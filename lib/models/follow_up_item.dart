@@ -108,6 +108,18 @@ class FollowUpItem extends HiveObject {
   @HiveField(12)
   String? calendarEventId;
 
+  @HiveField(13)
+  bool isPotentialDuplicate;
+
+  @HiveField(14)
+  String? linkedRecordId;
+
+  @HiveField(15)
+  String? linkedEntityName;
+
+  @HiveField(16)
+  String? linkedContext;
+
   FollowUpItem({
     required this.id,
     required this.category,
@@ -122,11 +134,15 @@ class FollowUpItem extends HiveObject {
     required this.createdAt,
     this.isCompleted = false,
     this.calendarEventId,
+    this.isPotentialDuplicate = false,
+    this.linkedRecordId,
+    this.linkedEntityName,
+    this.linkedContext,
   });
 
   String get structuredTitle {
     final parts = [
-      verb.length > 0 ? '${verb[0].toUpperCase()}${verb.substring(1)}' : verb,
+      verb.isNotEmpty ? '${verb[0].toUpperCase()}${verb.substring(1)}' : verb,
       object,
       timeframeRaw,
     ];

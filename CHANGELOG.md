@@ -1,5 +1,149 @@
 # Changelog - Sehat Locker
 
+## [2026-01-24 05:30] - Follow-Up Search & Indexing
+
+### Added
+- **SearchService**: Updated to support indexing `FollowUpItem`s.
+  - Automatically listens to changes in `follow_up_items` Hive box and updates the search index.
+  - Indexes verb, object, description, and category.
+- **DocumentsScreen**: Integrated follow-up items into the unified search.
+  - Displays a mixed list of "Follow-Ups" and "Documents" when searching.
+  - Supports editing and completing follow-up items directly from search results.
+- **Main**: Initialized `SearchService` listener on app startup to ensure index consistency.
+
+## [2026-01-24 05:15] - Doctor Visit Prep Feature
+
+### Added
+- **DoctorVisitPrepScreen**: Created `lib/screens/doctor_visit_prep_screen.dart` to help users prepare for doctor visits.
+  - Automatically fetches and lists pending follow-up items.
+  - Allows selecting items to include in an agenda.
+  - Generates a text agenda (Follow-up items + Due dates) that can be copied to clipboard.
+- **FollowUpListScreen**: Added a "Doctor Visit Prep" action button in the AppBar to navigate to the prep screen.
+
+## [2026-01-24 05:00] - Follow-Up Source Linking
+
+### Changed
+- **FollowUpCard**: Added a tappable "Extracted from [Conversation Title]" link.
+  - Fetches the source conversation using `sourceConversationId`.
+  - Navigates to `ConversationTranscriptScreen` on tap to view the full context.
+
+## [2026-01-24 04:45] - FollowUpDashboard Implementation
+
+### Added
+- **FollowUpDashboard**: Created `lib/widgets/dashboard/follow_up_dashboard.dart` to display a summary of follow-up items (Pending, Overdue, Due Week).
+- **Home Screen Integration**: Integrated the dashboard widget into `DocumentsScreen` (Home) to provide quick access to tasks.
+
+## [2026-01-24 04:30] - Overdue Follow-Up Detection
+
+### Added
+- **Overdue Detection**: Added `getOverdueItems` and `followUpItemsListenable` to `LocalStorageService`.
+- **UI Notifications**:
+  - Displays a **MaterialBanner** on app launch if there are overdue follow-up items.
+  - Added a **badge count** to the "Tasks" tab in the bottom navigation bar to show the number of overdue items in real-time.
+- **GlassBottomNav**: Updated to support notification badges on navigation items.
+
+### Changed
+- **SehatLockerApp**: Updated `initState` to check for overdue items and show the banner.
+- **LocalStorageService**: Improved type safety by using typed `Box<FollowUpItem>` for follow-up items storage.
+
+## [2026-01-24 04:00] - FollowUpReminderService Implementation
+
+### Added
+- **FollowUpReminderService**: Created `lib/services/follow_up_reminder_service.dart` to handle local notifications.
+  - Schedules notifications for follow-up items with due dates.
+  - Supports "1 day before" reminders and "on due date" reminders.
+  - Supports recurring reminders (Daily, Weekly, Monthly) based on frequency pattern.
+- **Dependencies**: Added `flutter_local_notifications` and `timezone` to `pubspec.yaml`.
+- **Permissions**: Updated `AndroidManifest.xml` with necessary permissions (POST_NOTIFICATIONS, SCHEDULE_EXACT_ALARM, etc.).
+
+### Changed
+- **Main**: Initialized `FollowUpReminderService` in `main.dart`.
+- **FollowUpReviewSheet**: Schedules reminders automatically when items are confirmed/saved.
+- **FollowUpListScreen**: Updates/Cancels reminders when items are completed or edited.
+
+## [2026-01-24 03:00] - FollowUpEditDialog Implementation
+
+### Added
+- **FollowUpEditDialog**: Created `lib/widgets/dialogs/follow_up_edit_dialog.dart` to allow users to modify follow-up items.
+  - Supports editing description, changing category, setting due date, and toggling priority.
+  - Validates inputs and returns modified `FollowUpItem`.
+
+### Changed
+- **FollowUpListScreen**: Integrated `FollowUpEditDialog`.
+  - Tapping an item or the edit button now opens the dialog.
+  - Updates the item in Hive storage upon save.
+- **FollowUpCard**: Updated to display `description` below the title if available, providing more context to the user.
+
+## [2026-01-24 02:45] - FollowUpReviewSheet & Transcription Flow
+
+### Added
+- **FollowUpReviewSheet**: Created `lib/widgets/sheets/follow_up_review_sheet.dart`, a bottom sheet to review and confirm extracted follow-up items after transcription.
+- **DoctorConversation Storage**: Added `saveDoctorConversation` and `getAllDoctorConversations` methods to `LocalStorageService`.
+
+### Changed
+- **AIScreen**: Integrated the full recording-transcription-extraction-review flow.
+  - Triggers transcription and extraction automatically after recording stops.
+  - Displays processing state while transcribing.
+  - Shows `FollowUpReviewSheet` to let user confirm extracted items.
+  - Saves the conversation and confirmed follow-up items to Hive.
+
+## [2026-01-24 02:15] - FollowUpListScreen Implementation
+
+### Added
+- **FollowUpListScreen**: Created `lib/screens/follow_up_list_screen.dart` to display grouped follow-up items.
+  - Grouped by category with expandable sections.
+  - Added count badges per category.
+  - Added filter toggle for Completed/Pending items.
+  - Uses `FollowUpCard` for item display.
+- **LocalStorageService**: Added `_followUpItemsBox` and CRUD methods (`saveFollowUpItem`, `getAllFollowUpItems`, `deleteFollowUpItem`) to manage `FollowUpItem` persistence.
+        ### Changed
+        - **App Integration**: Integrated `FollowUpListScreen` into the main navigation as the "Tasks" tab.
+        - **LocalStorageService**: Updated `initialize` to open the `follow_up_items` Hive box.
+
+## [2026-01-24 02:00] - Add to Calendar Implementation
+
+### Added
+- **FollowUpListScreen**: Implemented "Add to Calendar" action for follow-up items.
+  - Uses `add_2_calendar` package to create native calendar events.
+  - Event title set to item description.
+  - Event notes include link to source conversation title.
+  - Event date set from `dueDate`.
+- **LocalStorageService**: Added `getDoctorConversation` method to retrieve conversation details by ID.
+
+## [2026-01-24 01:45] - FollowUpCard Redesign
+
+### Changed
+- **FollowUpCard**: Redesigned widget to match requirements:
+  - Title shows **verb + object** (e.g., "Schedule MRI").
+  - Added badges for timeframe/frequency and high priority.
+  - Recurring items show frequency instead of single date.
+  - Added action buttons: "Add to Calendar", "Complete", "Edit".
+
+## [2026-01-24 01:30] - Follow-Up Context Enrichment
+
+### Added
+- **Context Enrichment**: Added `enrichItems` method to `FollowUpExtractor` to link extracted items to existing vault records.
+  - Links medication items to `Prescriptions` or `Medical Records` in the vault.
+  - Links test/monitoring items to `Lab Results` in the vault.
+- **FollowUpItem**: Added optional fields `linkedRecordId`, `linkedEntityName`, and `linkedContext` (Hive fields 14-16) to store linkage metadata.
+- **Tests**: Added `test/services/follow_up_extractor_enrichment_test.dart` to verify linking logic with mock vault data.
+
+### Changed
+- **FollowUpExtractor**: Updated constructor to accept optional `VaultService` dependency.
+
+## [2026-01-24 01:00] - Follow-Up Deduplication
+
+### Added
+- **Deduplication Logic**: Implemented Levenshtein distance-based deduplication in `FollowUpExtractor`.
+  - Compares new items against existing items using description similarity.
+  - Flags items as `isPotentialDuplicate` if similarity > 80%.
+- **StringUtils**: Created `lib/utils/string_utils.dart` with `levenshteinDistance` and `calculateSimilarity` functions.
+- **FollowUpItem**: Added `isPotentialDuplicate` field (Hive TypeId 7, Field 13).
+- **Tests**: Added `test/services/follow_up_extractor_deduplication_test.dart` to verify deduplication logic.
+
+### Changed
+- **FollowUpExtractor**: Updated `extractFromTranscript` to optionally accept `existingItems` for duplicate checking.
+
 ## [2026-01-24 00:30] - Extractor Matching Fixes
 
 ### Fixed

@@ -30,13 +30,17 @@ class FollowUpItemAdapter extends TypeAdapter<FollowUpItem> {
       createdAt: fields[10] as DateTime,
       isCompleted: fields[11] as bool,
       calendarEventId: fields[12] as String?,
+      isPotentialDuplicate: (fields[13] as bool?) ?? false,
+      linkedRecordId: fields[14] as String?,
+      linkedEntityName: fields[15] as String?,
+      linkedContext: fields[16] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, FollowUpItem obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -62,7 +66,15 @@ class FollowUpItemAdapter extends TypeAdapter<FollowUpItem> {
       ..writeByte(11)
       ..write(obj.isCompleted)
       ..writeByte(12)
-      ..write(obj.calendarEventId);
+      ..write(obj.calendarEventId)
+      ..writeByte(13)
+      ..write(obj.isPotentialDuplicate)
+      ..writeByte(14)
+      ..write(obj.linkedRecordId)
+      ..writeByte(15)
+      ..write(obj.linkedEntityName)
+      ..writeByte(16)
+      ..write(obj.linkedContext);
   }
 
   @override

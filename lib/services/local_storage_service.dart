@@ -20,6 +20,7 @@ class LocalStorageService {
   static const String _savedPapersBox = 'saved_papers';
   static const String _searchIndexBox = 'search_index';
   static const String _doctorConversationsBox = 'doctor_conversations';
+  static const String _followUpItemsBox = 'follow_up_items';
   static const String _appSettingsKey = 'app_settings_object';
   static const String _autoDeleteOriginalKey = 'auto_delete_original';
 
@@ -29,7 +30,7 @@ class LocalStorageService {
   LocalStorageService._internal();
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  
+
   bool _isInitialized = false;
 
   /// Initialize Hive and open encrypted boxes
@@ -38,7 +39,7 @@ class LocalStorageService {
 
     // Get application documents directory
     final appDocDir = await getApplicationDocumentsDirectory();
-    
+
     // Initialize Hive
     await Hive.initFlutter(appDocDir.path);
 
@@ -97,18 +98,23 @@ class LocalStorageService {
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
 
+    await Hive.openBox<FollowUpItem>(
+      _followUpItemsBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
     _isInitialized = true;
-    
+
     // Initialize model metadata on first load
     await _initializeAppSettingsMetadata();
-    
+
     debugPrint('LocalStorageService initialized with encrypted storage');
   }
 
   /// Get or create AES-256 encryption key
   Future<List<int>> _getOrCreateEncryptionKey() async {
     String? encodedKey = await _secureStorage.read(key: _encryptionKeyKey);
-    
+
     if (encodedKey == null) {
       // Generate new encryption key
       final key = Hive.generateSecureKey();
@@ -116,7 +122,7 @@ class LocalStorageService {
       await _secureStorage.write(key: _encryptionKeyKey, value: encodedKey);
       debugPrint('Generated new encryption key');
     }
-    
+
     return base64Decode(encodedKey);
   }
 
@@ -231,7 +237,7 @@ class LocalStorageService {
 
   /// Get document extractions box (stored in health_records box)
   /// Document extractions are stored separately but can be linked to HealthRecords
-  
+
   /// Save a document extraction
   Future<void> saveDocumentExtraction(DocumentExtraction extraction) async {
     final box = Hive.box('health_records');
@@ -251,9 +257,7 @@ class LocalStorageService {
   /// Get all document extractions
   List<DocumentExtraction> getAllDocumentExtractions() {
     final box = Hive.box('health_records');
-    return box.values
-        .whereType<DocumentExtraction>()
-        .toList();
+    return box.values.whereType<DocumentExtraction>().toList();
   }
 
   /// Find a document extraction by its content hash
@@ -275,6 +279,70 @@ class LocalStorageService {
       await extraction.delete();
       debugPrint('Deleted DocumentExtraction: $id');
     }
+  }
+
+  // MARK: - Doctor Conversations
+
+  /// Get doctor conversations box
+  Box get _conversationsBox => Hive.box(_doctorConversationsBox);
+
+  /// Save a doctor conversation
+  Future<void> saveDoctorConversation(DoctorConversation conversation) async {
+    await _conversationsBox.put(conversation.id, conversation);
+  }
+
+  /// Get all doctor conversations
+  List<DoctorConversation> getAllDoctorConversations() {
+    if (!Hive.isBoxOpen(_doctorConversationsBox)) return [];
+    return _conversationsBox.values.cast<DoctorConversation>().toList();
+  }
+
+  /// Get a doctor conversation by ID
+  DoctorConversation? getDoctorConversation(String id) {
+    if (!Hive.isBoxOpen(_doctorConversationsBox)) return null;
+    return _conversationsBox.get(id);
+  }
+
+  /// Delete a doctor conversation
+  Future<void> deleteDoctorConversation(String id) async {
+    await _conversationsBox.delete(id);
+  }
+
+  // MARK: - Follow Up Items
+
+  /// Get follow-up items box
+  Box<FollowUpItem> get _followUpBox =>
+      Hive.box<FollowUpItem>(_followUpItemsBox);
+
+  /// Save a follow-up item
+  Future<void> saveFollowUpItem(FollowUpItem item) async {
+    await _followUpBox.put(item.id, item);
+  }
+
+  /// Get all follow-up items
+  List<FollowUpItem> getAllFollowUpItems() {
+    if (!Hive.isBoxOpen(_followUpItemsBox)) return [];
+    return _followUpBox.values.cast<FollowUpItem>().toList();
+  }
+
+  /// Get overdue follow-up items
+  List<FollowUpItem> getOverdueItems() {
+    if (!Hive.isBoxOpen(_followUpItemsBox)) return [];
+    final now = DateTime.now();
+    return _followUpBox.values.cast<FollowUpItem>().where((item) {
+      return !item.isCompleted &&
+          item.dueDate != null &&
+          item.dueDate!.isBefore(now);
+    }).toList();
+  }
+
+  /// Get listenable for follow-up items box
+  ValueListenable<Box<FollowUpItem>> get followUpItemsListenable =>
+      _followUpBox.listenable();
+
+  /// Delete a follow-up item
+  Future<void> deleteFollowUpItem(String id) async {
+    await _followUpBox.delete(id);
   }
 
   // MARK: - Cleanup

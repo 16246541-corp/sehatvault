@@ -18,7 +18,6 @@ class DocumentGridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return GlassCard(
       onTap: onTap,
@@ -54,15 +53,16 @@ class DocumentGridCard extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                
+
                 // Date Badge
                 Positioned(
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -77,7 +77,7 @@ class DocumentGridCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Content Section
           Padding(
             padding: const EdgeInsets.all(12),
@@ -86,7 +86,8 @@ class DocumentGridCard extends StatelessWidget {
               children: [
                 CategoryBadge(
                   label: record.category,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                  backgroundColor:
+                      theme.colorScheme.primary.withValues(alpha: 0.1),
                   textColor: theme.colorScheme.primary,
                 ),
                 const SizedBox(height: 8),

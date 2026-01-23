@@ -6,11 +6,13 @@ import '../../utils/design_constants.dart';
 class GlassBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onItemTapped;
+  final Map<int, int>? badgeCounts;
 
   const GlassBottomNav({
     super.key,
     required this.currentIndex,
     required this.onItemTapped,
+    this.badgeCounts,
   });
 
   @override
@@ -21,7 +23,8 @@ class GlassBottomNav extends StatelessWidget {
     return Container(
       padding: DesignConstants.bottomNavPadding,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(DesignConstants.bottomNavCornerRadius),
+        borderRadius:
+            BorderRadius.circular(DesignConstants.bottomNavCornerRadius),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
@@ -30,7 +33,8 @@ class GlassBottomNav extends StatelessWidget {
               color: isDark
                   ? Colors.black.withValues(alpha: 0.5)
                   : Colors.white.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(DesignConstants.bottomNavCornerRadius),
+              borderRadius:
+                  BorderRadius.circular(DesignConstants.bottomNavCornerRadius),
               border: Border.all(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.15)
@@ -58,20 +62,27 @@ class GlassBottomNav extends StatelessWidget {
                 _buildNavItem(
                   context,
                   index: 1,
+                  icon: Icons.task_alt_outlined,
+                  activeIcon: Icons.task_alt,
+                  label: 'Tasks',
+                ),
+                _buildNavItem(
+                  context,
+                  index: 2,
                   icon: Icons.psychology_outlined,
                   activeIcon: Icons.psychology,
                   label: 'AI',
                 ),
                 _buildNavItem(
                   context,
-                  index: 2,
+                  index: 3,
                   icon: Icons.article_outlined,
                   activeIcon: Icons.article,
                   label: 'News',
                 ),
                 _buildNavItem(
                   context,
-                  index: 3,
+                  index: 4,
                   icon: Icons.settings_outlined,
                   activeIcon: Icons.settings,
                   label: 'Settings',
@@ -94,7 +105,7 @@ class GlassBottomNav extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isActive = currentIndex == index;
-    
+
     final activeColor = theme.colorScheme.primary;
     final inactiveColor = isDark
         ? Colors.white.withValues(alpha: 0.6)
@@ -115,11 +126,24 @@ class GlassBottomNav extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isActive ? activeIcon : icon,
-              color: isActive ? activeColor : inactiveColor,
-              size: 24,
-            ),
+            if (badgeCounts != null &&
+                badgeCounts![index] != null &&
+                badgeCounts![index]! > 0)
+              Badge(
+                label: Text('${badgeCounts![index]}'),
+                backgroundColor: Colors.red,
+                child: Icon(
+                  isActive ? activeIcon : icon,
+                  color: isActive ? activeColor : inactiveColor,
+                  size: 24,
+                ),
+              )
+            else
+              Icon(
+                isActive ? activeIcon : icon,
+                color: isActive ? activeColor : inactiveColor,
+                size: 24,
+              ),
             const SizedBox(height: 4),
             Text(
               label,

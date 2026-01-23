@@ -1,9 +1,7 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'glass_button.dart';
 import 'glass_effect_container.dart';
-import '../../utils/design_constants.dart';
 import '../../utils/theme.dart';
 import '../../services/conversation_recorder_service.dart';
 
@@ -56,7 +54,6 @@ class _RecordingControlWidgetState extends State<RecordingControlWidget>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return StreamBuilder<RecordingDisposition>(
       stream: widget.recorderService.onProgress,
@@ -64,7 +61,8 @@ class _RecordingControlWidgetState extends State<RecordingControlWidget>
         final duration = snapshot.hasData
             ? snapshot.data!.duration
             : const Duration(seconds: 0);
-        final decibels = snapshot.hasData ? snapshot.data!.decibels ?? 0.0 : 0.0;
+        final decibels =
+            snapshot.hasData ? snapshot.data!.decibels ?? 0.0 : 0.0;
 
         // Normalize decibels for visualization (usually -160 to 0 or similar)
         // Let's assume a range and map it to 0.0 - 1.0
@@ -88,18 +86,20 @@ class _RecordingControlWidgetState extends State<RecordingControlWidget>
                     AnimatedBuilder(
                       animation: _pulseController,
                       builder: (context, child) {
-                        final pulse = 1.0 + (normalizedLevel * 0.5 * _pulseController.value);
+                        final pulse = 1.0 +
+                            (normalizedLevel * 0.5 * _pulseController.value);
                         return Container(
                           width: 150 * pulse,
                           height: 150 * pulse,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppTheme.accentTeal.withValues(alpha: 0.2 * normalizedLevel),
+                            color: AppTheme.accentTeal
+                                .withValues(alpha: 0.2 * normalizedLevel),
                           ),
                         );
                       },
                     ),
-                  
+
                   // Glass Container for Timer
                   GlassEffect(
                     borderRadius: BorderRadius.circular(100),
@@ -120,8 +120,8 @@ class _RecordingControlWidgetState extends State<RecordingControlWidget>
                           Icon(
                             Icons.mic,
                             size: 32,
-                            color: widget.isPaused 
-                                ? theme.disabledColor 
+                            color: widget.isPaused
+                                ? theme.disabledColor
                                 : AppTheme.accentTeal,
                           ),
                           const SizedBox(height: 8),
@@ -129,7 +129,9 @@ class _RecordingControlWidgetState extends State<RecordingControlWidget>
                             _formatDuration(duration),
                             style: theme.textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              fontFeatures: [const FontFeature.tabularFigures()],
+                              fontFeatures: [
+                                const FontFeature.tabularFigures()
+                              ],
                             ),
                           ),
                           if (widget.isPaused)
@@ -147,7 +149,7 @@ class _RecordingControlWidgetState extends State<RecordingControlWidget>
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
 
             // Controls
@@ -160,9 +162,9 @@ class _RecordingControlWidgetState extends State<RecordingControlWidget>
                   icon: widget.isPaused ? Icons.play_arrow : Icons.pause,
                   onPressed: widget.isPaused ? widget.onResume : widget.onPause,
                 ),
-                
+
                 const SizedBox(width: 24),
-                
+
                 // Stop Button
                 GlassButton(
                   label: 'Stop',

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../widgets/design/liquid_glass_background.dart';
-import '../widgets/design/glass_card.dart';
 import '../widgets/design/glass_button.dart';
 import '../widgets/design/glass_text_field.dart';
 import '../utils/design_constants.dart';
@@ -10,11 +9,22 @@ import '../services/search_service.dart';
 import '../services/local_storage_service.dart';
 import '../models/health_record.dart';
 import '../widgets/cards/document_grid_card.dart';
+import '../widgets/dashboard/follow_up_dashboard.dart';
 import 'document_detail_screen.dart';
+import 'follow_up_list_screen.dart';
+import '../models/follow_up_item.dart';
+import '../widgets/follow_up_card.dart';
+import '../widgets/dialogs/follow_up_edit_dialog.dart';
+import '../services/follow_up_reminder_service.dart';
 
 /// Documents Screen - Health documents storage
 class DocumentsScreen extends StatefulWidget {
-  const DocumentsScreen({super.key});
+  final VoidCallback? onTasksTap;
+
+  const DocumentsScreen({
+    super.key,
+    this.onTasksTap,
+  });
 
   @override
   State<DocumentsScreen> createState() => _DocumentsScreenState();
@@ -24,9 +34,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   final VaultService _vaultService = VaultService(LocalStorageService());
   late final SearchService _searchService;
   final TextEditingController _searchController = TextEditingController();
-  
+
   List<HealthRecord> _documents = [];
   List<HealthRecord> _filteredDocuments = [];
+  List<FollowUpItem> _filteredFollowUps = [];
   bool _isLoading = true;
 
   @override
@@ -70,6 +81,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       if (_filteredDocuments.length != _documents.length) {
         setState(() {
           _filteredDocuments = List.from(_documents);
+          _filteredFollowUps = [];
         });
       }
       return;
@@ -87,15 +99,39 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         }
 
         // 2. Check metadata (title, category, notes)
-        final titleMatch = doc.title.toLowerCase().contains(query.toLowerCase());
-        final categoryMatch = doc.category.toLowerCase().contains(query.toLowerCase());
-        final notesMatch = doc.notes?.toLowerCase().contains(query.toLowerCase()) ?? false;
+        final titleMatch =
+            doc.title.toLowerCase().contains(query.toLowerCase());
+        final categoryMatch =
+            doc.category.toLowerCase().contains(query.toLowerCase());
+        final notesMatch =
+            doc.notes?.toLowerCase().contains(query.toLowerCase()) ?? false;
 
         return contentMatch || titleMatch || categoryMatch || notesMatch;
       }).toList();
+
+      // Filter follow-ups
+      final allFollowUps = LocalStorageService().getAllFollowUpItems();
+      _filteredFollowUps = allFollowUps.where((item) {
+        // 1. Check index
+        bool indexMatch = matchingExtractionIds.contains(item.id);
+
+        // 2. Check metadata
+        bool metaMatch =
+            item.description.toLowerCase().contains(query.toLowerCase()) ||
+                item.verb.toLowerCase().contains(query.toLowerCase()) ||
+                (item.object?.toLowerCase().contains(query.toLowerCase()) ??
+                    false) ||
+                item.category
+                    .toString()
+                    .split('.')
+                    .last
+                    .toLowerCase()
+                    .contains(query.toLowerCase());
+
+        return indexMatch || metaMatch;
+      }).toList();
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -134,27 +170,144 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              
+
+              // Dashboard
+              FollowUpDashboard(
+                onTap: () async {
+                  if (widget.onTasksTap != null) {
+                    widget.onTasksTap!();
+                  } else {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const FollowUpListScreen(),
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: DesignConstants.sectionSpacing),
+
               // Search Bar
               GlassTextField(
                 controller: _searchController,
                 hintText: 'Search documents...',
                 prefixIcon: Icons.search,
               ),
-              
+
               const SizedBox(height: DesignConstants.sectionSpacing),
-              
+
               // Content Area
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : _filteredDocuments.isNotEmpty
-                        ? _buildDocumentsGrid(context)
-                        : _buildEmptyState(context),
+                    : _searchController.text.isNotEmpty
+                        ? _buildSearchResults(context)
+                        : _filteredDocuments.isNotEmpty
+                            ? _buildDocumentsGrid(context)
+                            : _buildEmptyState(context),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResults(BuildContext context) {
+    if (_filteredDocuments.isEmpty && _filteredFollowUps.isEmpty) {
+      return _buildEmptyState(context);
+    }
+
+    return CustomScrollView(
+      slivers: [
+        if (_filteredFollowUps.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text('Follow-Ups',
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final item = _filteredFollowUps[index];
+                return FollowUpCard(
+                  item: item,
+                  onTap: () => _showEditDialog(item),
+                  onMarkComplete: () => _toggleCompletion(item),
+                  onEdit: () => _showEditDialog(item),
+                );
+              },
+              childCount: _filteredFollowUps.length,
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ],
+        if (_filteredDocuments.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text('Documents',
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+          ),
+          SliverGrid(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final doc = _filteredDocuments[index];
+                return DocumentGridCard(
+                  record: doc,
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DocumentDetailScreen(
+                          healthRecordId: doc.id,
+                        ),
+                      ),
+                    );
+                    _loadDocuments(); // Refresh grid on return (in case of deletion)
+                  },
+                );
+              },
+              childCount: _filteredDocuments.length,
+            ),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: DesignConstants.gridSpacing,
+              crossAxisSpacing: DesignConstants.gridSpacing,
+              childAspectRatio: 0.75, // Taller cards for images
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _toggleCompletion(FollowUpItem item) async {
+    setState(() {
+      item.isCompleted = !item.isCompleted;
+      item.save();
+    });
+
+    // Update reminder status
+    if (item.isCompleted) {
+      await FollowUpReminderService().cancelReminder(item.id);
+    } else {
+      await FollowUpReminderService().scheduleReminder(item);
+    }
+  }
+
+  void _showEditDialog(FollowUpItem item) {
+    showDialog(
+      context: context,
+      builder: (context) => FollowUpEditDialog(
+        item: item,
+        onSave: (updatedItem) async {
+          await LocalStorageService().saveFollowUpItem(updatedItem);
+          _performSearch();
+        },
       ),
     );
   }
@@ -166,7 +319,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off, size: 64, color: Theme.of(context).disabledColor),
+            Icon(Icons.search_off,
+                size: 64, color: Theme.of(context).disabledColor),
             const SizedBox(height: 16),
             Text(
               'No matching documents found',
@@ -178,7 +332,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
 
     final theme = Theme.of(context);
-    
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -241,20 +395,20 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       itemBuilder: (context, index) {
         final doc = _filteredDocuments[index];
         return DocumentGridCard(
-            record: doc,
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DocumentDetailScreen(
-                    healthRecordId: doc.id,
-                  ),
+          record: doc,
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DocumentDetailScreen(
+                  healthRecordId: doc.id,
                 ),
-              );
-              _loadDocuments(); // Refresh grid on return (in case of deletion)
-            },
-          );
-        },
-      );
-    }
+              ),
+            );
+            _loadDocuments(); // Refresh grid on return (in case of deletion)
+          },
+        );
+      },
+    );
   }
+}

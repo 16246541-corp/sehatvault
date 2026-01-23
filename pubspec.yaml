@@ -43,6 +43,9 @@ dependencies:
   flutter_sound: ^9.30.0
   encrypt: ^5.0.3
   whisper_flutter_new: ^1.0.1
+  add_2_calendar: ^3.0.1
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.1
 
 dev_dependencies:
   flutter_test:

@@ -7,6 +7,7 @@ import 'services/search_service.dart';
 import 'services/verb_mapping_configuration.dart';
 import 'services/temporal_phrase_patterns_configuration.dart';
 import 'services/medical_dictionary_service.dart';
+import 'services/follow_up_reminder_service.dart';
 
 /// Global storage service instance
 final LocalStorageService storageService = LocalStorageService();
@@ -32,8 +33,25 @@ void main() async {
   // Initialize medical dictionary service
   await MedicalDictionaryService().load();
 
+  // Initialize follow-up reminder service
+  await FollowUpReminderService().initialize();
+  // Ideally request permissions here or on first use.
+  // For now, let's request on startup to ensure it works.
+  await FollowUpReminderService().requestPermissions();
+
   // Initialize search index (ensure existing docs are indexed)
-  await SearchService(storageService).ensureIndexed();
+  final searchService = SearchService(storageService);
+  await searchService.ensureIndexed();
+
+  // Start listening to changes for automatic indexing
+  searchService.startListening();
+  // We need to keep searchService alive, but since it attaches listeners to Hive boxes
+  // which are singletons/globally accessible, the closures should keep working.
+  // However, startListening uses _storageService.followUpItemsListenable.addListener.
+  // The listener is a closure inside SearchService. If SearchService is GC'd, the closure might still exist
+  // referenced by the ValueNotifier? Yes.
+  // But to be safe and clean, we might want to store it in a global or service locator.
+  // For now, let's assume it works as the listener is held by the Box.
 
   runApp(const MyApp());
 }

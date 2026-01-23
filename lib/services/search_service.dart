@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/document_extraction.dart';
+import '../models/follow_up_item.dart';
 import 'local_storage_service.dart';
 import 'dart:math';
 
@@ -12,22 +13,87 @@ class SearchService {
 
   Box get _indexBox => _storageService.searchIndexBox;
 
+  /// Start listening to changes in data sources to keep index up-to-date
+  void startListening() {
+    Hive.box<FollowUpItem>('follow_up_items').watch().listen((event) {
+      if (event.deleted) {
+        removeDocument(event.key.toString());
+      } else {
+        final item = event.value as FollowUpItem;
+        indexFollowUpItem(item);
+      }
+    });
+    debugPrint('SearchService listening to data changes');
+  }
+
   /// Index a document's extracted text
   Future<void> indexDocument(DocumentExtraction doc) async {
-    final tokens = _tokenize(doc.extractedText);
-    
+    await _indexText(doc.id, doc.extractedText);
+    debugPrint('Indexed document ${doc.id}');
+  }
+
+  /// Index a follow-up item
+  Future<void> indexFollowUpItem(FollowUpItem item) async {
+    final text =
+        '${item.verb} ${item.object ?? ''} ${item.description} ${item.category.toString().split('.').last}';
+    await _indexText(item.id, text);
+    debugPrint('Indexed follow-up item ${item.id}');
+  }
+
+  /// Core indexing logic
+  Future<void> _indexText(String id, String text) async {
+    final tokens = _tokenize(text);
+
     for (var token in tokens) {
       // Get existing list of IDs for this token
       List<String> currentIds = List<String>.from(
-        _indexBox.get(token, defaultValue: <String>[]) as List
-      );
-      
-      if (!currentIds.contains(doc.id)) {
-        currentIds.add(doc.id);
+          _indexBox.get(token, defaultValue: <String>[]) as List);
+
+      if (!currentIds.contains(id)) {
+        currentIds.add(id);
         await _indexBox.put(token, currentIds);
       }
     }
-    debugPrint('Indexed document ${doc.id} with ${tokens.length} tokens');
+  }
+
+  /// Rebuild the entire index from existing documents and follow-ups
+  Future<void> rebuildIndex() async {
+    debugPrint('Rebuilding search index...');
+    await _indexBox.clear();
+
+    // Index documents
+    final docs = _storageService.getAllDocumentExtractions();
+    for (var doc in docs) {
+      await indexDocument(doc);
+    }
+
+    // Index follow-ups
+    final followUps = _storageService.getAllFollowUpItems();
+    for (var item in followUps) {
+      await indexFollowUpItem(item);
+    }
+
+    debugPrint(
+        'Search index rebuild complete. Indexed ${docs.length} documents and ${followUps.length} follow-ups.');
+  }
+
+  /// Ensure all documents and follow-ups are indexed (run on app start)
+  /// Only runs if index is empty but items exist
+  Future<void> ensureIndexed() async {
+    if (_indexBox.isEmpty) {
+      final docs = _storageService.getAllDocumentExtractions();
+      final followUps = _storageService.getAllFollowUpItems();
+
+      if (docs.isNotEmpty || followUps.isNotEmpty) {
+        debugPrint('Search index empty but items exist. indexing...');
+        for (var doc in docs) {
+          await indexDocument(doc);
+        }
+        for (var item in followUps) {
+          await indexFollowUpItem(item);
+        }
+      }
+    }
   }
 
   /// Remove a document from the index
@@ -35,9 +101,8 @@ class SearchService {
     final keys = _indexBox.keys;
     for (var key in keys) {
       List<String> ids = List<String>.from(
-        _indexBox.get(key, defaultValue: <String>[]) as List
-      );
-      
+          _indexBox.get(key, defaultValue: <String>[]) as List);
+
       if (ids.contains(docId)) {
         ids.remove(docId);
         if (ids.isEmpty) {
@@ -64,7 +129,7 @@ class SearchService {
 
     for (var token in queryTokens) {
       Set<String> tokenMatches = {};
-      
+
       // 1. Exact match
       if (_indexBox.containsKey(token)) {
         final ids = List<String>.from(_indexBox.get(token) as List);
@@ -74,14 +139,14 @@ class SearchService {
       // 2. Fuzzy match (Levenshtein distance <= 2 OR contains)
       for (var key in indexKeys) {
         if (key == token) continue; // Already handled
-        
+
         // Check if key contains token or token contains key (substring match)
         bool isSubstring = key.contains(token) || token.contains(key);
-        
+
         // Check edit distance for short words, be stricter
         // For longer words, allow more edits
         int maxDist = token.length < 4 ? 1 : 2;
-        
+
         if (isSubstring || _levenshtein(key, token) <= maxDist) {
           final ids = List<String>.from(_indexBox.get(key) as List);
           tokenMatches.addAll(ids);
@@ -96,42 +161,18 @@ class SearchService {
         resultIds = resultIds.intersection(tokenMatches);
       }
     }
-    
+
     return resultIds.toList();
   }
-  
+
   /// Tokenize text into unique words
   Set<String> _tokenize(String text) {
-     return text.toLowerCase()
-       .replaceAll(RegExp(r'[^\w\s]'), ' ') // Replace punctuation with space
-       .split(RegExp(r'\s+'))
-       .where((s) => s.length > 2) // Filter out very short words
-       .toSet();
-  }
-
-  /// Rebuild the entire index from existing documents
-  Future<void> rebuildIndex() async {
-    debugPrint('Rebuilding search index...');
-    await _indexBox.clear();
-    final docs = _storageService.getAllDocumentExtractions();
-    for (var doc in docs) {
-      await indexDocument(doc);
-    }
-    debugPrint('Search index rebuild complete. Indexed ${docs.length} documents.');
-  }
-
-  /// Ensure all documents are indexed (run on app start)
-  /// Only runs if index is empty but documents exist
-  Future<void> ensureIndexed() async {
-    if (_indexBox.isEmpty) {
-      final docs = _storageService.getAllDocumentExtractions();
-      if (docs.isNotEmpty) {
-        debugPrint('Search index empty but documents exist. indexing...');
-        for (var doc in docs) {
-          await indexDocument(doc);
-        }
-      }
-    }
+    return text
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^\w\s]'), ' ') // Replace punctuation with space
+        .split(RegExp(r'\s+'))
+        .where((s) => s.length > 2) // Filter out very short words
+        .toSet();
   }
 
   /// Calculate Levenshtein distance between two strings

@@ -4,6 +4,7 @@ import 'package:sehatlocker/models/follow_up_item.dart';
 import 'package:sehatlocker/services/follow_up_extractor.dart';
 import 'package:sehatlocker/services/verb_mapping_configuration.dart';
 import 'package:sehatlocker/services/temporal_phrase_patterns_configuration.dart';
+import 'package:sehatlocker/services/medical_dictionary_service.dart';
 
 // Reuse mocks from the existing test
 class MockVerbMappingConfiguration extends VerbMappingConfiguration {
@@ -23,7 +24,8 @@ class MockVerbMappingConfiguration extends VerbMappingConfiguration {
   }
 }
 
-class MockTemporalPhrasePatternsConfiguration extends TemporalPhrasePatternsConfiguration {
+class MockTemporalPhrasePatternsConfiguration
+    extends TemporalPhrasePatternsConfiguration {
   MockTemporalPhrasePatternsConfiguration() : super.forTesting();
   @override
   bool get isLoaded => true;
@@ -45,6 +47,7 @@ void main() {
       extractor = FollowUpExtractor(
         verbConfig: mockVerbConfig,
         temporalConfig: mockTemporalConfig,
+        dictionaryService: MedicalDictionaryService.forTesting({}),
       );
     });
 
@@ -64,7 +67,8 @@ void main() {
         ),
       ];
 
-      final items = extractor.extractFromTranscript("", "id", segments: segments);
+      final items =
+          extractor.extractFromTranscript("", "id", segments: segments);
       expect(items.length, 2);
       expect(items[0].verb, "take");
       expect(items[1].verb, "schedule");
@@ -86,16 +90,17 @@ void main() {
         ),
       ];
 
-      final items = extractor.extractFromTranscript("", "id", segments: segments);
+      final items =
+          extractor.extractFromTranscript("", "id", segments: segments);
       expect(items.length, 2);
       expect(items[0].verb, "take");
       expect(items[1].verb, "schedule");
     });
 
     test('does not split if silence gap is small', () {
-       final segments = [
+      final segments = [
         ConversationSegment(
-          text: "Take", 
+          text: "Take",
           startTimeMs: 0,
           endTimeMs: 500,
           speaker: "Doctor",
@@ -108,7 +113,8 @@ void main() {
         ),
       ];
 
-      final items = extractor.extractFromTranscript("", "id", segments: segments);
+      final items =
+          extractor.extractFromTranscript("", "id", segments: segments);
       expect(items.length, 1);
       expect(items[0].verb, "take");
       expect(items[0].object, "medicine");
@@ -117,20 +123,21 @@ void main() {
     test('splits sentences on speaker change', () {
       final segments = [
         ConversationSegment(
-          text: "Take medicine", 
+          text: "Take medicine",
           startTimeMs: 0,
           endTimeMs: 1000,
           speaker: "Doctor",
         ),
         ConversationSegment(
-          text: "Schedule appointment", 
-          startTimeMs: 1100, 
+          text: "Schedule appointment",
+          startTimeMs: 1100,
           endTimeMs: 2000,
           speaker: "User",
         ),
       ];
 
-      final items = extractor.extractFromTranscript("", "id", segments: segments);
+      final items =
+          extractor.extractFromTranscript("", "id", segments: segments);
       expect(items.length, 2);
     });
   });
