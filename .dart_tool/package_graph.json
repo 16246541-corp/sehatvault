@@ -17,6 +17,7 @@
         "flutter_secure_storage",
         "flutter_staggered_animations",
         "flutter_tesseract_ocr",
+        "flutter_tts",
         "google_fonts",
         "hive",
         "hive_flutter",
@@ -24,7 +25,9 @@
         "intl",
         "path",
         "path_provider",
+        "pdf",
         "permission_handler",
+        "photo_view",
         "smooth_page_indicator",
         "system_info2",
         "uuid"
@@ -113,8 +116,38 @@
       ]
     },
     {
+      "name": "flutter_tts",
+      "version": "4.2.5",
+      "dependencies": [
+        "flutter",
+        "flutter_web_plugins"
+      ]
+    },
+    {
+      "name": "pdf",
+      "version": "3.11.3",
+      "dependencies": [
+        "archive",
+        "barcode",
+        "bidi",
+        "crypto",
+        "image",
+        "meta",
+        "path_parsing",
+        "vector_math",
+        "xml"
+      ]
+    },
+    {
+      "name": "photo_view",
+      "version": "0.15.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
       "name": "image",
-      "version": "4.7.2",
+      "version": "4.5.4",
       "dependencies": [
         "archive",
         "meta",
@@ -714,12 +747,40 @@
       ]
     },
     {
+      "name": "flutter_web_plugins",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
       "name": "xml",
       "version": "6.6.1",
       "dependencies": [
         "collection",
         "meta",
         "petitparser"
+      ]
+    },
+    {
+      "name": "path_parsing",
+      "version": "1.1.0",
+      "dependencies": [
+        "meta",
+        "vector_math"
+      ]
+    },
+    {
+      "name": "bidi",
+      "version": "2.0.13",
+      "dependencies": []
+    },
+    {
+      "name": "barcode",
+      "version": "2.2.9",
+      "dependencies": [
+        "meta",
+        "qr"
       ]
     },
     {
@@ -898,13 +959,6 @@
       "name": "web",
       "version": "1.1.1",
       "dependencies": []
-    },
-    {
-      "name": "flutter_web_plugins",
-      "version": "0.0.0",
-      "dependencies": [
-        "flutter"
-      ]
     },
     {
       "name": "file",
@@ -1170,6 +1224,13 @@
       "version": "7.0.1",
       "dependencies": [
         "collection",
+        "meta"
+      ]
+    },
+    {
+      "name": "qr",
+      "version": "3.0.2",
+      "dependencies": [
         "meta"
       ]
     },

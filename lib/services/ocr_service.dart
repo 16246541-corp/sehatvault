@@ -3,6 +3,8 @@ import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:image/image.dart' as img;
+import '../models/document_extraction.dart';
+import 'data_extraction_service.dart';
 
 class OCRService {
   /// Extracts text from an image file using Tesseract OCR.
@@ -17,14 +19,14 @@ class OCRService {
 
     try {
       // 2. Run Tesseract OCR
-      // We use 'eng' as default. For medical documents, 'eng' is usually sufficient
-      // if the document is in English.
       final String text = await FlutterTesseractOcr.extractText(
         processedImageFile.path,
         language: 'eng',
         args: {
-          "psm": "3", // Fully automatic page segmentation, but no OSD.
+          "psm": "3", // Fully automatic page segmentation
           "preserve_interword_spaces": "1",
+          // Whitelist characters common in medical reports to speed up processing
+          "tessedit_char_whitelist": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,:;()[]{}!@#\$%^&*-+=<>?/|_ '\"\n",
         },
       );
 
@@ -49,6 +51,28 @@ class OCRService {
     return extractTextFromImage(File(imagePath));
   }
 
+  /// Full pipeline: Extracts text and then runs data extraction to get structured fields.
+  static Future<DocumentExtraction> processDocument(File image) async {
+    final String extractedText = await extractTextFromImage(image);
+    final Map<String, dynamic> structuredData = DataExtractionService.extractStructuredData(extractedText);
+    
+    // Simple confidence score heuristic:
+    // Base 0.5, +0.2 if text found, +0.2 if structured data found
+    double confidenceScore = 0.5;
+    if (extractedText.isNotEmpty) confidenceScore += 0.2;
+    if (structuredData.values.any((v) => v is List && v.isNotEmpty)) {
+      confidenceScore += 0.2;
+    }
+    if (confidenceScore > 1.0) confidenceScore = 1.0;
+
+    return DocumentExtraction(
+      originalImagePath: image.path,
+      extractedText: extractedText,
+      structuredData: structuredData,
+      confidenceScore: confidenceScore,
+    );
+  }
+
   /// Internal preprocessing: handles rotation, low-light enhancement, and grayscale.
   static Future<File> _preprocessImage(File imageFile) async {
     try {
@@ -57,11 +81,18 @@ class OCRService {
 
       if (image == null) return imageFile;
 
-      // 1. Handle Orientation (Auto-rotation)
+      // 1. Resize for Speed (Downscale)
+      // Processing 12MP+ images is slow. Resize to manageable width (e.g., 1024px)
+      // while maintaining aspect ratio.
+      if (image.width > 1024) {
+        image = img.copyResize(image, width: 1024);
+      }
+
+      // 2. Handle Orientation (Auto-rotation)
       // This fixes issues with images taken in different orientations.
       image = img.bakeOrientation(image);
 
-      // 2. Low-light preprocessing: Enhance contrast and brightness
+      // 3. Low-light preprocessing: Enhance contrast and brightness
       // Medical documents often have faint text or are captured in poor lighting.
       image = img.adjustColor(
         image, 
@@ -70,11 +101,11 @@ class OCRService {
         gamma: 1.2,
       );
 
-      // 3. Convert to Grayscale
+      // 4. Convert to Grayscale
       // Tesseract performs better on grayscale or binarized images.
       image = img.grayscale(image);
 
-      // 4. Final contrast stretch
+      // 5. Final contrast stretch
       image = img.contrast(image, contrast: 1.2);
 
       // Save to a temporary file for Tesseract to read

@@ -1,44 +1,61 @@
+import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
 
 class PermissionService {
-  /// Requests camera permission and returns true if granted.
-  /// Handles iOS/Android differences by managing status checks and
-  /// providing a path to settings if permanently denied.
-  static Future<bool> requestCameraPermission() async {
-    // 1. Check current status
-    PermissionStatus status = await Permission.camera.status;
+  /// Requests microphone permission with platform-specific rationale handling.
+  ///
+  /// Returns `true` if permission is granted, `false` otherwise.
+  static Future<bool> requestMicPermission(BuildContext context) async {
+    // Check current status
+    PermissionStatus status = await Permission.microphone.status;
 
-    // If already granted, return true
     if (status.isGranted) {
       return true;
     }
 
-    // 2. If denied (but not permanently), request it
-    if (status.isDenied) {
-      status = await Permission.camera.request();
-    }
-
-    // 3. Handle the result
-    if (status.isGranted) {
-      return true;
-    }
-
-    // 4. Handle permanent denial (User selected "Don't ask again" or iOS restriction)
     if (status.isPermanentlyDenied) {
-      // On both platforms, if permanently denied, the only way to enable is via settings.
-      // We return false here, but in a real UI flow, we might nudge the user.
-      // Some implementations automatically open settings, but it's often better 
-      // to let the UI layer handle the "Open Settings" dialog.
-      // However, to satisfy "handling differences", we check for permanent denial.
+      if (context.mounted) {
+        await _showSettingsDialog(context);
+      }
       return false;
     }
 
-    // 5. Handle iOS specific "Restricted" status (e.g. Parental Controls)
-    if (Platform.isIOS && status.isRestricted) {
+    // Request permission
+    status = await Permission.microphone.request();
+
+    if (status.isGranted) {
+      return true;
+    } else if (status.isPermanentlyDenied) {
+      if (context.mounted) {
+        await _showSettingsDialog(context);
+      }
       return false;
     }
 
-    return status.isGranted;
+    return false;
+  }
+
+  static Future<void> _showSettingsDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Microphone Permission Required'),
+        content: const Text(
+            'Microphone access is permanently denied. Please enable it in the app settings to use voice features.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
   }
 }

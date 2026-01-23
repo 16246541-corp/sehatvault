@@ -5,6 +5,8 @@ part 'health_record.g.dart';
 /// Base model for health record storage
 @HiveType(typeId: 0)
 class HealthRecord {
+  static const String typeDocumentExtraction = 'DocumentExtraction';
+
   @HiveField(0)
   final String id;
 
@@ -29,6 +31,12 @@ class HealthRecord {
   @HiveField(7)
   final Map<String, dynamic>? metadata;
 
+  @HiveField(8)
+  final String? recordType;
+
+  @HiveField(9)
+  final String? extractionId;
+
   HealthRecord({
     required this.id,
     required this.title,
@@ -38,6 +46,8 @@ class HealthRecord {
     this.filePath,
     this.notes,
     this.metadata,
+    this.recordType,
+    this.extractionId,
   });
 
   HealthRecord copyWith({
@@ -49,6 +59,8 @@ class HealthRecord {
     String? filePath,
     String? notes,
     Map<String, dynamic>? metadata,
+    String? recordType,
+    String? extractionId,
   }) {
     return HealthRecord(
       id: id ?? this.id,
@@ -59,6 +71,8 @@ class HealthRecord {
       filePath: filePath ?? this.filePath,
       notes: notes ?? this.notes,
       metadata: metadata ?? this.metadata,
+      recordType: recordType ?? this.recordType,
+      extractionId: extractionId ?? this.extractionId,
     );
   }
 }

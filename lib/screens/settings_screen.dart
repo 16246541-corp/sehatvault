@@ -111,6 +111,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _buildDivider(context),
                     _buildSettingsItem(
                       context,
+                      icon: Icons.delete_sweep_outlined,
+                      title: 'Auto-delete Original',
+                      subtitle: 'Delete images after extraction',
+                      trailing: Switch(
+                        value: storageService.autoDeleteOriginal,
+                        onChanged: (value) async {
+                          await storageService.setAutoDeleteOriginal(value);
+                          setState(() {});
+                        },
+                        activeTrackColor: AppTheme.accentTeal.withValues(alpha: 0.5),
+                        activeThumbColor: AppTheme.accentTeal,
+                      ),
+                    ),
+                    _buildDivider(context),
+                    _buildSettingsItem(
+                      context,
                       icon: Icons.backup_outlined,
                       title: 'Export Data',
                       subtitle: 'Create encrypted backup',

@@ -1,0 +1,319 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2024-05-22",
+  "categories": [
+    "Hematology",
+    "Biochemistry",
+    "Lipid Profile",
+    "Liver Function",
+    "Kidney Function",
+    "Thyroid Function",
+    "Electrolytes",
+    "Vitamins",
+    "Urinalysis"
+  ],
+  "common_units": [
+    "g/dL",
+    "mg/dL",
+    "mg/L",
+    "ug/dL",
+    "ng/mL",
+    "pg/mL",
+    "mmol/L",
+    "µmol/L",
+    "mEq/L",
+    "IU/L",
+    "U/L",
+    "mm/hr",
+    "fL",
+    "pg",
+    "10^6/µL",
+    "10^3/µL",
+    "million/cmm",
+    "thou/cmm",
+    "%",
+    "cells/cu mm"
+  ],
+  "abbreviations": {
+    "Hb": "Hemoglobin",
+    "Hgb": "Hemoglobin",
+    "WBC": "White Blood Cells",
+    "TLC": "Total Leucocyte Count",
+    "RBC": "Red Blood Cells",
+    "PCV": "Packed Cell Volume",
+    "Hct": "Hematocrit",
+    "MCV": "Mean Corpuscular Volume",
+    "MCH": "Mean Corpuscular Hemoglobin",
+    "MCHC": "Mean Corpuscular Hemoglobin Concentration",
+    "RDW": "Red Cell Distribution Width",
+    "PLT": "Platelet Count",
+    "MPV": "Mean Platelet Volume",
+    "ESR": "Erythrocyte Sedimentation Rate",
+    "FBS": "Fasting Blood Sugar",
+    "PPBS": "Post Prandial Blood Sugar",
+    "RBS": "Random Blood Sugar",
+    "HbA1c": "Glycated Hemoglobin",
+    "BUN": "Blood Urea Nitrogen",
+    "Cr": "Creatinine",
+    "UA": "Uric Acid",
+    "Na": "Sodium",
+    "K": "Potassium",
+    "Cl": "Chloride",
+    "Ca": "Calcium",
+    "T. Chol": "Total Cholesterol",
+    "TG": "Triglycerides",
+    "TGL": "Triglycerides",
+    "HDL": "High Density Lipoprotein",
+    "LDL": "Low Density Lipoprotein",
+    "VLDL": "Very Low Density Lipoprotein",
+    "LFT": "Liver Function Test",
+    "KFT": "Kidney Function Test",
+    "RFT": "Renal Function Test",
+    "T. Bil": "Total Bilirubin",
+    "D. Bil": "Direct Bilirubin",
+    "SGOT": "Aspartate Aminotransferase",
+    "AST": "Aspartate Aminotransferase",
+    "SGPT": "Alanine Aminotransferase",
+    "ALT": "Alanine Aminotransferase",
+    "ALP": "Alkaline Phosphatase",
+    "GGT": "Gamma Glutamyl Transferase",
+    "TSH": "Thyroid Stimulating Hormone",
+    "T3": "Triiodothyronine",
+    "T4": "Thyroxine",
+    "Vit D": "Vitamin D",
+    "Vit B12": "Vitamin B12"
+  },
+  "tests": [
+    {
+      "id": "hemoglobin",
+      "canonical_name": "Hemoglobin",
+      "aliases": ["Haemoglobin", "Hb", "Hgb", "Hemoglobin A1c"],
+      "category": "Hematology",
+      "common_units": ["g/dL", "g/L", "mmol/L"]
+    },
+    {
+      "id": "wbc",
+      "canonical_name": "White Blood Cell Count",
+      "aliases": ["WBC", "Total Leucocyte Count", "TLC", "Leukocytes", "White Count"],
+      "category": "Hematology",
+      "common_units": ["10^3/µL", "thou/cmm", "/cumm", "cells/uL"]
+    },
+    {
+      "id": "rbc",
+      "canonical_name": "Red Blood Cell Count",
+      "aliases": ["RBC", "Total RBC", "Erythrocytes", "Red Count"],
+      "category": "Hematology",
+      "common_units": ["10^6/µL", "million/cmm", "million/uL"]
+    },
+    {
+      "id": "platelets",
+      "canonical_name": "Platelet Count",
+      "aliases": ["PLT", "Platelets", "Thrombocytes"],
+      "category": "Hematology",
+      "common_units": ["10^3/µL", "thou/cmm", "lakh/cumm"]
+    },
+    {
+      "id": "hematocrit",
+      "canonical_name": "Hematocrit",
+      "aliases": ["Hct", "PCV", "Packed Cell Volume"],
+      "category": "Hematology",
+      "common_units": ["%"]
+    },
+    {
+      "id": "mcv",
+      "canonical_name": "Mean Corpuscular Volume",
+      "aliases": ["MCV"],
+      "category": "Hematology",
+      "common_units": ["fL"]
+    },
+    {
+      "id": "mch",
+      "canonical_name": "Mean Corpuscular Hemoglobin",
+      "aliases": ["MCH"],
+      "category": "Hematology",
+      "common_units": ["pg"]
+    },
+    {
+      "id": "mchc",
+      "canonical_name": "Mean Corpuscular Hemoglobin Concentration",
+      "aliases": ["MCHC"],
+      "category": "Hematology",
+      "common_units": ["g/dL", "%"]
+    },
+    {
+      "id": "glucose_fasting",
+      "canonical_name": "Fasting Blood Glucose",
+      "aliases": ["Fasting Blood Sugar", "FBS", "Glucose Fasting", "F. Glucose"],
+      "category": "Biochemistry",
+      "common_units": ["mg/dL", "mmol/L"]
+    },
+    {
+      "id": "glucose_pp",
+      "canonical_name": "Post Prandial Blood Glucose",
+      "aliases": ["PPBS", "Post Prandial Blood Sugar", "Glucose PP", "PP Glucose"],
+      "category": "Biochemistry",
+      "common_units": ["mg/dL", "mmol/L"]
+    },
+    {
+      "id": "hba1c",
+      "canonical_name": "HbA1c",
+      "aliases": ["Glycated Hemoglobin", "Glycohemoglobin", "A1c"],
+      "category": "Biochemistry",
+      "common_units": ["%", "mmol/mol"]
+    },
+    {
+      "id": "urea",
+      "canonical_name": "Blood Urea",
+      "aliases": ["Urea", "Blood Urea Nitrogen", "BUN"],
+      "category": "Kidney Function",
+      "common_units": ["mg/dL", "mmol/L"]
+    },
+    {
+      "id": "creatinine",
+      "canonical_name": "Serum Creatinine",
+      "aliases": ["Creatinine", "S. Creatinine", "Cr"],
+      "category": "Kidney Function",
+      "common_units": ["mg/dL", "µmol/L"]
+    },
+    {
+      "id": "uric_acid",
+      "canonical_name": "Uric Acid",
+      "aliases": ["S. Uric Acid", "UA"],
+      "category": "Kidney Function",
+      "common_units": ["mg/dL", "mmol/L"]
+    },
+    {
+      "id": "cholesterol_total",
+      "canonical_name": "Total Cholesterol",
+      "aliases": ["Serum Cholesterol", "T. Chol", "Cholesterol"],
+      "category": "Lipid Profile",
+      "common_units": ["mg/dL", "mmol/L"]
+    },
+    {
+      "id": "triglycerides",
+      "canonical_name": "Triglycerides",
+      "aliases": ["TGL", "TG", "Serum Triglycerides"],
+      "category": "Lipid Profile",
+      "common_units": ["mg/dL", "mmol/L"]
+    },
+    {
+      "id": "hdl",
+      "canonical_name": "HDL Cholesterol",
+      "aliases": ["High Density Lipoprotein", "HDL", "Good Cholesterol"],
+      "category": "Lipid Profile",
+      "common_units": ["mg/dL", "mmol/L"]
+    },
+    {
+      "id": "ldl",
+      "canonical_name": "LDL Cholesterol",
+      "aliases": ["Low Density Lipoprotein", "LDL", "Bad Cholesterol"],
+      "category": "Lipid Profile",
+      "common_units": ["mg/dL", "mmol/L"]
+    },
+    {
+      "id": "bilirubin_total",
+      "canonical_name": "Total Bilirubin",
+      "aliases": ["T. Bil", "Bilirubin Total"],
+      "category": "Liver Function",
+      "common_units": ["mg/dL", "µmol/L"]
+    },
+    {
+      "id": "bilirubin_direct",
+      "canonical_name": "Direct Bilirubin",
+      "aliases": ["D. Bil", "Bilirubin Direct", "Conjugated Bilirubin"],
+      "category": "Liver Function",
+      "common_units": ["mg/dL", "µmol/L"]
+    },
+    {
+      "id": "ast",
+      "canonical_name": "AST",
+      "aliases": ["SGOT", "Aspartate Aminotransferase", "Aspartate Transaminase"],
+      "category": "Liver Function",
+      "common_units": ["IU/L", "U/L"]
+    },
+    {
+      "id": "alt",
+      "canonical_name": "ALT",
+      "aliases": ["SGPT", "Alanine Aminotransferase", "Alanine Transaminase"],
+      "category": "Liver Function",
+      "common_units": ["IU/L", "U/L"]
+    },
+    {
+      "id": "alp",
+      "canonical_name": "Alkaline Phosphatase",
+      "aliases": ["ALP", "Alk Phos"],
+      "category": "Liver Function",
+      "common_units": ["IU/L", "U/L"]
+    },
+    {
+      "id": "tsh",
+      "canonical_name": "TSH",
+      "aliases": ["Thyroid Stimulating Hormone", "Thyrotropin"],
+      "category": "Thyroid Function",
+      "common_units": ["µIU/mL", "mIU/L", "mU/L"]
+    },
+    {
+      "id": "t3",
+      "canonical_name": "Total T3",
+      "aliases": ["Triiodothyronine", "T3 Total"],
+      "category": "Thyroid Function",
+      "common_units": ["ng/dL", "nmol/L"]
+    },
+    {
+      "id": "t4",
+      "canonical_name": "Total T4",
+      "aliases": ["Thyroxine", "T4 Total"],
+      "category": "Thyroid Function",
+      "common_units": ["µg/dL", "nmol/L"]
+    },
+    {
+      "id": "ft3",
+      "canonical_name": "Free T3",
+      "aliases": ["FT3"],
+      "category": "Thyroid Function",
+      "common_units": ["pg/mL", "pmol/L"]
+    },
+    {
+      "id": "ft4",
+      "canonical_name": "Free T4",
+      "aliases": ["FT4"],
+      "category": "Thyroid Function",
+      "common_units": ["ng/dL", "pmol/L"]
+    },
+    {
+      "id": "sodium",
+      "canonical_name": "Sodium",
+      "aliases": ["Na", "Na+", "Serum Sodium"],
+      "category": "Electrolytes",
+      "common_units": ["mEq/L", "mmol/L"]
+    },
+    {
+      "id": "potassium",
+      "canonical_name": "Potassium",
+      "aliases": ["K", "K+", "Serum Potassium"],
+      "category": "Electrolytes",
+      "common_units": ["mEq/L", "mmol/L"]
+    },
+    {
+      "id": "calcium",
+      "canonical_name": "Calcium",
+      "aliases": ["Ca", "Total Calcium", "S. Calcium"],
+      "category": "Biochemistry",
+      "common_units": ["mg/dL", "mmol/L"]
+    },
+    {
+      "id": "vitamin_d",
+      "canonical_name": "Vitamin D",
+      "aliases": ["25-Hydroxy Vitamin D", "Vit D", "25(OH)D"],
+      "category": "Vitamins",
+      "common_units": ["ng/mL", "nmol/L"]
+    },
+    {
+      "id": "vitamin_b12",
+      "canonical_name": "Vitamin B12",
+      "aliases": ["B12", "Cobalamin", "Vit B12"],
+      "category": "Vitamins",
+      "common_units": ["pg/mL", "pmol/L"]
+    }
+  ]
+}

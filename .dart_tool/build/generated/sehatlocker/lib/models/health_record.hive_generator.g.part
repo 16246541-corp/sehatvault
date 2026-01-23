@@ -21,13 +21,15 @@ class HealthRecordAdapter extends TypeAdapter<HealthRecord> {
       filePath: fields[5] as String?,
       notes: fields[6] as String?,
       metadata: (fields[7] as Map?)?.cast<String, dynamic>(),
+      recordType: fields[8] as String?,
+      extractionId: fields[9] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, HealthRecord obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -43,7 +45,11 @@ class HealthRecordAdapter extends TypeAdapter<HealthRecord> {
       ..writeByte(6)
       ..write(obj.notes)
       ..writeByte(7)
-      ..write(obj.metadata);
+      ..write(obj.metadata)
+      ..writeByte(8)
+      ..write(obj.recordType)
+      ..writeByte(9)
+      ..write(obj.extractionId);
   }
 
   @override

@@ -32,6 +32,18 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "barcode",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/barcode-2.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "bidi",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/bidi-2.0.13",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "boolean_selector",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/boolean_selector-2.1.2",
       "packageUri": "lib/",
@@ -332,6 +344,12 @@
       "languageVersion": "3.8"
     },
     {
+      "name": "flutter_tts",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/flutter_tts-4.2.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "flutter_web_plugins",
       "rootUri": "file:///opt/homebrew/share/flutter/packages/flutter_web_plugins",
       "packageUri": "lib/",
@@ -411,7 +429,7 @@
     },
     {
       "name": "image",
-      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/image-4.7.2",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/image-4.5.4",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -518,6 +536,12 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "path_parsing",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/path_parsing-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
       "name": "path_provider",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/path_provider-2.1.5",
       "packageUri": "lib/",
@@ -552,6 +576,12 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/path_provider_windows-2.3.0",
       "packageUri": "lib/",
       "languageVersion": "3.2"
+    },
+    {
+      "name": "pdf",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/pdf-3.11.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.19"
     },
     {
       "name": "permission_handler",
@@ -596,6 +626,12 @@
       "languageVersion": "3.8"
     },
     {
+      "name": "photo_view",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/photo_view-0.15.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "platform",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/platform-3.1.6",
       "packageUri": "lib/",
@@ -630,6 +666,12 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/pubspec_parse-1.5.0",
       "packageUri": "lib/",
       "languageVersion": "3.6"
+    },
+    {
+      "name": "qr",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/qr-3.0.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
     },
     {
       "name": "shelf",

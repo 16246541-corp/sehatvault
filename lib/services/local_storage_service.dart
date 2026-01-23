@@ -7,6 +7,7 @@ import '../models/app_settings.dart';
 import '../models/health_record.dart';
 import '../models/model_metadata.dart';
 import '../models/model_option.dart';
+import '../models/document_extraction.dart';
 
 /// Local Storage Service for health records
 /// Uses Hive with encryption for privacy-first data storage
@@ -15,7 +16,14 @@ class LocalStorageService {
   static const String _healthRecordsBox = 'health_records';
   static const String _settingsBox = 'settings';
   static const String _savedPapersBox = 'saved_papers';
+  static const String _searchIndexBox = 'search_index';
   static const String _appSettingsKey = 'app_settings_object';
+  static const String _autoDeleteOriginalKey = 'auto_delete_original';
+
+  // Singleton instance
+  static final LocalStorageService _instance = LocalStorageService._internal();
+  factory LocalStorageService() => _instance;
+  LocalStorageService._internal();
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   
@@ -41,6 +49,9 @@ class LocalStorageService {
     if (!Hive.isAdapterRegistered(3)) {
       Hive.registerAdapter(ModelMetadataAdapter());
     }
+    if (!Hive.isAdapterRegistered(4)) {
+      Hive.registerAdapter(DocumentExtractionAdapter());
+    }
 
     // Get or create encryption key
     final encryptionKey = await _getOrCreateEncryptionKey();
@@ -58,6 +69,11 @@ class LocalStorageService {
 
     await Hive.openBox(
       _savedPapersBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox(
+      _searchIndexBox,
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
 
@@ -144,6 +160,16 @@ class LocalStorageService {
     await _settings.put(_appSettingsKey, settings);
   }
 
+  /// Get Auto Delete Original setting
+  bool get autoDeleteOriginal {
+    return _settings.get(_autoDeleteOriginalKey, defaultValue: false);
+  }
+
+  /// Set Auto Delete Original setting
+  Future<void> setAutoDeleteOriginal(bool value) async {
+    await _settings.put(_autoDeleteOriginalKey, value);
+  }
+
   /// Initialize model metadata if it doesn't exist (First load)
   Future<void> _initializeAppSettingsMetadata() async {
     final settings = getAppSettings();
@@ -163,6 +189,9 @@ class LocalStorageService {
   /// Get saved papers box
   Box get _papers => Hive.box(_savedPapersBox);
 
+  /// Get search index box
+  Box get searchIndexBox => Hive.box(_searchIndexBox);
+
   /// Save a research paper
   Future<void> savePaper(String id, Map<String, dynamic> paper) async {
     await _papers.put(id, paper);
@@ -176,6 +205,56 @@ class LocalStorageService {
   /// Delete a saved paper
   Future<void> deletePaper(String id) async {
     await _papers.delete(id);
+  }
+
+  // MARK: - Document Extractions
+
+  /// Get document extractions box (stored in health_records box)
+  /// Document extractions are stored separately but can be linked to HealthRecords
+  
+  /// Save a document extraction
+  Future<void> saveDocumentExtraction(DocumentExtraction extraction) async {
+    final box = Hive.box('health_records');
+    await box.put(extraction.id, extraction);
+    debugPrint('Saved DocumentExtraction: ${extraction.id}');
+  }
+
+  /// Get a document extraction by ID
+  DocumentExtraction? getDocumentExtraction(String id) {
+    final box = Hive.box<DocumentExtraction>('health_records');
+    return box.values.firstWhere(
+      (extraction) => extraction.id == id,
+      orElse: () => throw Exception('DocumentExtraction not found: $id'),
+    );
+  }
+
+  /// Get all document extractions
+  List<DocumentExtraction> getAllDocumentExtractions() {
+    final box = Hive.box('health_records');
+    return box.values
+        .whereType<DocumentExtraction>()
+        .toList();
+  }
+
+  /// Find a document extraction by its content hash
+  DocumentExtraction? findDocumentExtractionByHash(String hash) {
+    try {
+      final box = Hive.box('health_records');
+      return box.values
+          .whereType<DocumentExtraction>()
+          .firstWhere((extraction) => extraction.contentHash == hash);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Delete a document extraction
+  Future<void> deleteDocumentExtraction(String id) async {
+    final extraction = getDocumentExtraction(id);
+    if (extraction != null) {
+      await extraction.delete();
+      debugPrint('Deleted DocumentExtraction: $id');
+    }
   }
 
   // MARK: - Cleanup
