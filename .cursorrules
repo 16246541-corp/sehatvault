@@ -1,0 +1,7 @@
+# Project Protocol: Changelog Management
+
+For every request in this repository:
+1. **MANDATORY**: Read `CHANGELOG.md` at the beginning of the task to understand previous changes and project state.
+2. **MANDATORY**: After completing any code changes (creations, deletions, or modifications), append a detailed entry to `CHANGELOG.md` summarizing the changes.
+3. Keep the `CHANGELOG.md` organized by date and category (Added, Changed, Fixed).
+4. Do not skip updating the changelog, even for minor fixes.

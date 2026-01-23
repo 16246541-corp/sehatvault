@@ -24,7 +24,7 @@ android {
         applicationId = "com.sehatlocker.sehatlocker"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // Android 6.0+ for 80/20 device coverage
+        minSdk = flutter.minSdkVersion  // Android 6.0+ for 80/20 device coverage
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

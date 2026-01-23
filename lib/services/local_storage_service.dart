@@ -3,6 +3,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
+import '../models/app_settings.dart';
+import '../models/health_record.dart';
+import '../models/model_metadata.dart';
+import '../models/model_option.dart';
 
 /// Local Storage Service for health records
 /// Uses Hive with encryption for privacy-first data storage
@@ -11,6 +15,7 @@ class LocalStorageService {
   static const String _healthRecordsBox = 'health_records';
   static const String _settingsBox = 'settings';
   static const String _savedPapersBox = 'saved_papers';
+  static const String _appSettingsKey = 'app_settings_object';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   
@@ -25,6 +30,17 @@ class LocalStorageService {
     
     // Initialize Hive
     await Hive.initFlutter(appDocDir.path);
+
+    // Register Adapters
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(HealthRecordAdapter());
+    }
+    if (!Hive.isAdapterRegistered(2)) {
+      Hive.registerAdapter(AppSettingsAdapter());
+    }
+    if (!Hive.isAdapterRegistered(3)) {
+      Hive.registerAdapter(ModelMetadataAdapter());
+    }
 
     // Get or create encryption key
     final encryptionKey = await _getOrCreateEncryptionKey();
@@ -46,6 +62,10 @@ class LocalStorageService {
     );
 
     _isInitialized = true;
+    
+    // Initialize model metadata on first load
+    await _initializeAppSettingsMetadata();
+    
     debugPrint('LocalStorageService initialized with encrypted storage');
   }
 
@@ -112,6 +132,30 @@ class LocalStorageService {
   /// Get a setting
   T? getSetting<T>(String key, {T? defaultValue}) {
     return _settings.get(key, defaultValue: defaultValue);
+  }
+
+  /// Get App Settings
+  AppSettings getAppSettings() {
+    return _settings.get(_appSettingsKey) ?? AppSettings.defaultSettings();
+  }
+
+  /// Save App Settings
+  Future<void> saveAppSettings(AppSettings settings) async {
+    await _settings.put(_appSettingsKey, settings);
+  }
+
+  /// Initialize model metadata if it doesn't exist (First load)
+  Future<void> _initializeAppSettingsMetadata() async {
+    final settings = getAppSettings();
+    if (settings.modelMetadataMap.isEmpty) {
+      debugPrint('Initializing model metadata on first load');
+      final Map<String, ModelMetadata> metadataMap = {};
+      for (var model in ModelOption.availableModels) {
+        metadataMap[model.id] = model.metadata;
+      }
+      settings.modelMetadataMap = metadataMap;
+      await saveAppSettings(settings);
+    }
   }
 
   // MARK: - Saved Papers

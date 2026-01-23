@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_card.dart';
-import '../widgets/design/glass_button.dart';
+
 import '../utils/design_constants.dart';
+
+import '../widgets/cards/model_status_card.dart';
 
 /// AI Screen - Local LLM interface placeholder
 class AIScreen extends StatelessWidget {
@@ -11,7 +13,6 @@ class AIScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return LiquidGlassBackground(
       child: SafeArea(
@@ -33,54 +34,7 @@ class AIScreen extends StatelessWidget {
               const SizedBox(height: DesignConstants.sectionSpacing),
               
               // AI Status Card
-              GlassCard(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.psychology,
-                        color: theme.colorScheme.primary,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Local Model Status',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Not configured',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: isDark
-                                  ? Colors.orange.shade300
-                                  : Colors.orange.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    GlassButton(
-                      label: 'Setup',
-                      onPressed: () {
-                        // TODO: Navigate to LLM setup
-                      },
-                    ),
-                  ],
-                ),
-              ),
+              const ModelStatusCard(),
               
               const SizedBox(height: DesignConstants.sectionSpacing),
               

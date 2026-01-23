@@ -3,10 +3,26 @@ import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_card.dart';
 import '../utils/design_constants.dart';
 import '../utils/theme.dart';
+import '../models/model_option.dart';
+import '../main.dart' show storageService;
+import 'model_selection_screen.dart';
 
 /// Settings Screen - App preferences
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  String _getSelectedModelName() {
+    final settings = storageService.getAppSettings();
+    final modelId = settings.selectedModelId;
+    return ModelOption.availableModels
+        .firstWhere((m) => m.id == modelId, orElse: () => ModelOption.availableModels.first)
+        .name;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +61,8 @@ class SettingsScreen extends StatelessWidget {
                       trailing: Switch(
                         value: true,
                         onChanged: (value) {},
-                        activeColor: AppTheme.accentTeal,
+                        activeTrackColor: AppTheme.accentTeal.withValues(alpha: 0.5),
+                        activeThumbColor: AppTheme.accentTeal,
                       ),
                     ),
                     _buildDivider(context),
@@ -57,7 +74,8 @@ class SettingsScreen extends StatelessWidget {
                       trailing: Switch(
                         value: false,
                         onChanged: (value) {},
-                        activeColor: AppTheme.accentTeal,
+                        activeTrackColor: AppTheme.accentTeal.withValues(alpha: 0.5),
+                        activeThumbColor: AppTheme.accentTeal,
                       ),
                     ),
                     _buildDivider(context),
@@ -66,7 +84,7 @@ class SettingsScreen extends StatelessWidget {
                       icon: Icons.enhanced_encryption_outlined,
                       title: 'Data Encryption',
                       subtitle: 'AES-256 encryption enabled',
-                      trailing: Icon(
+                      trailing: const Icon(
                         Icons.check_circle,
                         color: AppTheme.healthGreen,
                       ),
@@ -121,7 +139,17 @@ class SettingsScreen extends StatelessWidget {
                       context,
                       icon: Icons.psychology_outlined,
                       title: 'Local LLM',
-                      subtitle: 'Configure local AI model',
+                      subtitle: _getSelectedModelName(),
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const ModelSelectionScreen(),
+                          ),
+                        );
+                        if (mounted) {
+                          setState(() {});
+                        }
+                      },
                     ),
                     _buildDivider(context),
                     _buildSettingsItem(
@@ -187,6 +215,7 @@ class SettingsScreen extends StatelessWidget {
     required String title,
     required String subtitle,
     Widget? trailing,
+    VoidCallback? onTap,
     bool showChevron = true,
     bool isDestructive = false,
   }) {
@@ -194,9 +223,7 @@ class SettingsScreen extends StatelessWidget {
     final color = isDestructive ? Colors.red : theme.colorScheme.onSurface;
 
     return InkWell(
-      onTap: () {
-        // TODO: Handle tap
-      },
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -238,7 +265,6 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildDivider(BuildContext context) {
     return Divider(
       height: 1,

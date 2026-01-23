@@ -1,5 +1,6 @@
 /// Design widgets barrel file
 /// Export all glass design widgets for easy importing
+library design_widgets;
 
 export 'glass_card.dart';
 export 'glass_button.dart';
