@@ -24,6 +24,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
         .name;
   }
 
+  Future<void> _showAutoStopDurationDialog(BuildContext context) async {
+    final settings = storageService.getAppSettings();
+    int? selectedDuration = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        return SimpleDialog(
+          title: Text('Auto-stop Duration', style: theme.textTheme.titleLarge),
+          backgroundColor: theme.cardColor,
+          children: [15, 30, 45, 60].map((duration) {
+            return SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(context, duration);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      settings.autoStopRecordingMinutes == duration
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text('$duration minutes', style: theme.textTheme.bodyLarge),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    if (selectedDuration != null && selectedDuration != settings.autoStopRecordingMinutes) {
+      settings.autoStopRecordingMinutes = selectedDuration;
+      await storageService.saveAppSettings(settings);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -138,6 +180,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: 'Clear All Data',
                       subtitle: 'Permanently delete all records',
                       isDestructive: true,
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: DesignConstants.sectionSpacing),
+              
+              // Recording Section
+              _buildSectionHeader(context, 'Recording'),
+              GlassCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    _buildSettingsItem(
+                      context,
+                      icon: Icons.timer_outlined,
+                      title: 'Auto-stop Timer',
+                      subtitle: 'Stop after ${storageService.getAppSettings().autoStopRecordingMinutes} minutes',
+                      onTap: () async {
+                        await _showAutoStopDurationDialog(context);
+                        setState(() {});
+                      },
                     ),
                   ],
                 ),

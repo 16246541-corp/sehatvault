@@ -8,6 +8,8 @@ import '../models/health_record.dart';
 import '../models/model_metadata.dart';
 import '../models/model_option.dart';
 import '../models/document_extraction.dart';
+import '../models/doctor_conversation.dart';
+import '../models/follow_up_item.dart';
 
 /// Local Storage Service for health records
 /// Uses Hive with encryption for privacy-first data storage
@@ -17,6 +19,7 @@ class LocalStorageService {
   static const String _settingsBox = 'settings';
   static const String _savedPapersBox = 'saved_papers';
   static const String _searchIndexBox = 'search_index';
+  static const String _doctorConversationsBox = 'doctor_conversations';
   static const String _appSettingsKey = 'app_settings_object';
   static const String _autoDeleteOriginalKey = 'auto_delete_original';
 
@@ -52,6 +55,18 @@ class LocalStorageService {
     if (!Hive.isAdapterRegistered(4)) {
       Hive.registerAdapter(DocumentExtractionAdapter());
     }
+    if (!Hive.isAdapterRegistered(5)) {
+      Hive.registerAdapter(DoctorConversationAdapter());
+    }
+    if (!Hive.isAdapterRegistered(7)) {
+      Hive.registerAdapter(FollowUpItemAdapter());
+    }
+    if (!Hive.isAdapterRegistered(8)) {
+      Hive.registerAdapter(FollowUpCategoryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(9)) {
+      Hive.registerAdapter(FollowUpPriorityAdapter());
+    }
 
     // Get or create encryption key
     final encryptionKey = await _getOrCreateEncryptionKey();
@@ -74,6 +89,11 @@ class LocalStorageService {
 
     await Hive.openBox(
       _searchIndexBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox(
+      _doctorConversationsBox,
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
 

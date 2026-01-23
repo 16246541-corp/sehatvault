@@ -4,6 +4,9 @@ import 'app.dart';
 import 'utils/theme.dart';
 import 'services/local_storage_service.dart';
 import 'services/search_service.dart';
+import 'services/verb_mapping_configuration.dart';
+import 'services/temporal_phrase_patterns_configuration.dart';
+import 'services/medical_dictionary_service.dart';
 
 /// Global storage service instance
 final LocalStorageService storageService = LocalStorageService();
@@ -19,6 +22,15 @@ void main() async {
 
   // Initialize local storage
   await storageService.initialize();
+
+  // Initialize verb mapping configuration
+  await VerbMappingConfiguration().load();
+
+  // Initialize temporal phrase patterns configuration
+  await TemporalPhrasePatternsConfiguration().load();
+
+  // Initialize medical dictionary service
+  await MedicalDictionaryService().load();
 
   // Initialize search index (ensure existing docs are indexed)
   await SearchService(storageService).ensureIndexed();

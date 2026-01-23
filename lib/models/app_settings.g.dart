@@ -20,19 +20,22 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       selectedModelId: fields[0] as String,
       autoSelectModel: fields[1] as bool,
       modelMetadataMap: (fields[2] as Map?)?.cast<String, ModelMetadata>(),
+      autoStopRecordingMinutes: fields[3] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.selectedModelId)
       ..writeByte(1)
       ..write(obj.autoSelectModel)
       ..writeByte(2)
-      ..write(obj.modelMetadataMap);
+      ..write(obj.modelMetadataMap)
+      ..writeByte(3)
+      ..write(obj.autoStopRecordingMinutes);
   }
 
   @override

@@ -315,5 +315,177 @@
       "category": "Vitamins",
       "common_units": ["pg/mL", "pmol/L"]
     }
+  ],
+  "medications": [
+    {
+      "id": "metformin",
+      "canonical_name": "Metformin",
+      "aliases": ["Glucophage", "Fortamet", "Glumetza"],
+      "category": "Antidiabetic"
+    },
+    {
+      "id": "lisinopril",
+      "canonical_name": "Lisinopril",
+      "aliases": ["Prinivil", "Zestril"],
+      "category": "Antihypertensive"
+    },
+    {
+      "id": "atorvastatin",
+      "canonical_name": "Atorvastatin",
+      "aliases": ["Lipitor"],
+      "category": "Statin"
+    },
+    {
+      "id": "levothyroxine",
+      "canonical_name": "Levothyroxine",
+      "aliases": ["Synthroid", "Levoxyl", "L-Thyroxine", "Eltroxin"],
+      "category": "Thyroid Hormone"
+    },
+    {
+      "id": "amlodipine",
+      "canonical_name": "Amlodipine",
+      "aliases": ["Norvasc"],
+      "category": "Antihypertensive"
+    },
+    {
+      "id": "metoprolol",
+      "canonical_name": "Metoprolol",
+      "aliases": ["Lopressor", "Toprol XL"],
+      "category": "Beta Blocker"
+    },
+    {
+      "id": "omeprazole",
+      "canonical_name": "Omeprazole",
+      "aliases": ["Prilosec"],
+      "category": "Proton Pump Inhibitor"
+    },
+    {
+      "id": "losartan",
+      "canonical_name": "Losartan",
+      "aliases": ["Cozaar"],
+      "category": "Antihypertensive"
+    },
+    {
+      "id": "gabapentin",
+      "canonical_name": "Gabapentin",
+      "aliases": ["Neurontin"],
+      "category": "Anticonvulsant"
+    },
+    {
+      "id": "hydrochlorothiazide",
+      "canonical_name": "Hydrochlorothiazide",
+      "aliases": ["Microzide", "HCTZ"],
+      "category": "Diuretic"
+    },
+    {
+      "id": "paracetamol",
+      "canonical_name": "Paracetamol",
+      "aliases": ["Acetaminophen", "Tylenol", "Panadol", "Dolo", "Calpol"],
+      "category": "Analgesic"
+    },
+    {
+      "id": "ibuprofen",
+      "canonical_name": "Ibuprofen",
+      "aliases": ["Advil", "Motrin", "Brufen"],
+      "category": "NSAID"
+    },
+    {
+      "id": "aspirin",
+      "canonical_name": "Aspirin",
+      "aliases": ["Acetylsalicylic Acid", "Ecosprin", "Disprin"],
+      "category": "Antiplatelet"
+    },
+    {
+      "id": "amoxicillin",
+      "canonical_name": "Amoxicillin",
+      "aliases": ["Amoxil", "Mox"],
+      "category": "Antibiotic"
+    },
+    {
+      "id": "azithromycin",
+      "canonical_name": "Azithromycin",
+      "aliases": ["Zithromax", "Azithral"],
+      "category": "Antibiotic"
+    }
+  ],
+  "specialists": [
+    "Cardiologist",
+    "Dermatologist",
+    "Endocrinologist",
+    "Gastroenterologist",
+    "Neurologist",
+    "Oncologist",
+    "Ophthalmologist",
+    "Orthopedist",
+    "Pediatrician",
+    "Psychiatrist",
+    "Pulmonologist",
+    "Radiologist",
+    "Urologist",
+    "Gynecologist",
+    "Nephrologist",
+    "Rheumatologist",
+    "ENT Specialist",
+    "Dentist",
+    "Surgeon",
+    "Physiotherapist",
+    "Dietitian"
+  ],
+  "procedures": [
+    "X-Ray",
+    "MRI",
+    "CT Scan",
+    "Ultrasound",
+    "Biopsy",
+    "Colonoscopy",
+    "Endoscopy",
+    "ECG",
+    "EKG",
+    "Echocardiogram",
+    "Stress Test",
+    "Surgery",
+    "Operation",
+    "Injection",
+    "Vaccination",
+    "Physiotherapy",
+    "Dialysis"
+  ],
+  "body_parts": [
+    "Head",
+    "Neck",
+    "Shoulder",
+    "Arm",
+    "Elbow",
+    "Wrist",
+    "Hand",
+    "Finger",
+    "Chest",
+    "Stomach",
+    "Abdomen",
+    "Back",
+    "Spine",
+    "Hip",
+    "Leg",
+    "Knee",
+    "Ankle",
+    "Foot",
+    "Toe",
+    "Eye",
+    "Ear",
+    "Nose",
+    "Mouth",
+    "Tooth",
+    "Teeth",
+    "Throat",
+    "Heart",
+    "Lung",
+    "Liver",
+    "Kidney",
+    "Skin",
+    "Joint",
+    "Muscle",
+    "Bone",
+    "Blood",
+    "Brain"
   ]
 }

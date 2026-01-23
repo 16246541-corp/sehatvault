@@ -12,9 +12,11 @@
         "crypto",
         "cupertino_icons",
         "device_info_plus",
+        "encrypt",
         "flutter",
         "flutter_image_compress",
         "flutter_secure_storage",
+        "flutter_sound",
         "flutter_staggered_animations",
         "flutter_tesseract_ocr",
         "flutter_tts",
@@ -30,7 +32,8 @@
         "photo_view",
         "smooth_page_indicator",
         "system_info2",
-        "uuid"
+        "uuid",
+        "whisper_flutter_new"
       ],
       "devDependencies": [
         "build_runner",
@@ -113,6 +116,45 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "whisper_flutter_new",
+      "version": "1.0.1",
+      "dependencies": [
+        "ffi",
+        "flutter",
+        "freezed_annotation",
+        "json_annotation",
+        "path_provider",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "encrypt",
+      "version": "5.0.3",
+      "dependencies": [
+        "args",
+        "asn1lib",
+        "clock",
+        "collection",
+        "crypto",
+        "pointycastle"
+      ]
+    },
+    {
+      "name": "flutter_sound",
+      "version": "9.30.0",
+      "dependencies": [
+        "flutter",
+        "flutter_sound_platform_interface",
+        "flutter_sound_web",
+        "flutter_web_plugins",
+        "logger",
+        "path",
+        "path_provider",
+        "synchronized",
+        "web"
       ]
     },
     {
@@ -747,6 +789,76 @@
       ]
     },
     {
+      "name": "plugin_platform_interface",
+      "version": "2.1.8",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "json_annotation",
+      "version": "4.9.0",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "ffi",
+      "version": "2.1.5",
+      "dependencies": []
+    },
+    {
+      "name": "pointycastle",
+      "version": "3.9.1",
+      "dependencies": [
+        "collection",
+        "convert",
+        "js"
+      ]
+    },
+    {
+      "name": "asn1lib",
+      "version": "1.6.5",
+      "dependencies": []
+    },
+    {
+      "name": "flutter_sound_web",
+      "version": "9.30.0",
+      "dependencies": [
+        "flutter",
+        "flutter_sound_platform_interface",
+        "flutter_web_plugins",
+        "logger",
+        "web"
+      ]
+    },
+    {
+      "name": "flutter_sound_platform_interface",
+      "version": "9.30.0",
+      "dependencies": [
+        "flutter",
+        "logger",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "logger",
+      "version": "2.6.2",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "synchronized",
+      "version": "3.4.0",
+      "dependencies": []
+    },
+    {
+      "name": "web",
+      "version": "1.1.1",
+      "dependencies": []
+    },
+    {
       "name": "flutter_web_plugins",
       "version": "0.0.0",
       "dependencies": [
@@ -956,22 +1068,12 @@
       ]
     },
     {
-      "name": "web",
-      "version": "1.1.1",
-      "dependencies": []
-    },
-    {
       "name": "file",
       "version": "7.0.1",
       "dependencies": [
         "meta",
         "path"
       ]
-    },
-    {
-      "name": "ffi",
-      "version": "2.1.5",
-      "dependencies": []
     },
     {
       "name": "device_info_plus_platform_interface",
@@ -1132,13 +1234,6 @@
       ]
     },
     {
-      "name": "json_annotation",
-      "version": "4.9.0",
-      "dependencies": [
-        "meta"
-      ]
-    },
-    {
       "name": "http_parser",
       "version": "4.1.2",
       "dependencies": [
@@ -1252,13 +1347,6 @@
       ]
     },
     {
-      "name": "plugin_platform_interface",
-      "version": "2.1.8",
-      "dependencies": [
-        "meta"
-      ]
-    },
-    {
       "name": "platform",
       "version": "3.1.6",
       "dependencies": []
@@ -1319,6 +1407,15 @@
       "dependencies": [
         "collection",
         "hooks"
+      ]
+    },
+    {
+      "name": "freezed_annotation",
+      "version": "3.1.0",
+      "dependencies": [
+        "collection",
+        "json_annotation",
+        "meta"
       ]
     }
   ],

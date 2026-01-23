@@ -20,6 +20,14 @@ class PermissionService {
       return false;
     }
 
+    // Show rationale if needed (mainly for Android)
+    if (await Permission.microphone.shouldShowRequestRationale) {
+      if (context.mounted) {
+        final bool shouldRequest = await _showRationaleDialog(context);
+        if (!shouldRequest) return false;
+      }
+    }
+
     // Request permission
     status = await Permission.microphone.request();
 
@@ -33,6 +41,28 @@ class PermissionService {
     }
 
     return false;
+  }
+
+  static Future<bool> _showRationaleDialog(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Microphone Permission'),
+            content: const Text(
+                'We need microphone access to provide voice guidance during document scanning. This helps you capture better images.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   static Future<void> _showSettingsDialog(BuildContext context) async {

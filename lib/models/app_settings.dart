@@ -14,16 +14,21 @@ class AppSettings extends HiveObject {
   @HiveField(2)
   Map<String, ModelMetadata> modelMetadataMap;
 
+  @HiveField(3)
+  int autoStopRecordingMinutes;
+
   AppSettings({
     required this.selectedModelId,
     this.autoSelectModel = true,
     Map<String, ModelMetadata>? modelMetadataMap,
+    this.autoStopRecordingMinutes = 30,
   }) : modelMetadataMap = modelMetadataMap ?? {};
 
   factory AppSettings.defaultSettings() {
     return AppSettings(
       selectedModelId: 'med_gemma_4b',
       autoSelectModel: true,
+      autoStopRecordingMinutes: 30,
     );
   }
 }

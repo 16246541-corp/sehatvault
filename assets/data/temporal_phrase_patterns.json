@@ -1,0 +1,28 @@
+{
+  "deadline": [
+    "in \\d+ (?:weeks?|days?|months?)",
+    "within \\d+ (?:hours?|days?)",
+    "by (?:[a-zA-Z0-9\\s,]+)",
+    "before (?:[a-zA-Z0-9\\s]+)",
+    "next (?:week|month)"
+  ],
+  "frequency": [
+    "three times daily",
+    "twice a day",
+    "once a week",
+    "every morning",
+    "\\d+ times a day",
+    "\\d+ times daily",
+    "every \\d+ hours?",
+    "daily",
+    "weekly",
+    "as needed",
+    "with meals",
+    "at bedtime"
+  ],
+  "anchor": [
+    "after surgery",
+    "before your next visit",
+    "when symptoms appear"
+  ]
+}
