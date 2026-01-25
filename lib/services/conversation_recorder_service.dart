@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:battery_plus/battery_plus.dart';
+import 'desktop_notification_service.dart';
 import 'encryption_service.dart';
 import 'battery_monitor_service.dart';
 import 'local_storage_service.dart';
@@ -15,7 +16,7 @@ import 'education_service.dart';
 import 'session_manager.dart';
 import 'temp_file_manager.dart';
 
-class ConversationRecorderService with WidgetsBindingObserver {
+class ConversationRecorderService with WidgetsBindingObserver, ChangeNotifier {
   static final ConversationRecorderService _instance =
       ConversationRecorderService._internal();
   factory ConversationRecorderService() => _instance;
@@ -34,8 +35,6 @@ class ConversationRecorderService with WidgetsBindingObserver {
   // Lifecycle & Background
   DateTime? _backgroundTime;
   static const Duration _autoStopThreshold = Duration(minutes: 5);
-  final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
 
   // State Management
   bool get isRecording => _recorder?.isRecording ?? false;
@@ -103,12 +102,15 @@ class ConversationRecorderService with WidgetsBindingObserver {
     if (isRecording) {
       _backgroundTime = DateTime.now();
       await pauseRecording(isBackground: true);
-      await _showPausedNotification();
+      await DesktopNotificationService().showRecordingNotification(
+        title: 'Recording Paused',
+        message: 'Tap to resume recording',
+      );
     }
   }
 
   Future<void> _handleAppResumed() async {
-    await _notificationsPlugin.cancel(888); // Cancel paused notification
+    await DesktopNotificationService().cancelReminder('recording_status');
 
     if (_backgroundTime != null) {
       final duration = DateTime.now().difference(_backgroundTime!);
@@ -120,30 +122,11 @@ class ConversationRecorderService with WidgetsBindingObserver {
           // If no callback, we just ensure we are in a stopped state
           // The UI might be confused, but at least we are safe.
           // Ideally we should finalize.
+          // Ideally we should finalize.
         }
       }
       _backgroundTime = null;
     }
-  }
-
-  Future<void> _showPausedNotification() async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'recording_channel',
-      'Recording Status',
-      channelDescription: 'Shows recording status',
-      importance: Importance.low,
-      priority: Priority.low,
-    );
-    const NotificationDetails details =
-        NotificationDetails(android: androidDetails);
-
-    await _notificationsPlugin.show(
-      888,
-      'Recording Paused',
-      'Tap to resume recording',
-      details,
-    );
   }
 
   /// Starts recording to a temporary file.
@@ -216,28 +199,15 @@ class ConversationRecorderService with WidgetsBindingObserver {
     _previousSegmentsDuration = Duration.zero;
 
     await _startNewSegment();
+    notifyListeners();
   }
 
   Future<void> _updateRecordingNotification(int batteryLevel) async {
     if (!isRecording || isPaused) return;
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'recording_channel',
-      'Recording Status',
-      channelDescription: 'Shows recording status',
-      importance: Importance.low,
-      priority: Priority.low,
-      ongoing: true,
-    );
-    const NotificationDetails details =
-        NotificationDetails(android: androidDetails);
-
-    await _notificationsPlugin.show(
-      889, // Different ID from paused
-      'Recording in Progress',
-      'Battery: $batteryLevel%',
-      details,
+    await DesktopNotificationService().showRecordingNotification(
+      title: 'Recording in Progress',
+      message: 'Battery: $batteryLevel%',
     );
   }
 
@@ -273,12 +243,13 @@ class ConversationRecorderService with WidgetsBindingObserver {
     await _stopAndEncryptCurrentSegment();
 
     // Cancel recording notification
-    await _notificationsPlugin.cancel(889);
+    await DesktopNotificationService().cancelReminder('recording_status');
 
     // We don't call _recorder!.pauseRecorder() because we stopped it.
     // The state 'isPaused' is inferred from segments existing + recorder stopped.
 
     if (onPauseStateChanged != null) onPauseStateChanged!();
+    notifyListeners();
   }
 
   Future<void> resumeRecording() async {
@@ -369,7 +340,7 @@ class ConversationRecorderService with WidgetsBindingObserver {
 
     // Stop monitoring
     _batteryMonitor.stopMonitoring();
-    await _notificationsPlugin.cancel(889);
+    await DesktopNotificationService().cancelReminder('recording_status');
 
     // If currently recording, finish the segment
     if (isRecording) {
@@ -498,7 +469,7 @@ class ConversationRecorderService with WidgetsBindingObserver {
 
     // Stop monitoring
     _batteryMonitor.stopMonitoring();
-    await _notificationsPlugin.cancel(889);
+    await DesktopNotificationService().cancelReminder('recording_status');
 
     if (isRecording) {
       await _recorder!.stopRecorder();

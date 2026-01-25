@@ -19,12 +19,16 @@ class EnhancedPrivacySettings extends HiveObject {
   @HiveField(4)
   int tempFileRetentionMinutes;
 
+  @HiveField(5)
+  bool maskNotifications;
+
   EnhancedPrivacySettings({
     this.requireBiometricsForSensitiveData = true,
     this.requireBiometricsForExport = true,
     this.requireBiometricsForModelChange = false,
     this.requireBiometricsForSettings = false,
     this.tempFileRetentionMinutes = 0,
+    this.maskNotifications = false,
   });
 
   factory EnhancedPrivacySettings.defaultSettings() {
@@ -34,6 +38,7 @@ class EnhancedPrivacySettings extends HiveObject {
       requireBiometricsForModelChange: false,
       requireBiometricsForSettings: false,
       tempFileRetentionMinutes: 0,
+      maskNotifications: false,
     );
   }
 }

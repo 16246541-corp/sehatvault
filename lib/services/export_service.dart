@@ -23,6 +23,7 @@ import '../services/encryption_service.dart';
 import '../services/local_storage_service.dart';
 import '../services/pdf_export_service.dart';
 import '../services/safety_filter_service.dart';
+import '../services/ai_service.dart';
 import '../widgets/dialogs/auth_prompt_dialog.dart';
 
 import '../services/compliance_service.dart';
@@ -267,7 +268,7 @@ class ExportService {
     await _saveAndSharePdf(context, pdf, 'consent_history.pdf',
         'Sehat Locker Consent History', now, dateFormat);
 
-    final outputDir = await getTemporaryDirectory();
+    final jsonFile = await _getExportFile('consent_history.json.enc');
     final jsonEntries = entries
         .map((entry) => {
               'id': entry.id,
@@ -293,13 +294,11 @@ class ExportService {
       'entries': jsonEntries,
     });
     final encrypted = _encryptionService.encryptData(utf8.encode(jsonStr));
-    final jsonPath = '${outputDir.path}/consent_history.json.enc';
-    final jsonFile = File(jsonPath);
     await jsonFile.writeAsBytes(encrypted);
 
     if (context.mounted) {
       await Share.shareXFiles(
-        [XFile(jsonPath)],
+        [XFile(jsonFile.path)],
         subject: 'Encrypted Consent History',
         text: 'Encrypted consent history attached.',
       );
@@ -357,9 +356,14 @@ class ExportService {
     try {
       final now = DateTime.now();
       final dateFormat = DateFormat('MMMM d, yyyy');
-      final outputDir = await getTemporaryDirectory();
 
-      String filePath;
+      // Process conversation content through AI pipeline before export
+      final processedConversation =
+          await _processConversationForExport(conversation);
+
+      final file = await _getExportFile(
+          'transcript_${processedConversation.id}${options.format == ExportFormat.encryptedJson ? ".json.enc" : options.format == ExportFormat.pdf ? ".pdf" : ".txt"}');
+      String filePath = file.path;
       String subject;
       String text;
 
@@ -375,18 +379,18 @@ class ExportService {
             ),
             build: (pw.Context context) {
               return [
-                _buildTranscriptHeader(conversation, now, dateFormat),
+                _buildTranscriptHeader(processedConversation, now, dateFormat),
                 pw.SizedBox(height: 20),
-                _buildTranscriptContent(conversation, options),
+                _buildTranscriptContent(processedConversation, options),
                 if (options.includeFollowUps &&
-                    conversation.followUpItems.isNotEmpty) ...[
+                    processedConversation.followUpItems.isNotEmpty) ...[
                   pw.SizedBox(height: 20),
                   pw.Divider(),
                   pw.Text('Follow-Up Items',
                       style: pw.TextStyle(
                           fontWeight: pw.FontWeight.bold, fontSize: 14)),
                   pw.SizedBox(height: 10),
-                  ...conversation.followUpItems.map(
+                  ...processedConversation.followUpItems.map(
                       (item) => pw.Bullet(text: _redactSensitiveData(item))),
                 ],
                 pw.SizedBox(height: 20),
@@ -396,72 +400,70 @@ class ExportService {
           ),
         );
 
-        filePath = '${outputDir.path}/transcript_${conversation.id}.pdf';
-        final file = File(filePath);
         await file.writeAsBytes(await pdf.save());
-        subject = 'Sehat Locker Transcript - ${conversation.title}';
-        text = 'Here is your transcript.';
+        subject = 'Sehat Locker Transcript - ${processedConversation.title}';
+        text = 'Transcript export attached.';
       } else if (options.format == ExportFormat.plainText) {
         final sb = StringBuffer();
-        sb.writeln('TRANSCRIPT: ${conversation.title}');
-        sb.writeln('Date: ${dateFormat.format(conversation.createdAt)}');
-        sb.writeln('Doctor: ${conversation.doctorName}');
-        sb.writeln('-' * 20);
+        sb.writeln('TRANSCRIPT: ${processedConversation.title}');
+        sb.writeln('Doctor: ${processedConversation.doctorName}');
+        sb.writeln(
+            'Date: ${dateFormat.format(processedConversation.createdAt)}');
         sb.writeln();
 
-        if (conversation.segments != null &&
-            conversation.segments!.isNotEmpty) {
-          for (final segment in conversation.segments!) {
-            final sanitizedText = SafetyFilterService().sanitize(segment.text);
+        if (processedConversation.segments != null &&
+            processedConversation.segments!.isNotEmpty) {
+          for (final segment in processedConversation.segments!) {
+            final redactedText = _redactSensitiveData(segment.text);
             if (options.includeSpeakerLabels) {
-              sb.writeln('[${segment.speaker}]: $sanitizedText');
+              sb.writeln('${segment.speaker}: $redactedText');
             } else {
-              sb.writeln(sanitizedText);
+              sb.writeln(redactedText);
             }
-            sb.writeln();
           }
         } else {
-          sb.writeln(SafetyFilterService().sanitize(conversation.transcript));
+          sb.writeln(_redactSensitiveData(processedConversation.transcript));
         }
 
-        if (options.includeFollowUps && conversation.followUpItems.isNotEmpty) {
+        if (options.includeFollowUps &&
+            processedConversation.followUpItems.isNotEmpty) {
           sb.writeln();
           sb.writeln('FOLLOW-UP ITEMS:');
-          for (final item in conversation.followUpItems) {
-            sb.writeln('- $item');
+          for (final item in processedConversation.followUpItems) {
+            sb.writeln('- ${_redactSensitiveData(item)}');
           }
         }
 
-        final redactedText = _redactSensitiveData(sb.toString());
-        filePath = '${outputDir.path}/transcript_${conversation.id}.txt';
-        final file = File(filePath);
-        await file.writeAsString(redactedText);
-        subject = 'Transcript: ${conversation.title}';
-        text = 'Transcript attached.';
+        await file.writeAsString(sb.toString());
+        subject = 'Transcript Export';
+        text = 'Transcript text attached.';
       } else {
         // Encrypted JSON
+        final segmentsData = processedConversation.segments
+                ?.map((s) => {
+                      'speaker': s.speaker,
+                      'text': _redactSensitiveData(s.text),
+                      'startTimeMs': s.startTimeMs,
+                      'endTimeMs': s.endTimeMs,
+                    })
+                .toList() ??
+            [];
+
         final data = {
-          'id': conversation.id,
-          'title': conversation.title,
-          'date': conversation.createdAt.toIso8601String(),
-          'doctor': conversation.doctorName,
-          'transcript': conversation.transcript,
-          'segments': conversation.segments
-              ?.map((s) => {
-                    'text': s.text,
-                    'speaker': s.speaker,
-                    'start': s.startTimeMs,
-                    'end': s.endTimeMs,
-                  })
+          'id': processedConversation.id,
+          'title': processedConversation.title,
+          'doctorName': processedConversation.doctorName,
+          'createdAt': processedConversation.createdAt.toIso8601String(),
+          'transcript': _redactSensitiveData(processedConversation.transcript),
+          'segments': segmentsData,
+          'followUpItems': processedConversation.followUpItems
+              .map((i) => _redactSensitiveData(i))
               .toList(),
-          'followUps': conversation.followUpItems,
         };
 
         final jsonStr = jsonEncode(data);
         final encrypted = _encryptionService.encryptData(utf8.encode(jsonStr));
 
-        filePath = '${outputDir.path}/transcript_${conversation.id}.json.enc';
-        final file = File(filePath);
         await file.writeAsBytes(encrypted);
         subject = 'Encrypted Transcript Data';
         text = 'Encrypted transcript data attached.';
@@ -531,8 +533,9 @@ class ExportService {
     if (!authenticated) return;
 
     try {
-      final outputDir = await getTemporaryDirectory();
-      String filePath;
+      final file = await _getExportFile(
+          'document_${extraction.id}${format == ExportFormat.encryptedJson ? ".json.enc" : format == ExportFormat.pdf ? ".pdf" : ".txt"}');
+      String filePath = file.path;
       String subject;
       String text;
 
@@ -540,6 +543,7 @@ class ExportService {
         final pdfPath = await PdfExportService().generatePdf(
           extraction: extraction,
           record: record,
+          outputPath: filePath,
         );
         filePath = pdfPath;
         subject = 'Sehat Locker Document Export';
@@ -580,9 +584,7 @@ class ExportService {
           }
         }
 
-        filePath = '${outputDir.path}/document_extraction_${extraction.id}.txt';
-        final file = File(filePath);
-        await file.writeAsString(sb.toString());
+        await File(filePath).writeAsString(sb.toString());
         subject = 'Document Extraction Export';
         text = 'Document extraction text attached.';
       } else {
@@ -625,10 +627,7 @@ class ExportService {
         final jsonStr = jsonEncode(data);
         final encrypted = _encryptionService.encryptData(utf8.encode(jsonStr));
 
-        filePath =
-            '${outputDir.path}/document_extraction_${extraction.id}.json.enc';
-        final file = File(filePath);
-        await file.writeAsBytes(encrypted);
+        await File(filePath).writeAsBytes(encrypted);
         subject = 'Encrypted Document Extraction Data';
         text = 'Encrypted document extraction data attached.';
       }
@@ -655,6 +654,48 @@ class ExportService {
         );
       }
     }
+  }
+
+  Future<DoctorConversation> _processConversationForExport(
+      DoctorConversation conversation) async {
+    final aiService = AIService();
+
+    // We create a "processed" copy of the conversation for export
+    // Note: We don't save this to DB, it's just for the export file
+
+    String processedTranscript =
+        await aiService.processContent(conversation.transcript);
+
+    List<ConversationSegment>? processedSegments;
+    if (conversation.segments != null) {
+      processedSegments = [];
+      for (final segment in conversation.segments!) {
+        final processedText = await aiService.processContent(segment.text);
+        processedSegments.add(ConversationSegment(
+          text: processedText,
+          startTimeMs: segment.startTimeMs,
+          endTimeMs: segment.endTimeMs,
+          speaker: segment.speaker,
+          speakerConfidence: segment.speakerConfidence,
+        ));
+      }
+    }
+
+    return DoctorConversation(
+      id: conversation.id,
+      title: conversation.title,
+      duration: conversation.duration,
+      encryptedAudioPath: conversation.encryptedAudioPath,
+      transcript: processedTranscript,
+      createdAt: conversation.createdAt,
+      followUpItems: conversation.followUpItems,
+      doctorName: conversation.doctorName,
+      segments: processedSegments,
+      originalTranscript: conversation.originalTranscript,
+      editedAt: conversation.editedAt,
+      complianceVersion: conversation.complianceVersion,
+      complianceReviewDate: conversation.complianceReviewDate,
+    );
   }
 
   pw.Widget _buildTranscriptContent(
@@ -729,7 +770,7 @@ class ExportService {
 
     final localAuditService =
         LocalAuditService(_storageService, SessionManager());
-    final entries = await localAuditService.getEntries();
+    final entries = localAuditService.getEntries();
 
     if (entries.isEmpty) {
       if (context.mounted) {
@@ -791,7 +832,7 @@ class ExportService {
         'Sehat Locker Local Audit Log Report', now, dateFormat);
 
     // Also export as encrypted JSON for machine verification
-    final outputDir = await getTemporaryDirectory();
+    final jsonFile = await _getExportFile('local_audit_log.json.enc');
     final jsonEntries = entries
         .map((entry) => {
               'id': entry.id,
@@ -813,13 +854,11 @@ class ExportService {
     });
 
     final encrypted = _encryptionService.encryptData(utf8.encode(jsonStr));
-    final jsonPath = '${outputDir.path}/local_audit_log.json.enc';
-    final jsonFile = File(jsonPath);
     await jsonFile.writeAsBytes(encrypted);
 
     if (context.mounted) {
       await Share.shareXFiles(
-        [XFile(jsonPath)],
+        [XFile(jsonFile.path)],
         subject: 'Encrypted Local Audit Log',
         text: 'Encrypted local audit log attached for verification.',
       );
@@ -988,14 +1027,35 @@ class ExportService {
     );
   }
 
+  Future<File> _getExportFile(String fileName) async {
+    final settings = _storageService.getAppSettings();
+    if (settings.lastExportDirectory != null &&
+        Directory(settings.lastExportDirectory!).existsSync()) {
+      return File(
+          '${settings.lastExportDirectory}${Platform.pathSeparator}$fileName');
+    }
+    final tempDir = await getTemporaryDirectory();
+    return File('${tempDir.path}${Platform.pathSeparator}$fileName');
+  }
+
   Future<void> _saveAndSharePdf(BuildContext context, pw.Document pdf,
       String filename, String subject, DateTime now, DateFormat fmt) async {
     try {
-      final output = await getTemporaryDirectory();
-      final file = File('${output.path}/$filename');
+      final file = await _getExportFile(filename);
       await file.writeAsBytes(await pdf.save());
 
       if (context.mounted) {
+        final settings = _storageService.getAppSettings();
+        bool isSavedToCustomDir = settings.lastExportDirectory != null &&
+            Directory(settings.lastExportDirectory!).existsSync() &&
+            file.path.startsWith(settings.lastExportDirectory!);
+
+        if (isSavedToCustomDir) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Saved to: ${file.path}')),
+          );
+        }
+
         await Share.shareXFiles(
           [XFile(file.path)],
           subject: subject,

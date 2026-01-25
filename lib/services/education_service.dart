@@ -65,7 +65,7 @@ class EducationService {
     if (settings.completedEducationIds.contains(contentId)) {
       final legacyIds = Set<String>.from(settings.completedEducationIds);
       legacyIds.remove(contentId);
-      settings.completedEducationIds = legacyIds;
+      settings.completedEducationIds = legacyIds.toList();
     }
     await _localStorageService.saveAppSettings(settings);
     await _analyticsService.logEvent(
@@ -86,7 +86,7 @@ class EducationService {
     if (settings.completedEducationIds.contains(contentId)) {
       final legacyIds = Set<String>.from(settings.completedEducationIds);
       legacyIds.remove(contentId);
-      settings.completedEducationIds = legacyIds;
+      settings.completedEducationIds = legacyIds.toList();
     }
     await _localStorageService.saveAppSettings(settings);
   }

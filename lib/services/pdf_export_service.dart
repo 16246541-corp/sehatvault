@@ -14,6 +14,7 @@ class PdfExportService {
   Future<String> generatePdf({
     required DocumentExtraction extraction,
     HealthRecord? record,
+    String? outputPath,
   }) async {
     final pdf = pw.Document();
 
@@ -170,12 +171,16 @@ class PdfExportService {
     );
 
     // Save
-    final output = await getApplicationDocumentsDirectory();
-    final fileName =
-        'sehatlocker_export_${DateTime.now().millisecondsSinceEpoch}.pdf';
-    final file = File('${output.path}/$fileName');
+    File file;
+    if (outputPath != null) {
+      file = File(outputPath);
+    } else {
+      final output = await getApplicationDocumentsDirectory();
+      final fileName =
+          'sehatlocker_export_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      file = File('${output.path}/$fileName');
+    }
     await file.writeAsBytes(await pdf.save());
-
     return file.path;
   }
 

@@ -20,13 +20,8 @@ class TreatmentRecommendationRule implements ValidationRule {
     );
 
     if (pattern.hasMatch(content)) {
-      // For now, we rewrite it to be safer instead of blocking, or block if it's too direct.
-      // The spec says "ValidationRule" with implementations.
-      // Let's replace the recommendation with a disclaimer.
-
-      return ValidationResult.modified(
-        "I cannot provide specific treatment recommendations. Please consult your doctor for a treatment plan.",
-        warning: "Treatment recommendation blocked.",
+      return ValidationResult.blocked(
+        "Treatment recommendation blocked. I cannot provide specific treatment advice. Please consult your doctor.",
       );
     }
 

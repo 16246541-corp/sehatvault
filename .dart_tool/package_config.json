@@ -254,6 +254,12 @@
       "languageVersion": "2.17"
     },
     {
+      "name": "desktop_drop",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/desktop_drop-0.5.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "device_info_plus",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/device_info_plus-10.1.2",
       "packageUri": "lib/",
@@ -288,6 +294,54 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/file-7.0.1",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "file_selector",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/file_selector-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "file_selector_android",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/file_selector_android-0.5.2+4",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "file_selector_ios",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/file_selector_ios-0.5.3+5",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "file_selector_linux",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/file_selector_linux-0.9.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
+      "name": "file_selector_macos",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/file_selector_macos-0.9.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "file_selector_platform_interface",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/file_selector_platform_interface-2.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "file_selector_web",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/file_selector_web-0.9.4+2",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "file_selector_windows",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/file_selector_windows-0.9.3+5",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
     },
     {
       "name": "fixnum",
@@ -444,6 +498,12 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/flutter_staggered_animations-1.1.1",
       "packageUri": "lib/",
       "languageVersion": "2.17"
+    },
+    {
+      "name": "flutter_staggered_grid_view",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/flutter_staggered_grid_view-0.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "flutter_tesseract_ocr",
@@ -614,6 +674,12 @@
       "languageVersion": "3.1"
     },
     {
+      "name": "llama_cpp_dart",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/llama_cpp_dart-0.2.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
       "name": "local_auth",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/local_auth-3.0.0",
       "packageUri": "lib/",
@@ -678,6 +744,12 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/mime-2.0.0",
       "packageUri": "lib/",
       "languageVersion": "3.2"
+    },
+    {
+      "name": "mockito",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/mockito-5.4.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
     },
     {
       "name": "native_toolchain_c",
@@ -884,6 +956,36 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "screen_retriever",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/screen_retriever-0.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "screen_retriever_linux",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/screen_retriever_linux-0.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "screen_retriever_macos",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/screen_retriever_macos-0.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "screen_retriever_platform_interface",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/screen_retriever_platform_interface-0.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "screen_retriever_windows",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/screen_retriever_windows-0.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "share_plus",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/share_plus-12.0.1",
       "packageUri": "lib/",
@@ -1004,6 +1106,12 @@
       "languageVersion": "3.5"
     },
     {
+      "name": "typed_isolate",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/typed_isolate-6.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
       "name": "upower",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/upower-0.7.0",
       "packageUri": "lib/",
@@ -1116,6 +1224,12 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/win32_registry-1.1.5",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "window_manager",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/window_manager-0.4.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
     },
     {
       "name": "xdg_directories",

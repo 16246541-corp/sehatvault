@@ -1,6 +1,251 @@
 # Changelog - Sehat Locker
 
-## [2026-01-25 13:15] - Audit-Ready Local Logging Completion
+## [1.3.0] - 2026-01-25
+
+### Added
+- **Output Processing Pipeline**: Implemented a modular middleware system for AI response processing in `AIService`.
+  - Added modular pipeline architecture with configurable stages and priority-based ordering.
+  - Implemented parallel processing for independent validation stages to optimize performance.
+  - Added performance metrics tracking for each pipeline stage (Safety, Validation, Citations).
+  - Created `PipelineDebugger` for developer visualization and metrics logging.
+  - Integrated `SafetyFilterStage` for automated medical content sanitization.
+  - Added `ValidationStage` with parallel rule execution for medical advice verification.
+  - Integrated `CitationStage` for automated citation injection into AI outputs.
+  - Added support for real-time streaming response processing.
+  - Integrated pipeline into `ExportService` for processing transcript content before PDF/Text export.
+  - Implemented graceful degradation with comprehensive error handling and redacted logging via `SecureLogger`.
+- **Safe Prompt Templates**: Implemented `PromptTemplateService` for managed, versioned, and secure AI prompts.
+  - Added template versioning with rollback capability and version history tracking.
+  - Implemented a context injection system with safety boundaries and input sanitization.
+  - Added a template testing framework with automated adversarial example validation.
+  - Supported multilingual templates (English and Indonesian initial support).
+  - Integrated with `AIService` as the primary prompt generation layer.
+  - Connected to `MedicalFieldExtractor` for automated structured data injection into prompts.
+  - Added template compliance validation to the developer checklist and `ComplianceService`.
+  - Implemented performance metrics collection for template generation efficiency.
+  - Integrated with `TokenCounterService` for context window optimization.
+- **Context Window Management**: Implemented in `LLMEngine` for optimized local LLM performance.
+  - Added `TokenCounterService` with multilingual support (CJK, Arabic, Hebrew, Latin).
+  - Implemented strategic truncation preserving conversation starts and ends.
+  - Added content compression for repetitive phrases in LLM context.
+  - Integrated context usage tracking in `ModelMetrics`.
+- **UI Integration**:
+  - Added visual context window usage indicators in `ModelInfoPanel`.
+  - Implemented real-time token usage progress bars with color-coded alerts (70% warning, 90% critical).
+  - Created `TokenUsageIndicator` widget with detailed breakdown and expandable sections.
+  - Integrated persistent token usage monitoring in `AIScreen`.
+- **Analytics**: Added context usage pattern tracking via `AnalyticsService`.
+  - Implemented detailed token usage analytics collection.
+
+## [1.2.0] - 2026-01-25
+
+### Added
+- **LLMEngine**: Integrated GGUF model support using `llama_cpp_dart`.
+  - Implemented thread-safe model initialization and inference using managed isolates.
+  - Added real-time initialization progress reporting (0.0 to 1.0).
+  - Implemented model integrity verification with SHA-256 checksums.
+  - Added memory management with low-resource fallback strategies (reduced context size).
+  - Integrated performance metrics collection (load time, tokens per second, total tokens).
+- **ModelWarmupScreen**: New UI for first-time AI model initialization.
+  - Features glassmorphism design with `LiquidGlassBackground` and `GlassProgressBar`.
+  - Shows detailed status updates during the warmup process.
+- **Integration**:
+  - Connected `LLMEngine` to `ModelManager` for automated model loading.
+  - Integrated with `AIService` as the primary local backend for text generation.
+  - Added resource management in `SessionManager` to dispose of AI resources on session end or backgrounding.
+- **Testing**: Added `LLMEngine` unit tests in `test/services/llm_engine_test.dart`.
+
+## [1.1.0] - 2026-01-25
+
+### Added
+- `DesktopNotificationService` for managing advanced desktop-specific notifications.
+- Notification grouping for batch operations (Storage, Model Status, Recording).
+- Action buttons support for desktop notifications.
+- Rate limiting for notifications (5-second window per ID).
+- System "Do Not Disturb" mode detection for macOS and Windows.
+- Accessibility support with screen reader announcements for notifications.
+- User-configurable notification preferences in AppSettings (Privacy masking, Accessibility).
+- Integrated recording status notifications in `ConversationRecorderService`.
+- Added storage usage alerts and model integrity warnings.
+
+### Changed
+- `FollowUpReminderService` modified to allow inheritance by `DesktopNotificationService`.
+- `EnhancedPrivacySettings` extended with `maskNotifications` option.
+- `AppSettings` updated with `accessibilityEnabled` preference.
+
+## [2026-01-26 12:00] - Build Configuration System
+
+### Added
+- **Build System**: Created a comprehensive build configuration system in `build/`.
+  - Implemented platform-specific build scripts (`build_android.sh`, `build_ios.sh`, `build_desktop.sh`).
+  - Added a verification matrix script (`verify_matrix.sh`) for CI/CD readiness.
+  - Implemented automated size optimization (ProGuard) and obfuscation for production builds.
+  - Added build performance metrics (timer) and security scanning (`flutter pub audit`).
+- **Flavor Support**:
+  - Implemented multi-flavor architecture (Dev, Staging, Prod).
+  - Created entry points: `lib/main_dev.dart`, `lib/main_staging.dart`, `lib/main_prod.dart`.
+  - Added `AppConfig` for runtime flavor-specific configuration (API URLs, logging).
+- **Platform Abstraction**:
+  - Implemented `PlatformService` with conditional imports (`mobile`, `desktop`, `web`, `stub`).
+  - Unified platform detection across the codebase.
+- **Security & Compliance**:
+  - Added Android signing configuration management via `key.properties`.
+  - Integrated flavor-aware model selection in `ModelManager`.
+  - Added build verification unit tests in `test/build_config_test.dart`.
+
+### Changed
+- **Main Entry Point**: Refactored `lib/main.dart` into `lib/main_common.dart` to support flavor-based initialization.
+- **Android Gradle**: Updated `build.gradle.kts` with product flavors, signing configs, and optimization rules.
+- **ModelManager**: Enhanced to consider the active build flavor when recommending AI models.
+
+## [2026-01-26 10:30] - System Tray Integration
+
+### Added
+- **SystemTrayService**: Created a new service in `lib/services/system_tray_service.dart` for desktop tray management.
+  - Implements platform-specific tray icons for macOS and Windows using `MethodChannel`.
+  - Features dynamic state indicators for recording (Recording, Paused, Idle).
+  - Integrates a context menu with actions for app visibility, recording control, and session locking.
+  - Includes real-time battery status monitoring with critical level indicators.
+  - Implements privacy-focused tooltips showing session and recording status without sensitive data.
+- **Native Implementation**: 
+  - **macOS**: Implemented tray logic in `AppDelegate.swift` using `NSStatusItem` and `NSMenu`.
+  - **Windows**: Implemented tray logic in `flutter_window.cpp` using Win32 `Shell_NotifyIcon` and popup menus.
+- **Enterprise & Security**:
+  - Implemented enterprise environment detection (MDM on macOS, Domain Join on Windows).
+  - Added accessibility labels and platform-specific keyboard shortcuts in tray menus.
+  - Included security measures to prevent tray icon spoofing via platform-specific verification.
+
+### Changed
+- **Main**: Integrated `SystemTrayService` initialization into the app startup sequence.
+- **ConversationRecorderService**: Refactored to support `ChangeNotifier` for reactive tray state updates.
+
+## [2026-01-25 16:30] - Desktop Menu Bar Integration
+
+### Added
+- **DesktopMenuBar**: Created a native-feeling menu bar in `lib/widgets/desktop/desktop_menu_bar.dart` using `PlatformMenuBar`.
+  - Implements standard macOS/Windows/Linux menu structures (File, Edit, View, Window, Help).
+  - Features dynamic enable/disable states based on session lock and document availability.
+  - Integrates platform-specific shortcuts (Cmd for macOS, Ctrl for Windows/Linux).
+  - Added a "Recent Documents" MRU (Most Recently Used) submenu fetching from `LocalStorageService`.
+- **App Integration**: Successfully integrated `DesktopMenuBar` into the main `SehatLockerApp` in `lib/app.dart`.
+  - Connected menu actions to core app features: New Scan, Export, Settings, Lock Session, and Shortcut Cheat Sheet.
+  - Implemented navigation to document details from the recent documents menu.
+
+### Changed
+- **App Entry Point**: Modified `lib/app.dart` to wrap the main layout with `DesktopMenuBar`, ensuring consistent navigation and shortcut handling across the app.
+- **Shortcut Handling**: Unified desktop menu shortcuts with the existing `KeyboardShortcutService` and `AppShortcutManager`.
+
+## [2026-01-25 15:30] - Desktop Window Management
+
+### Added
+- **WindowManagerService**: Created a new service in `lib/services/window_manager_service.dart` using `window_manager` and `screen_retriever`.
+  - Implements window state persistence (size, position, maximized state).
+  - Features multi-monitor awareness with overlap-based visibility validation.
+  - Includes failsafe position recovery for disconnected or changed display configurations.
+  - Implements DPI scaling awareness for high-resolution displays.
+- **Dependencies**: Added `window_manager` and `screen_retriever` for advanced desktop window control.
+
+### Changed
+- **AppSettings**: Added `persistWindowState` and `restoreWindowPosition` fields to allow user control over window behavior.
+- **DesktopSettingsScreen**: Integrated new window management controls, including toggles for state persistence and a "Reset Window Position" utility.
+- **SessionManager**: Refactored to delegate window state management to the specialized `WindowManagerService`.
+- **Main**: Integrated `WindowManagerService` initialization into the application startup sequence.
+
+## [2026-01-25] - Desktop Keyboard Shortcuts
+
+### Added
+- **KeyboardShortcutService**: Created a singleton service in `lib/services/keyboard_shortcut_service.dart` for centralized shortcut management.
+  - Implements platform-specific mappings (Cmd vs Ctrl).
+  - Features context-aware action registration and execution.
+  - Includes system shortcut conflict detection and haptic feedback integration.
+- **AppShortcutManager**: Implemented a global shortcut manager in `lib/managers/shortcut_manager.dart`.
+  - Provides a visual cheat sheet overlay with glassmorphism styling.
+  - Manages global intents for recording, scanning, settings, and locking.
+- **Contextual Shortcuts**:
+  - `Cmd/Ctrl + R`: Toggle recording (active on AI Screen).
+  - `Cmd/Ctrl + S`: Capture document (active on Scanner Screen) or open scanner (global).
+  - `Cmd/Ctrl + L`: Immediately lock the session.
+  - `Cmd/Ctrl + ,`: Open application settings.
+  - `Cmd/Ctrl + /`: Toggle the keyboard shortcut cheat sheet.
+
+### Changed
+- **SettingsScreen**: Added a toggle to enable/disable keyboard shortcuts.
+- **SessionManager**: Added `lockImmediately()` for secure shortcut-triggered session locking.
+- **AIScreen**: Integrated recording shortcuts via `KeyboardShortcutService`.
+- **DocumentScannerScreen**: Integrated document capture shortcuts via `KeyboardShortcutService`.
+- **AppSettings**: Added `enableKeyboardShortcuts` field to persist user preference.
+
+## [2026-01-26 09:00] - File Drag-and-Drop Interface
+
+### Added
+- **FileDropService**: Created a singleton service in `lib/services/file_drop_service.dart` for batch file processing and validation.
+  - Supports image, PDF, and text file validation.
+  - Implements a processing queue with stream-based progress tracking.
+  - Integrates with `VaultService` for automatic document processing.
+  - Supports directory drops to set custom export destinations.
+- **FileDropZone**: Created a universal drag-and-drop widget in `lib/widgets/desktop/file_drop_zone.dart`.
+  - Features glassmorphism overlay and visual feedback.
+  - Includes keyboard accessibility for non-mouse users.
+  - Provides a queue indicator for background processing tasks.
+
+### Changed
+- **DocumentScannerScreen**: Integrated `FileDropZone` as an alternative to camera-based document scanning.
+- **AIScreen**: Integrated `FileDropZone` for importing transcript files for analysis.
+- **ExportService**: Enhanced to support user-configurable export destinations via folder drag-and-drop.
+  - Refactored all export methods to honor the custom directory set in `AppSettings`.
+- **AppSettings**: Added `maxFileUploadSizeMB` and `lastExportDirectory` fields for better control over file handling and exports.
+- **PdfExportService**: Updated to support custom output paths for generated PDF files.
+
+## [2026-01-26 08:30] - Desktop-Optimized Settings
+
+### Added
+- **DesktopSettingsScreen**: Created a new screen in `lib/screens/desktop_settings_screen.dart` for desktop-specific configurations.
+- **Window Management**: Added state persistence for window dimensions and position in `AppSettings` and `SessionManager`.
+- **Performance Tuning**: Implemented GPU acceleration toggle and increased cache limit options (up to 4GB) for desktop users.
+- **Capability Matrix**: Added a system capability visualization tool in developer tools for debugging hardware support.
+- **Storage Validation**: Integrated system storage checks with desktop-specific threshold alerts.
+
+### Changed
+- **AppSettings**: Extended model with fields for window state, GPU acceleration, and cache limits.
+- **ModelManager**: Enhanced recommendation logic to consider GPU acceleration settings and desktop-only models (e.g., Research-13B).
+- **SettingsScreen**: Integrated conditional access to Desktop Experience settings based on platform detection.
+- **StorageUsageService**: Added `isStorageSufficient` helper for hardware capability validation.
+
+## [2026-01-26 08:00] - Documents Screen UI/UX & Search Enhancements
+
+### Added
+- **Responsive Layout**: Implemented a responsive grid system in `DocumentsScreen` that adapts column count (2 to 4) based on screen width.
+- **Staggered Animations**: Integrated `flutter_staggered_animations` for smooth entry of grid items.
+- **Storage Monitoring**: Added a low-storage warning banner (triggered at 80% usage) using `StorageUsageService`.
+- **Keyboard Accessibility**: Added `FocusableActionDetector` and keyboard shortcuts (Enter/Space) to document and conversation cards.
+- **Scroll Preservation**: Implemented `PageStorageKey` and `ScrollController` to maintain scroll position across orientation changes.
+
+### Changed
+- **Search System**: Refined `_performSearch` in `DocumentsScreen` to correctly integrate fuzzy search results from ObjectBox via `SearchService`.
+- **UI Components**: Converted `FollowUpCard` to use `GlassCard` for visual consistency.
+- **Modern Flutter**: Replaced deprecated `withOpacity` with `withValues` across `DocumentsScreen` and grid cards.
+
+### Fixed
+- **Type Safety**: Resolved type mismatch between `SearchEntry` and `String` IDs in search filtering logic.
+- **Linter Issues**: Fixed several linter warnings including unused imports and statement block formatting.
+
+## [2026-01-26 07:30] - Desktop Detection Service
+
+### Added
+- **PlatformDetector**: Created a new service in `lib/services/platform_detector.dart` for cross-platform capability detection.
+  - Implements detection for RAM, GPU acceleration, and system resources.
+  - Includes lifecycle-aware detection with automatic capability refreshing on app resume.
+  - Provides a capability matrix for feature-based selection (e.g., `highRam`, `gpuAcceleration`).
+  - Includes performance metrics for detection time.
+- **Tests**: Added comprehensive unit tests for `PlatformDetector` in `test/services/platform_detector_test.dart`.
+
+### Changed
+- **ModelManager**: Integrated `PlatformDetector` to dynamically select optimal AI models based on actual device capabilities instead of hardcoded platform checks.
+- **SessionManager**: Integrated `PlatformDetector` initialization and added lifecycle hooks for capability updates.
+- **LocalStorageService**: Added automatic application of platform-specific default settings (e.g., session timeouts) during first-run initialization.
+- **AppSettings**: Migrated `Set<String>` fields to `List<String>` to resolve Hive adapter generation issues and improved session timeout defaults.
+
+## [2026-01-26 07:05] - Compliance Checklist Access & Export Fixes
 
 ### Added
 - **AuditTimelineScreen**: Created visual timeline interface with search, sensitivity filtering, and interactive integrity verification.

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../widgets/design/liquid_glass_background.dart';
@@ -6,18 +7,20 @@ import '../widgets/ai/model_info_panel.dart';
 import '../utils/design_constants.dart';
 import '../utils/theme.dart';
 import '../models/model_option.dart';
-import '../main.dart' show storageService;
+import '../main_common.dart' show storageService;
 import '../services/storage_usage_service.dart';
 import '../services/conversation_cleanup_service.dart';
 import 'model_selection_screen.dart';
 import 'recording_history_screen.dart';
 import 'biometric_settings_screen.dart';
 import 'security_dashboard_screen.dart';
+import 'desktop_settings_screen.dart';
 import '../services/session_manager.dart';
 import 'pin_setup_screen.dart';
 import 'privacy_manifest_screen.dart';
 import 'issue_reporting_review_screen.dart';
 import 'compliance_checklist_screen.dart';
+import '../services/keyboard_shortcut_service.dart';
 
 /// Settings Screen - App preferences
 class SettingsScreen extends StatefulWidget {
@@ -514,6 +517,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 const SizedBox(height: DesignConstants.sectionSpacing),
 
+                // Desktop Notifications Section
+                _buildSectionHeader(context, 'Desktop Notifications'),
+                GlassCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.notifications_active_outlined,
+                        title: 'Enable Notifications',
+                        subtitle: 'Receive desktop alerts',
+                        trailing: Switch(
+                          value: storageService
+                              .getAppSettings()
+                              .notificationsEnabled,
+                          onChanged: (value) async {
+                            final settings = storageService.getAppSettings();
+                            settings.notificationsEnabled = value;
+                            await storageService.saveAppSettings(settings);
+                            setState(() {});
+                          },
+                          activeTrackColor:
+                              AppTheme.accentTeal.withValues(alpha: 0.5),
+                          activeThumbColor: AppTheme.accentTeal,
+                        ),
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.privacy_tip_outlined,
+                        title: 'Mask Sensitive Notifications',
+                        subtitle: 'Hide content in notification body',
+                        trailing: Switch(
+                          value: storageService
+                              .getAppSettings()
+                              .enhancedPrivacySettings
+                              .maskNotifications,
+                          onChanged: (value) async {
+                            final settings = storageService.getAppSettings();
+                            settings.enhancedPrivacySettings.maskNotifications =
+                                value;
+                            await storageService.saveAppSettings(settings);
+                            setState(() {});
+                          },
+                          activeTrackColor:
+                              AppTheme.accentTeal.withValues(alpha: 0.5),
+                          activeThumbColor: AppTheme.accentTeal,
+                        ),
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.accessibility_new_outlined,
+                        title: 'Screen Reader Announcements',
+                        subtitle: 'Announce notifications for accessibility',
+                        trailing: Switch(
+                          value: storageService
+                              .getAppSettings()
+                              .accessibilityEnabled,
+                          onChanged: (value) async {
+                            final settings = storageService.getAppSettings();
+                            settings.accessibilityEnabled = value;
+                            await storageService.saveAppSettings(settings);
+                            setState(() {});
+                          },
+                          activeTrackColor:
+                              AppTheme.accentTeal.withValues(alpha: 0.5),
+                          activeThumbColor: AppTheme.accentTeal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: DesignConstants.sectionSpacing),
+
                 // AI Section
                 _buildSectionHeader(context, 'AI Model'),
                 GlassCard(
@@ -597,6 +676,100 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const ModelInfoPanel(compact: true),
 
                 const SizedBox(height: DesignConstants.sectionSpacing),
+
+                // Accessibility & Shortcuts Section
+                _buildSectionHeader(context, 'Accessibility & Shortcuts'),
+                GlassCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.keyboard_outlined,
+                        title: 'Keyboard Shortcuts',
+                        subtitle: 'Enable desktop shortcuts (Cmd/Ctrl + /)',
+                        trailing: Switch(
+                          value: storageService
+                              .getAppSettings()
+                              .enableKeyboardShortcuts,
+                          onChanged: (value) async {
+                            final settings = storageService.getAppSettings();
+                            settings.enableKeyboardShortcuts = value;
+                            await storageService.saveAppSettings(settings);
+                            setState(() {});
+                          },
+                          activeTrackColor:
+                              AppTheme.accentTeal.withValues(alpha: 0.5),
+                          activeThumbColor: AppTheme.accentTeal,
+                        ),
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.info_outline,
+                        title: 'Shortcut Cheat Sheet',
+                        subtitle: 'View all available shortcuts',
+                        onTap: () {
+                          // Trigger the cheat sheet from the service
+                          KeyboardShortcutService()
+                              .executeAction('toggle_cheat_sheet');
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: DesignConstants.sectionSpacing),
+
+                // Desktop Experience Section
+                if (!kIsWeb &&
+                    (Platform.isMacOS ||
+                        Platform.isWindows ||
+                        Platform.isLinux)) ...[
+                  _buildSectionHeader(context, 'Desktop Experience'),
+                  GlassCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.desktop_windows_outlined,
+                          title: 'Desktop Optimization',
+                          subtitle: 'Performance & window settings',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const DesktopSettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.keyboard_outlined,
+                          title: 'Keyboard Shortcuts',
+                          subtitle: 'Enable desktop hotkeys',
+                          trailing: Switch(
+                            value: storageService
+                                .getAppSettings()
+                                .enableKeyboardShortcuts,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.enableKeyboardShortcuts = value;
+                              await storageService.saveAppSettings(settings);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: DesignConstants.sectionSpacing),
+                ],
 
                 // About Section
                 _buildSectionHeader(context, 'About'),

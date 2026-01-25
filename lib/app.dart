@@ -17,7 +17,14 @@ import 'services/education_service.dart';
 import 'widgets/education/education_gate.dart';
 
 import 'screens/document_scanner_screen.dart';
+import 'screens/document_detail_screen.dart';
 import 'utils/theme.dart';
+import 'services/keyboard_shortcut_service.dart';
+import 'services/session_manager.dart';
+import 'services/export_service.dart';
+import 'managers/shortcut_manager.dart';
+import 'widgets/desktop/desktop_menu_bar.dart';
+import 'models/health_record.dart';
 
 /// Main App Widget with bottom navigation
 class SehatLockerApp extends StatefulWidget {
@@ -51,6 +58,8 @@ class _SehatLockerAppState extends State<SehatLockerApp>
       const SettingsScreen(),
     ];
 
+    SessionManager().addListener(_onSessionChanged);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOverdueItems();
       _checkBiometricEnrollment();
@@ -61,8 +70,15 @@ class _SehatLockerAppState extends State<SehatLockerApp>
 
   @override
   void dispose() {
+    SessionManager().removeListener(_onSessionChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _onSessionChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -221,15 +237,74 @@ class _SehatLockerAppState extends State<SehatLockerApp>
       );
     }
 
-    return Scaffold(
-      extendBody: true,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton(
-              onPressed: () {
+    final isLocked = SessionManager().isLocked;
+
+    return ValueListenableBuilder(
+      valueListenable: LocalStorageService().recordsListenable,
+      builder: (context, box, _) {
+        final hasRecords = box.isNotEmpty;
+        return DesktopMenuBar(
+          canExport: hasRecords,
+          isSessionLocked: isLocked,
+          onNewScan: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const EducationGate(
+                  contentId: 'document_scanner',
+                  child: DocumentScannerScreen(),
+                ),
+              ),
+            );
+          },
+          onExportPdf: () {
+            ExportService().exportAuditLogReport(context);
+          },
+          onExportJson: () {
+            // Placeholder for JSON export
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('JSON Export coming soon')),
+            );
+          },
+          onOpenRecent: (HealthRecord record) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    DocumentDetailScreen(healthRecordId: record.id),
+              ),
+            );
+          },
+          onSettings: () {
+            _onItemTapped(4); // Index 4 is settings
+          },
+          onLock: () {
+            SessionManager().lockImmediately();
+          },
+          onAbout: () {
+            showAboutDialog(
+              context: context,
+              applicationName: 'Sehat Locker',
+              applicationVersion: '1.0.0',
+              applicationIcon: const Icon(Icons.lock, size: 48),
+              applicationLegalese: '© 2026 Sehat Locker Team',
+            );
+          },
+          onToggleShortcuts: () {
+            KeyboardShortcutService().executeAction('toggle_cheat_sheet');
+          },
+          child: AppShortcutManager(
+            onRecordToggle: () {
+              if (_currentIndex != 2) {
+                _onItemTapped(2);
+              }
+            },
+            onScanOpen: () {
+              if (_currentIndex == 0) {
+                // Trigger scan action if on documents screen
+                KeyboardShortcutService().executeAction('capture_document');
+              } else {
+                // Open scanner if not on documents screen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -239,35 +314,63 @@ class _SehatLockerAppState extends State<SehatLockerApp>
                     ),
                   ),
                 );
-              },
-              backgroundColor: AppTheme.accentTeal,
-              child: const Icon(Icons.document_scanner),
-            )
-          : null,
-      bottomNavigationBar: ValueListenableBuilder<Box<FollowUpItem>>(
-        valueListenable: LocalStorageService().followUpItemsListenable,
-        builder: (context, box, _) {
-          final now = DateTime.now();
-          final overdueCount = box.values
-              .where((item) =>
-                  !item.isCompleted &&
-                  item.dueDate != null &&
-                  item.dueDate!.isBefore(now))
-              .length;
-
-          return FutureBuilder<Map<int, bool>>(
-            future: _getEducationIndicators(),
-            builder: (context, snapshot) {
-              return GlassBottomNav(
-                currentIndex: _currentIndex,
-                onItemTapped: _onItemTapped,
-                badgeCounts: overdueCount > 0 ? {1: overdueCount} : null,
-                attentionIndicators: snapshot.data,
-              );
+              }
             },
-          );
-        },
-      ),
+            onSettingsOpen: () {
+              _onItemTapped(4); // Index 4 is settings
+            },
+            child: Scaffold(
+              extendBody: true,
+              body: IndexedStack(
+                index: _currentIndex,
+                children: _screens,
+              ),
+              floatingActionButton: _currentIndex == 0
+                  ? FloatingActionButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EducationGate(
+                              contentId: 'document_scanner',
+                              child: DocumentScannerScreen(),
+                            ),
+                          ),
+                        );
+                      },
+                      backgroundColor: AppTheme.accentTeal,
+                      child: const Icon(Icons.document_scanner),
+                    )
+                  : null,
+              bottomNavigationBar: ValueListenableBuilder<Box<FollowUpItem>>(
+                valueListenable: LocalStorageService().followUpItemsListenable,
+                builder: (context, box, _) {
+                  final now = DateTime.now();
+                  final overdueCount = box.values
+                      .where((item) =>
+                          !item.isCompleted &&
+                          item.dueDate != null &&
+                          item.dueDate!.isBefore(now))
+                      .length;
+
+                  return FutureBuilder<Map<int, bool>>(
+                    future: _getEducationIndicators(),
+                    builder: (context, snapshot) {
+                      return GlassBottomNav(
+                        currentIndex: _currentIndex,
+                        onItemTapped: _onItemTapped,
+                        badgeCounts:
+                            overdueCount > 0 ? {1: overdueCount} : null,
+                        attentionIndicators: snapshot.data,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -17,7 +17,7 @@ class AppSettings extends HiveObject {
   String language;
 
   @HiveField(3)
-  Set<String> keepAudioIds;
+  List<String> keepAudioIds;
 
   @HiveField(4)
   int autoDeleteRecordingsDays;
@@ -41,7 +41,7 @@ class AppSettings extends HiveObject {
   bool enableBatteryWarnings;
 
   @HiveField(11)
-  Set<String> completedEducationIds;
+  List<String> completedEducationIds;
 
   @HiveField(12)
   Map<String, int> completedEducationVersions;
@@ -61,11 +61,56 @@ class AppSettings extends HiveObject {
   @HiveField(17)
   bool autoSelectModel;
 
+  @HiveField(18)
+  double? desktopWindowWidth;
+
+  @HiveField(19)
+  double? desktopWindowHeight;
+
+  @HiveField(20)
+  double? desktopWindowX;
+
+  @HiveField(21)
+  double? desktopWindowY;
+
+  @HiveField(22)
+  bool isMaximized;
+
+  @HiveField(23)
+  bool enableGpuAcceleration;
+
+  @HiveField(24)
+  int increasedCacheLimitMB;
+
+  @HiveField(25)
+  bool showDesktopDebugTools;
+
+  @HiveField(26)
+  int maxFileUploadSizeMB;
+
+  @HiveField(27)
+  String? lastExportDirectory;
+
+  @HiveField(28)
+  bool hasSeenBiometricEnrollmentPrompt;
+
+  @HiveField(29)
+  bool enableKeyboardShortcuts;
+
+  @HiveField(30)
+  bool persistWindowState;
+
+  @HiveField(31)
+  bool restoreWindowPosition;
+
+  @HiveField(32)
+  bool accessibilityEnabled;
+
   AppSettings({
     this.darkMode = false,
     this.notificationsEnabled = true,
     this.language = 'en',
-    Set<String>? keepAudioIds,
+    List<String>? keepAudioIds,
     this.autoDeleteRecordingsDays = 365,
     this.sessionTimeoutMinutes = 2,
     EnhancedPrivacySettings? enhancedPrivacySettings,
@@ -73,18 +118,33 @@ class AppSettings extends HiveObject {
     Map<String, ModelMetadata>? modelMetadataMap,
     this.autoStopRecordingMinutes = 60,
     this.enableBatteryWarnings = true,
-    Set<String>? completedEducationIds,
+    List<String>? completedEducationIds,
     Map<String, int>? completedEducationVersions,
     this.enableWellnessLanguageChecks = true,
     this.showWellnessDebugInfo = false,
-    this.localAuditRetentionDays = 365,
-    this.localAuditChainAnchorHash = '00000000000000000000000000000000',
+    this.localAuditRetentionDays = 90,
+    this.localAuditChainAnchorHash = '',
     this.autoSelectModel = true,
-  })  : keepAudioIds = keepAudioIds ?? {},
-        enhancedPrivacySettings = enhancedPrivacySettings ??
-            EnhancedPrivacySettings.defaultSettings(),
+    this.desktopWindowWidth,
+    this.desktopWindowHeight,
+    this.desktopWindowX,
+    this.desktopWindowY,
+    this.isMaximized = false,
+    this.enableGpuAcceleration = false,
+    this.increasedCacheLimitMB = 512,
+    this.showDesktopDebugTools = false,
+    this.maxFileUploadSizeMB = 50,
+    this.lastExportDirectory,
+    this.hasSeenBiometricEnrollmentPrompt = false,
+    this.enableKeyboardShortcuts = true,
+    this.persistWindowState = true,
+    this.restoreWindowPosition = true,
+    this.accessibilityEnabled = false,
+  })  : keepAudioIds = keepAudioIds ?? [],
+        enhancedPrivacySettings =
+            enhancedPrivacySettings ?? EnhancedPrivacySettings(),
         modelMetadataMap = modelMetadataMap ?? {},
-        completedEducationIds = completedEducationIds ?? {},
+        completedEducationIds = completedEducationIds ?? [],
         completedEducationVersions = completedEducationVersions ?? {};
 
   factory AppSettings.defaultSettings() {

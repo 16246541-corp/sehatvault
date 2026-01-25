@@ -3,7 +3,7 @@ import '../../models/model_option.dart';
 import '../../utils/theme.dart';
 import '../design/glass_card.dart';
 import '../design/glass_button.dart';
-import '../../main.dart' show storageService;
+import '../../main_common.dart' show storageService;
 import '../../services/model_manager.dart';
 import '../../screens/model_selection_screen.dart';
 

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:math';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../widgets/design/liquid_glass_background.dart';
-import '../widgets/design/glass_button.dart';
 import '../widgets/design/glass_text_field.dart';
+import '../widgets/design/glass_card.dart';
+import '../widgets/desktop/file_drop_zone.dart';
 import '../utils/design_constants.dart';
-import 'document_scanner_screen.dart';
 import '../services/vault_service.dart';
 import '../services/search_service.dart';
 import '../services/local_storage_service.dart';
+import '../services/storage_usage_service.dart';
 import '../models/health_record.dart';
 import '../widgets/cards/document_grid_card.dart';
-import '../widgets/cards/conversation_grid_card.dart';
 import '../widgets/dashboard/follow_up_dashboard.dart';
 import 'document_detail_screen.dart';
 import 'follow_up_list_screen.dart';
@@ -40,26 +43,48 @@ class DocumentsScreen extends StatefulWidget {
 class _DocumentsScreenState extends State<DocumentsScreen> {
   final VaultService _vaultService = VaultService(LocalStorageService());
   late final SearchService _searchService;
+  late final StorageUsageService _storageUsageService;
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   List<HealthRecord> _documents = [];
   List<HealthRecord> _filteredDocuments = [];
   List<FollowUpItem> _filteredFollowUps = [];
   List<SearchEntry> _conversationResults = [];
+  StorageUsage? _storageUsage;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _searchService = SearchService(LocalStorageService());
+    _storageUsageService = StorageUsageService(LocalStorageService());
     _searchController.addListener(_performSearch);
     _loadDocuments();
+    _checkStorage();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkStorage() async {
+    final usage = await _storageUsageService.calculateStorageUsage();
+    if (mounted) {
+      setState(() {
+        _storageUsage = usage;
+      });
+    }
+  }
+
+  int _calculateColumnCount(double width) {
+    if (width >= 1200) return 4;
+    if (width >= 900) return 3;
+    if (width >= 600) return 2;
+    return 2;
   }
 
   Future<void> _loadDocuments() async {
@@ -86,57 +111,61 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   void _performSearch() {
     final query = _searchController.text.trim();
     if (query.isEmpty) {
-      if (_filteredDocuments.length != _documents.length) {
+      if (_filteredDocuments.length != _documents.length ||
+          _conversationResults.isNotEmpty ||
+          _filteredFollowUps.isNotEmpty) {
         setState(() {
           _filteredDocuments = List.from(_documents);
+          _conversationResults = [];
           _filteredFollowUps = [];
         });
       }
       return;
     }
 
-    // Get document IDs that match the search query (fuzzy search on extracted text)
-    final matchingExtractionIds = _searchService.search(query);
+    // Get indexed results from SearchService
+    final results = _searchService.search(query);
+
+    // Group results by type
+    final searchDocIds = results
+        .where((e) => e.type == 'document')
+        .map((e) => e.sourceId)
+        .toSet();
+    final searchFollowUpIds = results
+        .where((e) => e.type == 'followup')
+        .map((e) => e.sourceId)
+        .toSet();
+    final conversationResults =
+        results.where((e) => e.type == 'conversation').toList();
 
     setState(() {
-      _filteredDocuments = _documents.where((doc) {
-        // 1. Check if document's extraction ID is in the search results
-        bool contentMatch = false;
-        if (doc.extractionId != null) {
-          contentMatch = matchingExtractionIds.contains(doc.extractionId);
-        }
+      _conversationResults = conversationResults;
 
-        // 2. Check metadata (title, category, notes)
+      // Filter documents (metadata match OR index match)
+      _filteredDocuments = _documents.where((doc) {
         final titleMatch =
             doc.title.toLowerCase().contains(query.toLowerCase());
         final categoryMatch =
             doc.category.toLowerCase().contains(query.toLowerCase());
         final notesMatch =
             doc.notes?.toLowerCase().contains(query.toLowerCase()) ?? false;
+        final indexMatch =
+            doc.extractionId != null && searchDocIds.contains(doc.extractionId);
 
-        return contentMatch || titleMatch || categoryMatch || notesMatch;
+        return titleMatch || categoryMatch || notesMatch || indexMatch;
       }).toList();
 
-      // Filter follow-ups
+      // Filter follow-ups (metadata match OR index match)
       final allFollowUps = LocalStorageService().getAllFollowUpItems();
       _filteredFollowUps = allFollowUps.where((item) {
-        // 1. Check index
-        bool indexMatch = matchingExtractionIds.contains(item.id);
+        final metaMatch = item.description
+                .toLowerCase()
+                .contains(query.toLowerCase()) ||
+            item.verb.toLowerCase().contains(query.toLowerCase()) ||
+            (item.object?.toLowerCase().contains(query.toLowerCase()) ?? false);
+        final indexMatch = searchFollowUpIds.contains(item.id);
 
-        // 2. Check metadata
-        bool metaMatch =
-            item.description.toLowerCase().contains(query.toLowerCase()) ||
-                item.verb.toLowerCase().contains(query.toLowerCase()) ||
-                (item.object?.toLowerCase().contains(query.toLowerCase()) ??
-                    false) ||
-                item.category
-                    .toString()
-                    .split('.')
-                    .last
-                    .toLowerCase()
-                    .contains(query.toLowerCase());
-
-        return indexMatch || metaMatch;
+        return metaMatch || indexMatch;
       }).toList();
     });
   }
@@ -146,184 +175,276 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     final theme = Theme.of(context);
 
     return LiquidGlassBackground(
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: DesignConstants.titleTopPadding),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: FileDropZone(
+        vaultService: _vaultService,
+        settings: LocalStorageService().getAppSettings(),
+        child: SafeArea(
+          child: LayoutBuilder(builder: (context, constraints) {
+            final columnCount = _calculateColumnCount(constraints.maxWidth);
+
+            return Padding(
+              padding:
+                  const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: DesignConstants.titleTopPadding),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Documents',
-                        style: theme.textTheme.displayMedium,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Documents',
+                            style: theme.textTheme.displayMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Your health records, stored locally',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Your health records, stored locally',
-                        style: theme.textTheme.bodyMedium,
+                      IconButton(
+                        onPressed: () {
+                          _loadDocuments();
+                          _checkStorage();
+                        },
+                        icon: const Icon(Icons.refresh),
+                        tooltip: 'Refresh',
                       ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: _loadDocuments,
-                    icon: const Icon(Icons.refresh),
-                    tooltip: 'Refresh',
+                  const SizedBox(height: 16),
+
+                  // Storage Warning
+                  if (_storageUsage != null &&
+                      _storageUsage!.usagePercentage > 0.8)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: GlassCard(
+                        backgroundColor: theme.colorScheme.errorContainer
+                            .withValues(alpha: 0.3),
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded,
+                                color: theme.colorScheme.error),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Storage space low',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      color: theme.colorScheme.error,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'You have used ${(_storageUsage!.usagePercentage * 100).toStringAsFixed(1)}% of your device storage.',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // Dashboard
+                  FollowUpDashboard(
+                    onTap: () async {
+                      if (widget.onTasksTap != null) {
+                        widget.onTasksTap!();
+                      } else {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const FollowUpListScreen(),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: DesignConstants.sectionSpacing),
+
+                  // Search Bar
+                  GlassTextField(
+                    controller: _searchController,
+                    hintText: 'Search documents...',
+                    prefixIcon: Icons.search,
+                  ),
+
+                  const SizedBox(height: DesignConstants.sectionSpacing),
+
+                  // Content Area
+                  Expanded(
+                    child: FocusTraversalGroup(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _searchController.text.isNotEmpty
+                              ? _buildSearchResults(context, columnCount)
+                              : _filteredDocuments.isNotEmpty
+                                  ? _buildDocumentsGrid(context, columnCount)
+                                  : _buildEmptyState(context),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              // Dashboard
-              FollowUpDashboard(
-                onTap: () async {
-                  if (widget.onTasksTap != null) {
-                    widget.onTasksTap!();
-                  } else {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const FollowUpListScreen(),
-                      ),
-                    );
-                  }
-                },
-              ),
-              const SizedBox(height: DesignConstants.sectionSpacing),
-
-              // Search Bar
-              GlassTextField(
-                controller: _searchController,
-                hintText: 'Search documents...',
-                prefixIcon: Icons.search,
-              ),
-
-              const SizedBox(height: DesignConstants.sectionSpacing),
-
-              // Content Area
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _searchController.text.isNotEmpty
-                        ? _buildSearchResults(context)
-                        : _filteredDocuments.isNotEmpty
-                            ? _buildDocumentsGrid(context)
-                            : _buildEmptyState(context),
-              ),
-            ],
-          ),
+            );
+          }),
         ),
       ),
     );
   }
 
-  Widget _buildSearchResults(BuildContext context) {
+  Widget _buildSearchResults(BuildContext context, int columnCount) {
     if (_filteredDocuments.isEmpty &&
         _filteredFollowUps.isEmpty &&
         _conversationResults.isEmpty) {
       return _buildEmptyState(context);
     }
 
-    return CustomScrollView(
-      slivers: [
-        if (_conversationResults.isNotEmpty) ...[
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text('Conversations',
-                  style: Theme.of(context).textTheme.titleMedium),
+    return AnimationLimiter(
+      child: CustomScrollView(
+        controller: _scrollController,
+        key: const PageStorageKey('documents_search_scroll'),
+        slivers: [
+          if (_conversationResults.isNotEmpty) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text('Conversations',
+                    style: Theme.of(context).textTheme.titleMedium),
+              ),
             ),
-          ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final entry = _conversationResults[index];
-                return _buildConversationResultCard(entry);
-              },
-              childCount: _conversationResults.length,
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final entry = _conversationResults[index];
+                  return AnimationConfiguration.staggeredList(
+                    position: index,
+                    duration: const Duration(milliseconds: 375),
+                    child: FadeInAnimation(
+                      child: _buildConversationResultCard(entry),
+                    ),
+                  );
+                },
+                childCount: _conversationResults.length,
+              ),
             ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
-        if (_filteredFollowUps.isNotEmpty) ...[
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text('Follow-Ups',
-                  style: Theme.of(context).textTheme.titleMedium),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+          if (_filteredFollowUps.isNotEmpty) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text('Follow-Ups',
+                    style: Theme.of(context).textTheme.titleMedium),
+              ),
             ),
-          ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final item = _filteredFollowUps[index];
-                return FollowUpCard(
-                  item: item,
-                  onTap: () => _showEditDialog(item),
-                  onMarkComplete: () => _toggleCompletion(item),
-                  onEdit: () => _showEditDialog(item),
-                );
-              },
-              childCount: _filteredFollowUps.length,
-            ),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
-        if (_filteredDocuments.isNotEmpty) ...[
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text('Documents',
-                  style: Theme.of(context).textTheme.titleMedium),
-            ),
-          ),
-          SliverGrid(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final doc = _filteredDocuments[index];
-                return DocumentGridCard(
-                  record: doc,
-                  onTap: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DocumentDetailScreen(
-                          healthRecordId: doc.id,
-                        ),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final item = _filteredFollowUps[index];
+                  return AnimationConfiguration.staggeredList(
+                    position: index,
+                    duration: const Duration(milliseconds: 375),
+                    child: FadeInAnimation(
+                      child: FollowUpCard(
+                        item: item,
+                        onTap: () => _showEditDialog(item),
+                        onMarkComplete: () => _toggleCompletion(item),
+                        onEdit: () => _showEditDialog(item),
                       ),
-                    );
-                    _loadDocuments(); // Refresh grid on return (in case of deletion)
-                  },
+                    ),
+                  );
+                },
+                childCount: _filteredFollowUps.length,
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+          if (_filteredDocuments.isNotEmpty) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text('Documents',
+                    style: Theme.of(context).textTheme.titleMedium),
+              ),
+            ),
+            SliverMasonryGrid.count(
+              crossAxisCount: columnCount,
+              mainAxisSpacing: DesignConstants.gridSpacing,
+              crossAxisSpacing: DesignConstants.gridSpacing,
+              itemBuilder: (context, index) {
+                final doc = _filteredDocuments[index];
+                return AnimationConfiguration.staggeredGrid(
+                  position: index,
+                  duration: const Duration(milliseconds: 375),
+                  columnCount: columnCount,
+                  child: ScaleAnimation(
+                    child: FadeInAnimation(
+                      child: _buildDocumentCard(doc),
+                    ),
+                  ),
                 );
               },
               childCount: _filteredDocuments.length,
             ),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: DesignConstants.gridSpacing,
-              crossAxisSpacing: DesignConstants.gridSpacing,
-              childAspectRatio: 0.75, // Taller cards for images
-            ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
+  }
+
+  Widget _buildDocumentCard(HealthRecord doc) {
+    return FocusableActionDetector(
+      onShowFocusHighlight: (value) {},
+      actions: {
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (intent) => _openDocument(doc),
+        ),
+      },
+      shortcuts: {
+        LogicalKeySet(LogicalKeyboardKey.enter): const ActivateIntent(),
+        LogicalKeySet(LogicalKeyboardKey.space): const ActivateIntent(),
+      },
+      child: DocumentGridCard(
+        record: doc,
+        onTap: () => _openDocument(doc),
+      ),
+    );
+  }
+
+  Future<void> _openDocument(HealthRecord doc) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DocumentDetailScreen(
+          healthRecordId: doc.id,
+        ),
+      ),
+    );
+    _loadDocuments();
+    _checkStorage();
   }
 
   Widget _buildConversationResultCard(SearchEntry entry) {
     final query = _searchController.text.trim();
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-            color:
-                Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
+            color: Theme.of(context)
+                .colorScheme
+                .outlineVariant
+                .withValues(alpha: 0.5)),
       ),
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -391,9 +512,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     final snippet = content.substring(start, end);
     final matchIndexInSnippet = snippet.toLowerCase().indexOf(lowerQuery);
 
-    if (matchIndexInSnippet == -1)
+    if (matchIndexInSnippet == -1) {
       return Text('$prefix$snippet$suffix',
           style: Theme.of(context).textTheme.bodySmall);
+    }
 
     return RichText(
       text: TextSpan(
@@ -407,7 +529,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               fontWeight: FontWeight.bold,
               color: Theme.of(context).colorScheme.primary,
               backgroundColor:
-                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             ),
           ),
           TextSpan(
@@ -478,32 +600,29 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     );
   }
 
-  Widget _buildDocumentsGrid(BuildContext context) {
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+  Widget _buildDocumentsGrid(BuildContext context, int columnCount) {
+    return AnimationLimiter(
+      child: MasonryGridView.count(
+        controller: _scrollController,
+        key: const PageStorageKey('documents_grid_scroll'),
+        crossAxisCount: columnCount,
         mainAxisSpacing: DesignConstants.gridSpacing,
         crossAxisSpacing: DesignConstants.gridSpacing,
-        childAspectRatio: 0.75, // Taller cards for images
-      ),
-      itemCount: _filteredDocuments.length,
-      itemBuilder: (context, index) {
-        final doc = _filteredDocuments[index];
-        return DocumentGridCard(
-          record: doc,
-          onTap: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DocumentDetailScreen(
-                  healthRecordId: doc.id,
-                ),
+        itemCount: _filteredDocuments.length,
+        itemBuilder: (context, index) {
+          final doc = _filteredDocuments[index];
+          return AnimationConfiguration.staggeredGrid(
+            position: index,
+            duration: const Duration(milliseconds: 375),
+            columnCount: columnCount,
+            child: ScaleAnimation(
+              child: FadeInAnimation(
+                child: _buildDocumentCard(doc),
               ),
-            );
-            _loadDocuments(); // Refresh grid on return (in case of deletion)
-          },
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
   }
 }

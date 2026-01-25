@@ -8,19 +8,23 @@ import '../models/follow_up_item.dart';
 
 class FollowUpReminderService {
   static final FollowUpReminderService _instance =
-      FollowUpReminderService._internal();
+      FollowUpReminderService.internal();
 
   factory FollowUpReminderService() => _instance;
 
-  FollowUpReminderService._internal();
+  @protected
+  FollowUpReminderService.internal();
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+  @protected
+  @visibleForTesting
+  FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  bool _isInitialized = false;
+  @protected
+  bool isInitialized = false;
 
   Future<void> initialize() async {
-    if (_isInitialized) return;
+    if (isInitialized) return;
 
     tz.initializeTimeZones();
 
@@ -41,7 +45,7 @@ class FollowUpReminderService {
       macOS: initializationSettingsDarwin,
     );
 
-    await _notificationsPlugin.initialize(
+    await notificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         // Handle notification tap
@@ -49,12 +53,12 @@ class FollowUpReminderService {
       },
     );
 
-    _isInitialized = true;
+    isInitialized = true;
   }
 
   Future<void> requestPermissions() async {
     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
+        notificationsPlugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidImplementation != null) {
@@ -62,7 +66,7 @@ class FollowUpReminderService {
     }
 
     final iOSImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
+        notificationsPlugin.resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>();
 
     if (iOSImplementation != null) {
@@ -74,7 +78,7 @@ class FollowUpReminderService {
     }
 
     final macOSImplementation =
-        _notificationsPlugin.resolvePlatformSpecificImplementation<
+        notificationsPlugin.resolvePlatformSpecificImplementation<
             MacOSFlutterLocalNotificationsPlugin>();
 
     if (macOSImplementation != null) {
@@ -129,10 +133,11 @@ class FollowUpReminderService {
   }
 
   Future<void> cancelReminder(String itemId) async {
-    await _notificationsPlugin.cancel(itemId.hashCode);
-    await _notificationsPlugin.cancel('${itemId}_before'.hashCode);
+    await notificationsPlugin.cancel(itemId.hashCode);
+    await notificationsPlugin.cancel('${itemId}_before'.hashCode);
   }
 
+  @protected
   Future<void> _scheduleNotification({
     required int id,
     required String title,
@@ -141,7 +146,7 @@ class FollowUpReminderService {
     required String payload,
     DateTimeComponents? matchComponents,
   }) async {
-    await _notificationsPlugin.zonedSchedule(
+    await notificationsPlugin.zonedSchedule(
       id,
       title,
       body,

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import '../services/keyboard_shortcut_service.dart';
 import 'package:flutter/services.dart';
 import '../services/permission_service.dart';
 import '../services/image_service.dart';
@@ -13,6 +14,7 @@ import '../services/temp_file_manager.dart';
 import '../services/consent_service.dart';
 import '../widgets/design/glass_button.dart';
 import '../widgets/design/liquid_glass_background.dart';
+import '../widgets/desktop/file_drop_zone.dart';
 import '../widgets/dialogs/save_to_vault_dialog.dart';
 import '../utils/theme.dart';
 
@@ -44,6 +46,7 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
     WidgetsBinding.instance.addObserver(this);
     _initializeServices();
     _checkConsent();
+    KeyboardShortcutService().registerAction('capture_document', _takePicture);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SessionManager().showEducationIfNeeded('document_scanner');
     });
@@ -519,6 +522,7 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -547,7 +551,11 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
       ),
       body: LiquidGlassBackground(
         showTexture: false,
-        child: _buildBody(),
+        child: FileDropZone(
+          vaultService: VaultService(LocalStorageService()),
+          settings: LocalStorageService().getAppSettings(),
+          child: _buildBody(),
+        ),
       ),
     );
   }
@@ -722,7 +730,6 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
                       label: 'Done',
                       onPressed: _processImages,
                       isProminent: true,
-                      width: 100,
                     )
                   else
                     const SizedBox(width: 100), // Spacer

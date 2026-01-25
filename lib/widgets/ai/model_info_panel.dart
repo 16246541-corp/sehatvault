@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/model_option.dart';
 import '../../services/model_manager.dart';
+import '../../services/model_fallback_service.dart';
 import '../../services/reference_range_service.dart';
+import '../../services/llm_engine.dart';
 import '../design/glass_card.dart';
 
 class ModelInfoPanel extends StatefulWidget {
@@ -26,11 +28,14 @@ class _ModelInfoPanelState extends State<ModelInfoPanel> {
   ModelOption? _activeModel;
   bool _loading = true;
 
-  // Performance metrics (mocked for now as we don't have real-time metrics service yet)
+  // Performance metrics
   final Map<String, dynamic> _metrics = {
-    'loadTime': '1.2s',
-    'inferenceSpeed': '45 t/s',
+    'loadTime': '0.0s',
+    'inferenceSpeed': '0 t/s',
     'memoryUsage': 'Unknown',
+    'contextUsage': 0.0,
+    'contextTokens': 0,
+    'maxContext': 2048,
   };
 
   @override
@@ -38,9 +43,32 @@ class _ModelInfoPanelState extends State<ModelInfoPanel> {
     super.initState();
     _isExpanded = widget.initiallyExpanded;
     _loadModelInfo();
+    ModelFallbackService().addListener(_onFallbackEvent);
+  }
+
+  @override
+  void dispose() {
+    ModelFallbackService().removeListener(_onFallbackEvent);
+    super.dispose();
+  }
+
+  void _onFallbackEvent() {
+    if (mounted) {
+      _loadModelInfo();
+    }
   }
 
   Future<void> _loadModelInfo() async {
+    final engine = LLMEngine();
+    if (engine.currentModel != null) {
+      setState(() {
+        _activeModel = engine.currentModel;
+        _loading = false;
+        _updateMetrics(_activeModel!);
+      });
+      return;
+    }
+
     if (widget.model != null) {
       setState(() {
         _activeModel = widget.model;
@@ -51,8 +79,6 @@ class _ModelInfoPanelState extends State<ModelInfoPanel> {
     }
 
     // Load from ModelManager
-    // In a real app, we would get the actually loaded model from a state manager or service
-    // For now we use getRecommendedModel as a proxy for the active model
     final model = await ModelManager.getRecommendedModel();
 
     if (mounted) {
@@ -65,18 +91,36 @@ class _ModelInfoPanelState extends State<ModelInfoPanel> {
   }
 
   void _updateMetrics(ModelOption model) {
-    if (model.id.contains('tiny')) {
-      _metrics['loadTime'] = '0.8s';
-      _metrics['inferenceSpeed'] = '55 t/s';
-      _metrics['memoryUsage'] = '1.1 GB';
-    } else if (model.id.contains('advanced')) {
-      _metrics['loadTime'] = '2.4s';
-      _metrics['inferenceSpeed'] = '25 t/s';
-      _metrics['memoryUsage'] = '5.8 GB';
+    final engine = LLMEngine();
+    final metrics = engine.metrics;
+
+    if (metrics != null) {
+      setState(() {
+        _metrics['loadTime'] =
+            '${(metrics.loadTimeMs / 1000).toStringAsFixed(1)}s';
+        _metrics['inferenceSpeed'] =
+            '${metrics.tokensPerSecond.toStringAsFixed(1)} t/s';
+        _metrics['memoryUsage'] = '${model.ramRequired} GB';
+        _metrics['contextUsage'] = metrics.contextUsage;
+        _metrics['contextTokens'] = metrics.contextTokens;
+        _metrics['maxContext'] = metrics.maxContextTokens;
+      });
     } else {
-      _metrics['loadTime'] = '1.5s';
-      _metrics['inferenceSpeed'] = '35 t/s';
-      _metrics['memoryUsage'] = '${model.ramRequired} GB';
+      setState(() {
+        if (model.id.contains('tiny')) {
+          _metrics['loadTime'] = '0.8s';
+          _metrics['inferenceSpeed'] = '55 t/s';
+          _metrics['memoryUsage'] = '1.1 GB';
+        } else if (model.id.contains('advanced')) {
+          _metrics['loadTime'] = '2.4s';
+          _metrics['inferenceSpeed'] = '25 t/s';
+          _metrics['memoryUsage'] = '5.8 GB';
+        } else {
+          _metrics['loadTime'] = '1.5s';
+          _metrics['inferenceSpeed'] = '35 t/s';
+          _metrics['memoryUsage'] = '${model.ramRequired} GB';
+        }
+      });
     }
   }
 
@@ -187,6 +231,11 @@ class _ModelInfoPanelState extends State<ModelInfoPanel> {
                     ),
                   _buildInfoRow(context, 'License', _activeModel!.license),
 
+                  if (ModelFallbackService().history.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _buildFallbackStatus(context),
+                  ],
+
                   const SizedBox(height: 20),
                   Text('Performance Metrics',
                       style: theme.textTheme.titleSmall
@@ -199,6 +248,60 @@ class _ModelInfoPanelState extends State<ModelInfoPanel> {
                       _buildMetric(
                           context, 'Speed', _metrics['inferenceSpeed']),
                       _buildMetric(context, 'Memory', _metrics['memoryUsage']),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+                  Text('Context Window',
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${_metrics['contextTokens']} / ${_metrics['maxContext']} tokens',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                          Text(
+                            '${(_metrics['contextUsage'] * 100).toStringAsFixed(1)}%',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: _metrics['contextUsage'] > 0.8
+                                  ? Colors.orange
+                                  : null,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: _metrics['contextUsage'],
+                          minHeight: 8,
+                          backgroundColor:
+                              theme.colorScheme.primary.withOpacity(0.1),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _metrics['contextUsage'] > 0.9
+                                ? Colors.red
+                                : _metrics['contextUsage'] > 0.7
+                                    ? Colors.orange
+                                    : theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Automatic truncation preserves conversation flow',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                      ),
                     ],
                   ),
 
@@ -301,6 +404,98 @@ class _ModelInfoPanelState extends State<ModelInfoPanel> {
               color: theme.colorScheme.onSurface.withOpacity(0.6),
             )),
       ],
+    );
+  }
+
+  Widget _buildFallbackStatus(BuildContext context) {
+    final theme = Theme.of(context);
+    final lastEvent = ModelFallbackService().history.last;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.auto_awesome, size: 20, color: Colors.orange),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Fallback Active',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Reason: ${lastEvent.reason ?? "Optimization"}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              // Show dialog to manage models or disable fallback
+              _showFallbackSettings(context);
+            },
+            child: const Text('Manage'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFallbackSettings(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final service = ModelFallbackService();
+          return AlertDialog(
+            title: const Text('Model Settings'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchListTile(
+                  title: const Text('Automatic Fallback'),
+                  subtitle:
+                      const Text('Automatically switch models on failure'),
+                  value: service.isAutoFallbackEnabled,
+                  onChanged: (val) {
+                    service.setAutoFallback(val);
+                    setDialogState(() {});
+                  },
+                ),
+                const Divider(),
+                const Text('Active Model History',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                ...service.history.reversed.take(3).map((e) => ListTile(
+                      dense: true,
+                      title: Text('${e.fromModel.name} → ${e.toModel.name}'),
+                      subtitle: Text(DateFormat.jm().format(e.timestamp)),
+                      leading: const Icon(Icons.history, size: 16),
+                    )),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

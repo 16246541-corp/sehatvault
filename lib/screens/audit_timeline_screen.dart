@@ -7,7 +7,7 @@ import '../services/session_manager.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_card.dart';
 import '../utils/design_constants.dart';
-import '../main.dart';
+import '../main_common.dart' show storageService;
 
 class AuditTimelineScreen extends StatefulWidget {
   const AuditTimelineScreen({super.key});

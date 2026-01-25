@@ -18,6 +18,7 @@ import '../models/citation.dart';
 import '../models/issue_report.dart';
 import '../models/consent_entry.dart';
 import '../models/local_audit_entry.dart';
+import 'platform_detector.dart';
 
 /// Local Storage Service for health records
 /// Uses Hive with encryption for privacy-first data storage
@@ -221,6 +222,10 @@ class LocalStorageService {
   /// Get health records box
   Box get _recordsBox => Hive.box(_healthRecordsBox);
 
+  /// Get listenable for health records
+  ValueListenable<Box> get recordsListenable =>
+      Hive.box(_healthRecordsBox).listenable();
+
   /// Save a health record
   Future<void> saveRecord(String id, Map<String, dynamic> record) async {
     await _recordsBox.put(id, record);
@@ -296,6 +301,8 @@ class LocalStorageService {
   /// Initialize model metadata if it doesn't exist (First load)
   Future<void> _initializeAppSettingsMetadata() async {
     final settings = getAppSettings();
+    bool needsSave = false;
+
     if (settings.modelMetadataMap.isEmpty) {
       debugPrint('Initializing model metadata on first load');
       final Map<String, ModelMetadata> metadataMap = {};
@@ -303,6 +310,15 @@ class LocalStorageService {
         metadataMap[model.id] = model.metadata;
       }
       settings.modelMetadataMap = metadataMap;
+
+      // Also apply platform defaults on first load
+      await PlatformDetector().getCapabilities();
+      PlatformDetector().applyPlatformDefaults(settings);
+
+      needsSave = true;
+    }
+
+    if (needsSave) {
       await saveAppSettings(settings);
     }
   }

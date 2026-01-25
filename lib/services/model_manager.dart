@@ -1,10 +1,14 @@
 import 'dart:io';
 import 'package:crypto/crypto.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:system_info2/system_info2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'llm_engine.dart';
+import 'model_fallback_service.dart';
+import 'desktop_notification_service.dart';
 import '../models/model_option.dart';
+import 'platform_detector.dart';
+import 'local_storage_service.dart';
+import '../config/app_config.dart';
 
 class ModelLoadException implements Exception {
   final String message;
@@ -19,40 +23,16 @@ class ModelLoadException implements Exception {
 }
 
 class ModelManager {
-  static final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
+  static final LLMEngine _engine = LLMEngine();
 
   /// Detects device RAM and recommends the optimal model option.
   static Future<ModelOption> getRecommendedModel() async {
-    // Detect Platform
-    bool isDesktop = false;
+    final capabilities = await PlatformDetector().getCapabilities();
+    final settings = LocalStorageService().getAppSettings();
+    final config = AppConfig.instance;
 
-    try {
-      if (!kIsWeb) {
-        if (Platform.isMacOS || Platform.isWindows) {
-          isDesktop = true;
-          if (Platform.isMacOS) {
-            await _deviceInfo.macOsInfo;
-          } else if (Platform.isWindows) {
-            await _deviceInfo.windowsInfo;
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Error detecting platform info: $e');
-    }
-
-    // Detect Device RAM
-    int totalRamMB = 0;
-    try {
-      totalRamMB = SysInfo.getTotalPhysicalMemory() ~/ (1024 * 1024);
-    } catch (e) {
-      debugPrint('Error detecting RAM: $e');
-      // Fallback to a safe default (2GB)
-      totalRamMB = 2048;
-    }
-
-    final double totalRamGB = totalRamMB / 1024.0;
-    debugPrint('Detected RAM: ${totalRamGB.toStringAsFixed(2)} GB');
+    debugPrint('Detected RAM: ${capabilities.ramGB.toStringAsFixed(2)} GB');
+    debugPrint('Current Flavor: ${config.flavor}');
 
     // Recommendation Logic based on ModelOption.availableModels
     // We prioritize the most capable model the device can comfortably run.
@@ -62,11 +42,23 @@ class ModelManager {
       ..sort((a, b) => b.ramRequired.compareTo(a.ramRequired));
 
     for (var model in sortedModels) {
+      // In dev mode, we might want to skip the heaviest models unless explicitly enabled
+      if (config.isDev && model.ramRequired > 8.0) {
+        continue;
+      }
+
       // If it's a desktop-only model, ensure we are on desktop
-      if (model.isDesktopOnly && !isDesktop) continue;
+      if (model.isDesktopOnly && !capabilities.isDesktop) continue;
+
+      // Desktop specific: if gpu acceleration is disabled, we avoid very heavy models (>8GB RAM required)
+      if (capabilities.isDesktop &&
+          model.ramRequired > 8 &&
+          !settings.enableGpuAcceleration) {
+        continue;
+      }
 
       // If device has enough RAM (with a 10% buffer for OS/other apps)
-      if (totalRamGB >= model.ramRequired) {
+      if (capabilities.ramGB >= model.ramRequired) {
         return model;
       }
     }
@@ -115,6 +107,12 @@ class ModelManager {
     final actualHash = digest.toString();
 
     if (actualHash != actualExpected) {
+      DesktopNotificationService().showModelStatus(
+        title: 'Model Integrity Error',
+        message:
+            'The AI model file appears to be corrupted. Please re-download.',
+        isError: true,
+      );
       throw ModelLoadException(
         'Integrity check failed! The model file appears to be corrupted or tampered with.',
         isIntegrityIssue: true,
@@ -149,9 +147,19 @@ class ModelManager {
       }
 
       if (needsDownload) {
+        DesktopNotificationService().showModelStatus(
+          title: 'Model Download Started',
+          message: 'Downloading ${model.name} for offline AI processing.',
+        );
+
         // Check storage before "downloading"
         final enoughSpace = await hasEnoughStorage(model.storageRequired);
         if (!enoughSpace) {
+          DesktopNotificationService().showModelStatus(
+            title: 'Download Failed',
+            message: 'Insufficient storage to download ${model.name}.',
+            isError: true,
+          );
           throw ModelLoadException(
             'Insufficient storage to download ${model.name}. Required: ${model.storageRequired}GB.',
             isStorageIssue: true,
@@ -172,6 +180,10 @@ class ModelManager {
         // Initial verification
         await _verifyModelHash(dummyFile, model.metadata.checksum);
 
+        DesktopNotificationService().showModelStatus(
+          title: 'Model Ready',
+          message: '${model.name} has been downloaded and verified.',
+        );
         debugPrint('Model ${model.id} downloaded and verified.');
       }
 
@@ -183,24 +195,59 @@ class ModelManager {
     }
   }
 
-  /// Loads the model into memory using a background isolate (compute).
+  /// Loads the model into memory using LLMEngine.
   static Future<bool> loadModel(ModelOption model) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final modelPath = '${directory.path}/models/${model.id}';
+    try {
+      debugPrint('Loading model ${model.id} into memory via LLMEngine...');
 
-    final params = _ModelLoadParams(
-      modelPath: modelPath,
-      checksum: model.metadata.checksum,
-    );
+      await _engine.initialize(model);
 
-    // Use compute to run CPU intensive loading/verification in background
-    return await compute(_backgroundLoadTask, params);
+      DesktopNotificationService().showModelStatus(
+        title: 'Model Loaded',
+        message: '${model.name} is ready for local AI processing.',
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('Error in loadModel: $e');
+
+      if (e is LLMEngineException) {
+        // Attempt fallback if possible
+        final fallbackModel = await ModelFallbackService().evaluateFallback(
+          model,
+          error: e,
+        );
+
+        if (fallbackModel != null) {
+          debugPrint(
+              'Attempting fallback from ${model.name} to ${fallbackModel.name}');
+          return loadModel(fallbackModel);
+        }
+
+        DesktopNotificationService().showModelStatus(
+          title: 'Loading Failed',
+          message: 'Failed to load ${model.name}. ${e.message}',
+          isError: true,
+        );
+
+        throw ModelLoadException(e.message,
+            isIntegrityIssue: e.code == 'CHECKSUM_MISMATCH');
+      }
+
+      DesktopNotificationService().showModelStatus(
+        title: 'Loading Failed',
+        message: 'Failed to load ${model.name}. Check device resources.',
+        isError: true,
+      );
+
+      throw ModelLoadException('Failed to load model: ${e.toString()}');
+    }
   }
 
   /// Returns detailed information about the recommended model configuration.
   static Future<Map<String, dynamic>> getDeviceInfoReport() async {
     final model = await getRecommendedModel();
-    final ramMB = SysInfo.getTotalPhysicalMemory() ~/ (1024 * 1024);
+    final capabilities = await PlatformDetector().getCapabilities();
 
     return {
       'recommendedModelId': model.id,
@@ -208,46 +255,13 @@ class ModelManager {
       'modelDescription': model.description,
       'ramRequiredGB': model.ramRequired,
       'storageRequiredGB': model.storageRequired,
-      'totalRamGB': (ramMB / 1024.0).toStringAsFixed(2),
-      'isDesktop': Platform.isMacOS || Platform.isWindows,
-      'platform': Platform.operatingSystem,
+      'totalRamGB': capabilities.ramGB.toStringAsFixed(2),
+      'isDesktop': capabilities.isDesktop,
+      'platform': capabilities.platformName,
+      'capabilities': capabilities.supportedCapabilities
+          .map((e) => e.toString().split('.').last)
+          .toList(),
+      'metrics': capabilities.performanceMetrics,
     };
-  }
-}
-
-/// Parameters for background model loading
-class _ModelLoadParams {
-  final String modelPath;
-  final String checksum;
-
-  _ModelLoadParams({required this.modelPath, required this.checksum});
-}
-
-/// Top-level function for compute() to handle background model loading and verification.
-Future<bool> _backgroundLoadTask(_ModelLoadParams params) async {
-  try {
-    // 1. Heavy File Integrity Check (CPU bound)
-    final file = File('${params.modelPath}/config.json');
-    if (!await file.exists()) return false;
-
-    final bytes = await file.readAsBytes();
-    final digest = sha256.convert(bytes);
-    final actualHash = digest.toString();
-
-    final parts = params.checksum.split(':');
-    final expectedHash = parts.length > 1 ? parts[1] : parts[0];
-
-    if (actualHash != expectedHash) return false;
-
-    // 2. Simulate heavy weight loading/graph initialization
-    // We use a manual loop or heavy task here if we wanted to truly block the isolate
-    // but a delay is fine for demo purposes.
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    debugPrint('Model loaded successfully in background isolate.');
-    return true;
-  } catch (e) {
-    debugPrint('Background model load failed: $e');
-    return false;
   }
 }

@@ -5,7 +5,7 @@ import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_card.dart';
 import '../utils/design_constants.dart';
 import '../utils/theme.dart';
-import '../main.dart'; // for storageService
+import '../main_common.dart' show storageService;
 import '../widgets/auth_gate.dart';
 import 'package:url_launcher/url_launcher.dart';
 

@@ -6,7 +6,7 @@ import '../widgets/design/glass_card.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../utils/design_constants.dart';
 import '../utils/theme.dart';
-import '../main.dart'; // for storageService
+import '../main_common.dart' show storageService;
 import '../widgets/auth_gate.dart';
 
 class BiometricSettingsScreen extends StatefulWidget {

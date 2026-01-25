@@ -28,13 +28,31 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       completedEducationVersions: (fields[12] as Map?)?.cast<String, int>(),
       enableWellnessLanguageChecks: fields[13] as bool,
       showWellnessDebugInfo: fields[14] as bool,
+      localAuditRetentionDays: fields[15] as int,
+      localAuditChainAnchorHash: fields[16] as String,
+      autoSelectModel: fields[17] as bool,
+      desktopWindowWidth: fields[18] as double?,
+      desktopWindowHeight: fields[19] as double?,
+      desktopWindowX: fields[20] as double?,
+      desktopWindowY: fields[21] as double?,
+      isMaximized: fields[22] as bool,
+      enableGpuAcceleration: fields[23] as bool,
+      increasedCacheLimitMB: fields[24] as int,
+      showDesktopDebugTools: fields[25] as bool,
+      maxFileUploadSizeMB: fields[26] as int,
+      lastExportDirectory: fields[27] as String?,
+      hasSeenBiometricEnrollmentPrompt: fields[28] as bool,
+      enableKeyboardShortcuts: fields[29] as bool,
+      persistWindowState: fields[30] as bool,
+      restoreWindowPosition: fields[31] as bool,
+      accessibilityEnabled: fields[32] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(33)
       ..writeByte(0)
       ..write(obj.darkMode)
       ..writeByte(1)
@@ -42,7 +60,7 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(2)
       ..write(obj.language)
       ..writeByte(3)
-      ..write(obj.keepAudioIds.toList())
+      ..write(obj.keepAudioIds)
       ..writeByte(4)
       ..write(obj.autoDeleteRecordingsDays)
       ..writeByte(5)
@@ -58,13 +76,49 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(10)
       ..write(obj.enableBatteryWarnings)
       ..writeByte(11)
-      ..write(obj.completedEducationIds.toList())
+      ..write(obj.completedEducationIds)
       ..writeByte(12)
       ..write(obj.completedEducationVersions)
       ..writeByte(13)
       ..write(obj.enableWellnessLanguageChecks)
       ..writeByte(14)
-      ..write(obj.showWellnessDebugInfo);
+      ..write(obj.showWellnessDebugInfo)
+      ..writeByte(15)
+      ..write(obj.localAuditRetentionDays)
+      ..writeByte(16)
+      ..write(obj.localAuditChainAnchorHash)
+      ..writeByte(17)
+      ..write(obj.autoSelectModel)
+      ..writeByte(18)
+      ..write(obj.desktopWindowWidth)
+      ..writeByte(19)
+      ..write(obj.desktopWindowHeight)
+      ..writeByte(20)
+      ..write(obj.desktopWindowX)
+      ..writeByte(21)
+      ..write(obj.desktopWindowY)
+      ..writeByte(22)
+      ..write(obj.isMaximized)
+      ..writeByte(23)
+      ..write(obj.enableGpuAcceleration)
+      ..writeByte(24)
+      ..write(obj.increasedCacheLimitMB)
+      ..writeByte(25)
+      ..write(obj.showDesktopDebugTools)
+      ..writeByte(26)
+      ..write(obj.maxFileUploadSizeMB)
+      ..writeByte(27)
+      ..write(obj.lastExportDirectory)
+      ..writeByte(28)
+      ..write(obj.hasSeenBiometricEnrollmentPrompt)
+      ..writeByte(29)
+      ..write(obj.enableKeyboardShortcuts)
+      ..writeByte(30)
+      ..write(obj.persistWindowState)
+      ..writeByte(31)
+      ..write(obj.restoreWindowPosition)
+      ..writeByte(32)
+      ..write(obj.accessibilityEnabled);
   }
 
   @override

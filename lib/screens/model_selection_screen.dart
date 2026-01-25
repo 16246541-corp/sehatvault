@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'model_warmup_screen.dart';
 import '../models/model_option.dart';
 import '../models/app_settings.dart';
 import '../services/model_manager.dart';
@@ -11,7 +12,7 @@ import '../services/biometric_service.dart';
 import '../services/consent_service.dart';
 import '../services/local_audit_service.dart';
 import '../services/session_manager.dart';
-import '../main.dart' show storageService;
+import '../main_common.dart' show storageService;
 
 class ModelSelectionScreen extends StatefulWidget {
   const ModelSelectionScreen({super.key});
@@ -153,19 +154,18 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
           _downloadedModels[model.id] = true;
         });
 
-        // Simulate background loading using compute()
-        debugPrint('Initializing ${model.name} in background...');
-        final loaded = await ModelManager.loadModel(model);
-
-        if (loaded && mounted) {
-          setState(() {}); // Refresh UI
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${model.name} is ready and loaded'),
-              backgroundColor: AppTheme.healthGreen,
-              duration: const Duration(seconds: 2),
+        // Show Warmup Screen
+        if (mounted) {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ModelWarmupScreen(
+                model: model,
+                onComplete: () => Navigator.of(context).pop(),
+              ),
             ),
           );
+
+          setState(() {}); // Refresh UI
         }
       }
     } catch (e) {

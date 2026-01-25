@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../main.dart' show storageService;
+import '../main_common.dart' show storageService;
 import 'local_storage_service.dart';
 import 'wellness_language_validator.dart';
 

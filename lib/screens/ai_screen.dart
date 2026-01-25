@@ -6,10 +6,13 @@ import 'package:uuid/uuid.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_card.dart';
+import '../widgets/desktop/file_drop_zone.dart';
 import '../widgets/design/recording_control_widget.dart';
+import '../services/vault_service.dart';
 import '../widgets/design/emergency_stop_button.dart';
 import '../utils/design_constants.dart';
 import '../widgets/ai/model_info_panel.dart';
+import '../widgets/ai/token_usage_indicator.dart';
 import '../services/conversation_recorder_service.dart';
 import '../services/transcription_service.dart';
 import '../services/follow_up_extractor.dart';
@@ -17,12 +20,13 @@ import '../services/biometric_service.dart';
 import '../services/battery_monitor_service.dart';
 import '../services/session_manager.dart';
 import '../services/local_audit_service.dart';
+import 'package:sehatlocker/services/keyboard_shortcut_service.dart';
 import '../models/doctor_conversation.dart';
 import '../models/follow_up_item.dart';
 import '../models/recording_audit_entry.dart';
 import '../widgets/sheets/follow_up_review_sheet.dart';
 import '../widgets/dialogs/recording_consent_dialog.dart';
-import '../main.dart'; // for storageService
+import '../main_common.dart' show storageService;
 import '../widgets/compliance/fda_disclaimer_widget.dart';
 import '../widgets/compliance/emergency_use_banner.dart';
 import 'issue_reporting_review_screen.dart';
@@ -57,6 +61,8 @@ class _AIScreenState extends State<AIScreen> {
   void initState() {
     super.initState();
     _initRecorder();
+    KeyboardShortcutService()
+        .registerAction('record_start_stop', _handleToggleRecording);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SessionManager().showEducationIfNeeded('ai_features');
     });
@@ -109,8 +115,18 @@ class _AIScreenState extends State<AIScreen> {
 
   @override
   void dispose() {
+    KeyboardShortcutService().unregisterAction('record_start_stop');
+    _recorderSubscription?.cancel();
     _recorderService.dispose();
     super.dispose();
+  }
+
+  void _handleToggleRecording() {
+    if (_isRecording) {
+      _handleStopRecording();
+    } else {
+      _handleRecordingAction();
+    }
   }
 
   Future<void> _handlePauseRecording() async {
@@ -489,157 +505,144 @@ class _AIScreenState extends State<AIScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final contentEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding:
-                  const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
-              child: _isProcessing
-                  ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Processing conversation...'),
-                        ],
-                      ),
-                    )
-                  : _isRecording
-                      ? Center(
-                          child: RecordingControlWidget(
-                            recorderService: _recorderService,
-                            onStop: _handleStopRecording,
-                            onPause: _handlePauseRecording,
-                            onResume: _handleResumeRecording,
-                            isPaused: _isPaused,
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      body: LiquidGlassBackground(
+        child: FileDropZone(
+          vaultService: VaultService(storageService),
+          settings: storageService.getAppSettings(),
+          child: Stack(
+            children: [
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(
+                      DesignConstants.pageHorizontalPadding),
+                  child: _isProcessing
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Processing conversation...'),
+                            ],
                           ),
                         )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 60),
-                            const SizedBox(
-                                height: DesignConstants.titleTopPadding),
-                            Text(
-                              'AI Assistant',
-                              style: theme.textTheme.displayMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Powered by local LLM • Your data stays on device',
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                            const SizedBox(
-                                height: DesignConstants.sectionSpacing),
-                            const ModelInfoPanel(compact: true),
-                            const SizedBox(
-                                height: DesignConstants.sectionSpacing),
-                            Text(
-                              'Quick Actions',
-                              style: theme.textTheme.headlineLarge,
-                            ),
-                            const SizedBox(height: 16),
-                            Expanded(
-                              child: ListView(
-                                children: [
-                                  _buildQuickAction(
-                                    context,
-                                    icon: _isRecording
-                                        ? Icons.stop_circle_outlined
-                                        : Icons.mic_outlined,
-                                    title: _isRecording
-                                        ? 'Stop Recording'
-                                        : 'Record Conversation',
-                                    description: _isRecording
-                                        ? 'Tap to stop and save'
-                                        : 'Securely record and analyze a conversation',
-                                    onTap: _handleRecordingAction,
-                                    isActive: _isRecording,
-                                  ),
-                                  _buildQuickAction(
-                                    context,
-                                    icon: Icons.summarize_outlined,
-                                    title: 'Summarize Document',
-                                    description:
-                                        'Get a quick summary of any health document',
-                                  ),
-                                  _buildQuickAction(
-                                    context,
-                                    icon: Icons.translate,
-                                    title: 'Explain Medical Terms',
-                                    description:
-                                        'Understand complex medical terminology',
-                                  ),
-                                  _buildQuickAction(
-                                    context,
-                                    icon: Icons.compare_arrows,
-                                    title: 'Compare Results',
-                                    description:
-                                        'Track changes in your lab results over time',
-                                  ),
-                                  _buildQuickAction(
-                                    context,
-                                    icon: Icons.search,
-                                    title: 'Search Records',
-                                    description:
-                                        'Find information across all your documents',
-                                  ),
-                                  _buildQuickAction(
-                                    context,
-                                    icon: Icons.history,
-                                    title: 'View History',
-                                    description: 'Access past conversations',
-                                    onTap: () {
-                                      // Navigate to Documents tab
-                                      // This might need a callback to parent to switch tabs
-                                    },
-                                  ),
-                                  const SizedBox(height: 24),
-                                  const Padding(
-                                    padding: EdgeInsets.only(bottom: 24.0),
-                                    child: FdaDisclaimerWidget(),
-                                  ),
-                                ],
+                      : _isRecording
+                          ? Center(
+                              child: RecordingControlWidget(
+                                recorderService: _recorderService,
+                                onStop: _handleStopRecording,
+                                onPause: _handlePauseRecording,
+                                onResume: _handleResumeRecording,
+                                isPaused: _isPaused,
                               ),
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 60),
+                                const SizedBox(
+                                    height: DesignConstants.titleTopPadding),
+                                Text(
+                                  'AI Assistant',
+                                  style: theme.textTheme.displayMedium,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Powered by local LLM • Your data stays on device',
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                                const SizedBox(
+                                    height: DesignConstants.sectionSpacing),
+                                const ModelInfoPanel(compact: true),
+                                const SizedBox(
+                                    height: DesignConstants.sectionSpacing),
+                                Text(
+                                  'Quick Actions',
+                                  style: theme.textTheme.headlineLarge,
+                                ),
+                                const SizedBox(height: 16),
+                                Expanded(
+                                  child: ListView(
+                                    children: [
+                                      _buildQuickAction(
+                                        context,
+                                        icon: _isRecording
+                                            ? Icons.stop_circle_outlined
+                                            : Icons.mic_outlined,
+                                        title: _isRecording
+                                            ? 'Stop Recording'
+                                            : 'Record Conversation',
+                                        description: _isRecording
+                                            ? 'Tap to stop and save'
+                                            : 'Securely record and analyze a conversation',
+                                        onTap: _handleRecordingAction,
+                                        isActive: _isRecording,
+                                      ),
+                                      _buildQuickAction(context,
+                                          icon: Icons.summarize_outlined,
+                                          title: 'Summarize Document',
+                                          description:
+                                              'Get a quick summary of any health document'),
+                                      _buildQuickAction(context,
+                                          icon: Icons.translate,
+                                          title: 'Explain Medical Terms',
+                                          description:
+                                              'Understand complex medical terminology'),
+                                      _buildQuickAction(context,
+                                          icon: Icons.compare_arrows,
+                                          title: 'Compare Results',
+                                          description:
+                                              'Track changes in your lab results over time'),
+                                      _buildQuickAction(context,
+                                          icon: Icons.search,
+                                          title: 'Search Records',
+                                          description:
+                                              'Find information across all your documents'),
+                                      _buildQuickAction(
+                                        context,
+                                        icon: Icons.history,
+                                        title: 'View History',
+                                        description:
+                                            'Access past conversations',
+                                        onTap: () {
+                                          // Navigate to Documents tab
+                                          // This might need a callback to parent to switch tabs
+                                        },
+                                      ),
+                                      const SizedBox(height: 24),
+                                      const Padding(
+                                        padding: EdgeInsets.only(bottom: 24.0),
+                                        child: FdaDisclaimerWidget(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-            ),
-          ),
-          if (_isRecording) EmergencyStopButton(onTap: _handleEmergencyStop),
-        ],
-      ),
-    );
-
-    final bannerEntry = OverlayEntry(
-      builder: (context) => const Positioned(
-        top: 0,
-        left: 0,
-        right: 0,
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: DesignConstants.pageHorizontalPadding,
-              vertical: 8.0,
-            ),
-            child: EmergencyUseBanner(),
+                ),
+              ),
+              if (_isRecording)
+                EmergencyStopButton(onTap: _handleEmergencyStop),
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: DesignConstants.pageHorizontalPadding,
+                      vertical: 8.0,
+                    ),
+                    child: EmergencyUseBanner(),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ),
-    );
-
-    final isBannerPriority = true;
-    final entries = isBannerPriority
-        ? [contentEntry, bannerEntry]
-        : [bannerEntry, contentEntry];
-
-    return LiquidGlassBackground(
-      child: Overlay(
-        initialEntries: entries,
       ),
     );
   }

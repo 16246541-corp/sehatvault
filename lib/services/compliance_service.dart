@@ -5,6 +5,7 @@ import 'package:local_auth/local_auth.dart';
 import 'local_storage_service.dart';
 import 'auth_audit_service.dart';
 import 'safety_filter_service.dart';
+import 'prompt_template_service.dart';
 import '../utils/secure_logger.dart';
 
 class ComplianceCheckResult {
@@ -76,7 +77,29 @@ class ComplianceService {
     // 5. Audit Logging Check
     results.add(_checkAuditLogging());
 
+    // 6. Prompt Template Compliance Check
+    results.add(await _checkTemplateCompliance());
+
     return results;
+  }
+
+  Future<ComplianceCheckResult> _checkTemplateCompliance() async {
+    final service = PromptTemplateService();
+    // Validate the main medical assistant template
+    final isCompliant =
+        service.validateRegulatoryCompliance('medical_assistant');
+    final testPassed = await service.testTemplate('medical_assistant');
+
+    return ComplianceCheckResult(
+      id: 'prompt_template_compliance',
+      name: 'AI Prompt Template Compliance',
+      passed: isCompliant && testPassed,
+      details: isCompliant
+          ? (testPassed
+              ? 'Templates meet regulatory requirements and passed adversarial tests.'
+              : 'Templates meet regulatory requirements but failed adversarial tests.')
+          : 'Templates missing mandatory safety language (AI disclaimer, etc.).',
+    );
   }
 
   /// Calculate compliance score (0-100)

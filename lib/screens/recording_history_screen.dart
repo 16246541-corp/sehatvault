@@ -4,7 +4,7 @@ import '../services/export_service.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_card.dart';
 import '../utils/design_constants.dart';
-import '../main.dart';
+import '../main_common.dart' show storageService;
 
 class RecordingHistoryScreen extends StatelessWidget {
   const RecordingHistoryScreen({super.key});

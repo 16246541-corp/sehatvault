@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'llm_engine.dart';
+import 'model_fallback_service.dart';
 import '../services/local_storage_service.dart';
 import '../services/conversation_recorder_service.dart';
 import '../services/temp_file_manager.dart';
 import '../services/local_audit_service.dart';
+import '../services/platform_detector.dart';
+import '../services/window_manager_service.dart';
 import '../screens/lock_screen.dart';
 import '../widgets/education/education_modal.dart';
 
-class SessionManager with WidgetsBindingObserver {
+class SessionManager with WidgetsBindingObserver, ChangeNotifier {
   static final SessionManager _instance = SessionManager._internal();
   factory SessionManager() => _instance;
   SessionManager._internal();
@@ -20,6 +24,7 @@ class SessionManager with WidgetsBindingObserver {
   DateTime? _lastUnlockTime;
   int _validationFailures = 0;
   String? _currentSessionId;
+  Map<String, dynamic>? _preservedModelContext;
 
   final StreamController<void> _resumeStream =
       StreamController<void>.broadcast();
@@ -30,6 +35,18 @@ class SessionManager with WidgetsBindingObserver {
   DateTime? get lastUnlockTime => _lastUnlockTime;
   int get validationFailures => _validationFailures;
   String? get currentSessionId => _currentSessionId;
+
+  /// Preserves AI context during model fallback or session transitions.
+  void preserveModelContext(Map<String, dynamic> context) {
+    _preservedModelContext = context;
+  }
+
+  /// Retrieves and clears preserved AI context.
+  Map<String, dynamic>? consumePreservedContext() {
+    final ctx = _preservedModelContext;
+    _preservedModelContext = null;
+    return ctx;
+  }
 
   void trackValidationFailure() {
     _validationFailures++;
@@ -43,6 +60,10 @@ class SessionManager with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _lastUnlockTime = DateTime.now();
     _currentSessionId = const Uuid().v4();
+
+    // Initialize platform detector
+    PlatformDetector().getCapabilities();
+
     final auditService = LocalAuditService(LocalStorageService(), this);
     auditService.log(
       action: 'session_start',
@@ -58,6 +79,11 @@ class SessionManager with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _timeoutTimer?.cancel();
     _timeoutTimer = null;
+    _releaseAIResources();
+  }
+
+  void _releaseAIResources() {
+    LLMEngine().dispose();
   }
 
   void resetActivity() {
@@ -117,6 +143,7 @@ class SessionManager with WidgetsBindingObserver {
     // Purge temporary files that are not preserved
     await TempFileManager().purgeAll(reason: 'background_pause');
     await LocalAuditService(LocalStorageService(), this).runDailyCleanup();
+    _releaseAIResources();
   }
 
   Future<void> lockImmediately() async {
@@ -134,6 +161,7 @@ class SessionManager with WidgetsBindingObserver {
 
     _isLocked = true;
     _timeoutTimer?.cancel();
+    notifyListeners();
     await LocalAuditService(LocalStorageService(), this).log(
       action: 'session_lock',
       details: {'reason': 'timeout'},
@@ -154,6 +182,7 @@ class SessionManager with WidgetsBindingObserver {
       _isLocked = false;
       _lastUnlockTime = DateTime.now();
       _currentSessionId = const Uuid().v4();
+      notifyListeners();
       await LocalAuditService(LocalStorageService(), this).log(
         action: 'session_unlock',
         details: {'sessionId': _currentSessionId ?? ''},

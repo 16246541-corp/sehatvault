@@ -1,0 +1,120 @@
+import Cocoa
+import FlutterMacOS
+
+@main
+class AppDelegate: FlutterAppDelegate {
+  var statusItem: NSStatusItem?
+  var trayChannel: FlutterMethodChannel?
+  var notificationChannel: FlutterMethodChannel?
+
+  override func applicationDidFinishLaunching(_ notification: Notification) {
+    let controller = mainFlutterWindow?.contentViewController as! FlutterViewController
+    trayChannel = FlutterMethodChannel(name: "com.sehatlocker/system_tray", binaryMessenger: controller.engine.binaryMessenger)
+    
+    trayChannel?.setMethodCallHandler { [weak self] (call, result) in
+      switch call.method {
+      case "initTray":
+        self?.setupTray(arguments: call.arguments as? [String: Any])
+        result(nil)
+      case "updateTray":
+        self?.updateTray(arguments: call.arguments as? [String: Any])
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+
+    notificationChannel = FlutterMethodChannel(name: "com.sehatlocker/desktop_notifications", binaryMessenger: controller.engine.binaryMessenger)
+    notificationChannel?.setMethodCallHandler { (call, result) in
+      switch call.method {
+      case "isDoNotDisturbEnabled":
+        let isDnd = DistributedNotificationCenter.default().publisher(for: NSNotification.Name("com.apple.notificationcenter.notdisturbstatechanged")).description.contains("1")
+        // Note: The above is a bit hacky. A more robust way to check DND on macOS:
+        let dndEnabled = CFPreferencesCopyAppValue("doNotDisturb" as CFString, "com.apple.notificationcenterui" as CFString) as? Bool ?? false
+        result(dndEnabled)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+    
+    super.applicationDidFinishLaunching(notification)
+  }
+
+  override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    return false
+  }
+
+  private func setupTray(arguments: [String: Any]?) {
+    if statusItem == nil {
+      statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+      statusItem?.button?.image = NSImage(named: NSImage.networkName) // Placeholder
+      statusItem?.button?.image?.isTemplate = true
+    }
+    
+    if let tooltip = arguments?["tooltip"] as? String {
+      statusItem?.button?.toolTip = tooltip
+    }
+  }
+
+  private func updateTray(arguments: [String: Any]?) {
+    guard let statusItem = statusItem else { return }
+    
+    if let tooltip = arguments?["tooltip"] as? String {
+      statusItem.button?.toolTip = tooltip
+    }
+    
+    // Update Icon based on recording state
+    if let recordingState = arguments?["recordingState"] as? String {
+      switch recordingState {
+      case "recording":
+        statusItem.button?.image = NSImage(named: NSImage.touchBarRecordStartTemplateName)
+      case "paused":
+        statusItem.button?.image = NSImage(named: NSImage.touchBarPauseTemplateName)
+      default:
+        statusItem.button?.image = NSImage(named: NSImage.networkName)
+      }
+      statusItem.button?.image?.isTemplate = true
+    }
+
+    // Build Menu
+    if let menuItems = arguments?["menuItems"] as? [[String: Any]] {
+      let menu = NSMenu()
+      for item in menuItems {
+        if let type = item["type"] as? String, type == "separator" {
+          menu.addItem(NSMenuItem.separator())
+          continue
+        }
+        
+        let label = item["label"] as? String ?? ""
+        let id = item["id"] as? String ?? ""
+        let enabled = item["enabled"] as? Bool ?? true
+        
+        let menuItem = NSMenuItem(title: label, action: #selector(menuItemClicked(_:)), keyEquivalent: "")
+        menuItem.target = self
+        menuItem.representedObject = id
+        menuItem.isEnabled = enabled
+        
+        // Handle shortcuts if provided
+        if let shortcut = item["shortcut"] as? String {
+            if shortcut.contains("cmd+") {
+                menuItem.keyEquivalent = String(shortcut.last!)
+                menuItem.keyEquivalentModifierMask = .command
+            }
+        }
+        
+        menu.addItem(menuItem)
+      }
+      statusItem.menu = menu
+    }
+  }
+
+  @objc func menuItemClicked(_ sender: NSMenuItem) {
+    if let id = sender.representedObject as? String {
+      if id == "quit" {
+        NSApp.terminate(nil)
+      } else {
+        channel?.invokeMethod("onTrayMenuItemClick", arguments: id)
+      }
+    }
+  }
+}

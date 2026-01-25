@@ -4,10 +4,12 @@ import 'package:build_runner_core/build_runner_core.dart' as _i1;
 import 'package:hive_generator/hive_generator.dart' as _i2;
 import 'package:source_gen/builder.dart' as _i3;
 import 'package:objectbox_generator/objectbox_generator.dart' as _i4;
-import 'package:build_resolvers/builder.dart' as _i5;
-import 'dart:isolate' as _i6;
-import 'package:build_runner/build_runner.dart' as _i7;
-import 'dart:io' as _i8;
+import 'package:mockito/src/builder.dart' as _i5;
+import 'package:build_config/build_config.dart' as _i6;
+import 'package:build_resolvers/builder.dart' as _i7;
+import 'dart:isolate' as _i8;
+import 'package:build_runner/build_runner.dart' as _i9;
+import 'dart:io' as _i10;
 
 final _builders = <_i1.BuilderApplication>[
   _i1.apply(
@@ -37,8 +39,15 @@ final _builders = <_i1.BuilderApplication>[
     hideOutput: false,
   ),
   _i1.apply(
+    r'mockito:mockBuilder',
+    [_i5.buildMocks],
+    _i1.toDependentsOf(r'mockito'),
+    hideOutput: false,
+    defaultGenerateFor: const _i6.InputSet(include: [r'test/**']),
+  ),
+  _i1.apply(
     r'build_resolvers:transitive_digests',
-    [_i5.transitiveDigestsBuilder],
+    [_i7.transitiveDigestsBuilder],
     _i1.toAllPackages(),
     isOptional: true,
     hideOutput: true,
@@ -46,7 +55,7 @@ final _builders = <_i1.BuilderApplication>[
   ),
   _i1.applyPostProcess(
     r'build_resolvers:transitive_digest_cleanup',
-    _i5.transitiveDigestCleanup,
+    _i7.transitiveDigestCleanup,
   ),
   _i1.applyPostProcess(
     r'source_gen:part_cleanup',
@@ -55,12 +64,12 @@ final _builders = <_i1.BuilderApplication>[
 ];
 void main(
   List<String> args, [
-  _i6.SendPort? sendPort,
+  _i8.SendPort? sendPort,
 ]) async {
-  var result = await _i7.run(
+  var result = await _i9.run(
     args,
     _builders,
   );
   sendPort?.send(result);
-  _i8.exitCode = result;
+  _i10.exitCode = result;
 }
