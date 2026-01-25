@@ -43,6 +43,9 @@ class DoctorConversation extends HiveObject {
   @HiveField(12)
   final DateTime? complianceReviewDate;
 
+  @HiveField(13)
+  final String? modelId;
+
   DoctorConversation({
     required this.id,
     required this.title,
@@ -57,6 +60,7 @@ class DoctorConversation extends HiveObject {
     this.editedAt,
     this.complianceVersion,
     this.complianceReviewDate,
+    this.modelId,
   });
 }
 

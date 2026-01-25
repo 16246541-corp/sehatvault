@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import '../services/model_quantization_service.dart';
 
 part 'model_metadata.g.dart';
 
@@ -13,9 +14,21 @@ class ModelMetadata extends HiveObject {
   @HiveField(2)
   final DateTime releaseDate;
 
+  @HiveField(3)
+  final QuantizationFormat quantization;
+
+  @HiveField(4)
+  final String? signature;
+
+  @HiveField(5)
+  final String? publicKey;
+
   ModelMetadata({
     required this.version,
     required this.checksum,
     required this.releaseDate,
+    this.quantization = QuantizationFormat.q4_k_m,
+    this.signature,
+    this.publicKey,
   });
 }

@@ -13,6 +13,9 @@ import '../widgets/design/emergency_stop_button.dart';
 import '../utils/design_constants.dart';
 import '../widgets/ai/model_info_panel.dart';
 import '../widgets/ai/token_usage_indicator.dart';
+import '../widgets/compliance/knowledge_cutoff_notice.dart';
+import '../models/model_option.dart';
+import '../services/medical_field_extractor.dart';
 import '../services/conversation_recorder_service.dart';
 import '../services/transcription_service.dart';
 import '../services/follow_up_extractor.dart';
@@ -258,6 +261,9 @@ class _AIScreenState extends State<AIScreen> {
       final transcriptionResult =
           await _transcriptionService.transcribeAudio(encryptedFile);
 
+      // Check for dates after knowledge cutoff
+      _checkTranscriptionForOutdatedKnowledge(transcriptionResult.fullText);
+
       // 2. Extract Items
       final conversationId = const Uuid().v4();
       final items = _followUpExtractor.extractFromTranscript(
@@ -302,6 +308,7 @@ class _AIScreenState extends State<AIScreen> {
         segments: transcriptionResult.segments,
         complianceVersion: '1.0',
         complianceReviewDate: DateTime.now(),
+        modelId: storageService.getAppSettings().selectedModelId,
       );
 
       await storageService.saveDoctorConversation(conversation);
@@ -556,6 +563,7 @@ class _AIScreenState extends State<AIScreen> {
                                 const SizedBox(
                                     height: DesignConstants.sectionSpacing),
                                 const ModelInfoPanel(compact: true),
+                                _buildKnowledgeCutoffNotice(),
                                 const SizedBox(
                                     height: DesignConstants.sectionSpacing),
                                 Text(
@@ -644,6 +652,120 @@ class _AIScreenState extends State<AIScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _checkTranscriptionForOutdatedKnowledge(String text) {
+    final settings = storageService.getAppSettings();
+    final modelId = settings.selectedModelId;
+    final model = ModelOption.availableModels.firstWhere(
+      (m) => m.id == modelId,
+      orElse: () => ModelOption.availableModels.first,
+    );
+
+    if (model.knowledgeCutoffDate == null) return;
+
+    final extracted = MedicalFieldExtractor.extractDates(text);
+    final dates = extracted['dates'] as List;
+
+    bool hasRecentDate = false;
+    for (var dateEntry in dates) {
+      try {
+        final dateValue = dateEntry['value'] as String;
+        // Simple date parsing attempt
+        DateTime? date;
+        if (dateValue.contains('-')) {
+          date = DateTime.tryParse(dateValue);
+        } else if (dateValue.contains('/')) {
+          final parts = dateValue.split('/');
+          if (parts.length == 3) {
+            // Assume DD/MM/YYYY or MM/DD/YYYY - this is a simplification
+            final y = int.tryParse(parts[2]);
+            if (y != null) {
+              date = DateTime(y);
+            }
+          }
+        }
+
+        if (date != null && date.isAfter(model.knowledgeCutoffDate!)) {
+          hasRecentDate = true;
+          break;
+        }
+      } catch (_) {}
+    }
+
+    if (hasRecentDate) {
+      // Show warning or trigger re-show of cutoff notice
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Note: This conversation mentions dates after ${model.name}\'s knowledge cutoff.'),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Details',
+              onPressed: () {
+                // Show a dialog or expand the notice
+                _showCutoffDetailsDialog(model);
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showCutoffDetailsDialog(ModelOption model) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Knowledge Cutoff Information'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            KnowledgeCutoffNotice(model: model, forceShow: true),
+            const SizedBox(height: 16),
+            const Text(
+              'The AI model used for this analysis has a knowledge cutoff date. It may not be aware of medical research or guidelines published after this date.',
+              style: TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKnowledgeCutoffNotice() {
+    final settings = storageService.getAppSettings();
+    final modelId = settings.selectedModelId;
+    final model = ModelOption.availableModels.firstWhere(
+      (m) => m.id == modelId,
+      orElse: () => ModelOption.availableModels.first,
+    );
+
+    final isDismissed =
+        settings.dismissedKnowledgeCutoffModelIds.contains(modelId);
+
+    if (isDismissed) {
+      return const SizedBox.shrink();
+    }
+
+    return KnowledgeCutoffNotice(
+      model: model,
+      onDismiss: () {
+        final newSettings = storageService.getAppSettings();
+        if (!newSettings.dismissedKnowledgeCutoffModelIds.contains(modelId)) {
+          newSettings.dismissedKnowledgeCutoffModelIds.add(modelId);
+          newSettings.save();
+          setState(() {});
+        }
+      },
     );
   }
 

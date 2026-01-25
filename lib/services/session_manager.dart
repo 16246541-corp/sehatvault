@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'llm_engine.dart';
 import 'model_fallback_service.dart';
+import 'model_manager.dart';
 import '../services/local_storage_service.dart';
 import '../services/conversation_recorder_service.dart';
 import '../services/temp_file_manager.dart';
 import '../services/local_audit_service.dart';
 import '../services/platform_detector.dart';
 import '../services/window_manager_service.dart';
+import 'model_warmup_service.dart';
+import '../models/generation_parameters.dart';
 import '../screens/lock_screen.dart';
 import '../widgets/education/education_modal.dart';
 
@@ -25,6 +28,7 @@ class SessionManager with WidgetsBindingObserver, ChangeNotifier {
   int _validationFailures = 0;
   String? _currentSessionId;
   Map<String, dynamic>? _preservedModelContext;
+  GenerationParameters? _temporaryGenerationParameters;
 
   final StreamController<void> _resumeStream =
       StreamController<void>.broadcast();
@@ -48,6 +52,22 @@ class SessionManager with WidgetsBindingObserver, ChangeNotifier {
     return ctx;
   }
 
+  /// Sets temporary generation parameters for the current session.
+  void setTemporaryGenerationParameters(GenerationParameters params) {
+    _temporaryGenerationParameters = params;
+    notifyListeners();
+  }
+
+  /// Gets temporary generation parameters if set.
+  GenerationParameters? get temporaryGenerationParameters =>
+      _temporaryGenerationParameters;
+
+  /// Clears temporary generation parameters.
+  void clearTemporaryGenerationParameters() {
+    _temporaryGenerationParameters = null;
+    notifyListeners();
+  }
+
   void trackValidationFailure() {
     _validationFailures++;
   }
@@ -61,8 +81,9 @@ class SessionManager with WidgetsBindingObserver, ChangeNotifier {
     _lastUnlockTime = DateTime.now();
     _currentSessionId = const Uuid().v4();
 
-    // Initialize platform detector
+    // Initialize platform detector and model manager
     PlatformDetector().getCapabilities();
+    ModelManager.init();
 
     final auditService = LocalAuditService(LocalStorageService(), this);
     auditService.log(
@@ -83,6 +104,11 @@ class SessionManager with WidgetsBindingObserver, ChangeNotifier {
   }
 
   void _releaseAIResources() {
+    final warmupService = ModelWarmupService();
+    if (warmupService.isWarmupActive) {
+      debugPrint('Skipping AI resource release: Warm-up in progress');
+      return;
+    }
     LLMEngine().dispose();
   }
 

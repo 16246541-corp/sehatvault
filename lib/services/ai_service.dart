@@ -16,13 +16,17 @@ import 'validation/rules/diagnostic_language_rule.dart';
 import 'prompt_template_service.dart';
 import 'model_fallback_service.dart';
 import 'medical_field_extractor.dart';
+import 'ai_recovery_service.dart';
 import 'ai_middleware/output_pipeline.dart';
 import 'ai_middleware/pipeline_stage.dart';
 import 'ai_middleware/stages/safety_filter_stage.dart';
 import 'ai_middleware/stages/validation_stage.dart';
 import 'ai_middleware/stages/citation_stage.dart';
+import 'ai_middleware/stages/hallucination_validation_stage.dart';
 import 'ai_middleware/pipeline_debugger.dart';
 import 'safety_filter_service.dart';
+import 'hallucination_validation_service.dart';
+import 'conversation_memory_service.dart';
 
 class AIService {
   static final AIService _instance = AIService.internal();
@@ -39,7 +43,11 @@ class AIService {
   final CitationService _citationService =
       CitationService(LocalStorageService());
   final PromptTemplateService _promptTemplateService = PromptTemplateService();
+  final HallucinationValidationService _hallucinationService =
+      HallucinationValidationService();
+  final ConversationMemoryService _memoryService = ConversationMemoryService();
   final OutputPipeline _pipeline = OutputPipeline();
+  final AIRecoveryService _recoveryService = AIRecoveryService();
 
   void _initRules() {
     // In a real app, load from JSON. For now, add manually.
@@ -59,7 +67,7 @@ class AIService {
       'parallel_validation',
       [
         ValidationStage(_rules),
-        // Add other independent stages here if needed
+        HallucinationValidationStage(_hallucinationService),
       ],
       priority: 20,
     ));
@@ -74,18 +82,55 @@ class AIService {
   /// [history] is the conversation history for context.
   /// Returns a Stream of [ValidationResult].
   Stream<ValidationResult> generateResponse(String prompt,
-      {List<Map<String, String>> history = const []}) async* {
-    // 1. Get current model and ensure it's loaded
+      {String? conversationId,
+      List<Map<String, String>> history = const []}) async* {
+    // 1. Manage Memory if conversationId is provided
+    List<Map<String, String>> activeHistory = history;
+    if (conversationId != null) {
+      await _memoryService.addEntry(
+        conversationId: conversationId,
+        role: 'user',
+        content: prompt,
+      );
+      activeHistory = _memoryService.getContext(conversationId);
+    }
+
+    // 2. Get current model and ensure it's loaded
     ModelOption activeModel = await ModelManager.getRecommendedModel();
     final llmEngine = LLMEngine();
 
     try {
       await llmEngine.initialize(activeModel);
+      _recoveryService.resetRetryCount(); // Reset on success
     } catch (e) {
       SecureLogger.log(
           "Failed to initialize LLMEngine in generateResponse: $e");
-      yield ValidationResult.blocked(
-          "AI engine failed to initialize. Please check device storage and memory.");
+
+      final aiError = _recoveryService.classifyError(e);
+
+      // Attempt automatic recovery with backoff if possible
+      if (aiError.isRecoverable &&
+          await _recoveryService.shouldRetryWithBackoff()) {
+        yield* generateResponse(prompt,
+            conversationId: conversationId, history: history);
+        return;
+      }
+
+      // If retry fails or not recoverable, try model fallback
+      final fallbackModel = await ModelFallbackService().evaluateFallback(
+        activeModel,
+        error: e is LLMEngineException ? e : null,
+      );
+
+      if (fallbackModel != null) {
+        _sessionManager.preserveModelContext(
+            ModelFallbackService().captureContext(llmEngine));
+        yield* generateResponse(prompt,
+            conversationId: conversationId, history: history);
+        return;
+      }
+
+      yield ValidationResult.blocked(aiError.userFriendlyMessage);
       return;
     }
 
@@ -93,6 +138,9 @@ class AIService {
     if (llmEngine.currentModel != null) {
       activeModel = llmEngine.currentModel!;
     }
+
+    // Mark model as used to prevent retention unloading
+    ModelManager.markAsUsed();
 
     // 2. Prepare Context using PromptTemplateService
     final medicalData = MedicalFieldExtractor.extractLabValues(prompt);
@@ -109,30 +157,40 @@ class AIService {
     );
 
     final managedPrompt =
-        llmEngine.manageContext(systemPrompt, history, prompt);
+        llmEngine.manageContext(systemPrompt, activeHistory, prompt);
 
     // 3. Stream generation from LLMEngine
     Stream<String>? llmStream;
     try {
+      ModelManager.markAsUsed();
       llmStream = llmEngine.generate(managedPrompt);
     } catch (e) {
-      if (e is LLMEngineException) {
-        final fallbackModel = await ModelFallbackService().evaluateFallback(
-          activeModel,
-          error: e,
-        );
+      final aiError = _recoveryService.classifyError(e);
 
-        if (fallbackModel != null) {
-          _sessionManager.preserveModelContext(
-              ModelFallbackService().captureContext(llmEngine));
-          // Recursive call with fallback model already initialized in evaluateFallback logic if integrated?
-          // Actually ModelManager.loadModel handles the fallback.
-          // For simplicity, we re-trigger generation which will pick up the new model via initialize()
-          yield* generateResponse(prompt, history: history);
-          return;
-        }
+      if (aiError.isRecoverable &&
+          await _recoveryService.shouldRetryWithBackoff()) {
+        yield* generateResponse(prompt,
+            conversationId: conversationId, history: history);
+        return;
       }
-      rethrow;
+
+      final fallbackModel = await ModelFallbackService().evaluateFallback(
+        activeModel,
+        error: e is LLMEngineException ? e : null,
+      );
+
+      if (fallbackModel != null) {
+        _sessionManager.preserveModelContext(
+            ModelFallbackService().captureContext(llmEngine));
+        yield* generateResponse(prompt,
+            conversationId: conversationId, history: history);
+        return;
+      }
+
+      // Final fallback: Graceful degradation message
+      yield ValidationResult.modified(
+          _recoveryService.getGracefulDegradationResponse(aiError));
+      return;
     }
 
     String accumulatedResponse = "";
@@ -144,7 +202,7 @@ class AIService {
       final context = await _pipeline.process(
         prompt,
         accumulatedResponse,
-        history: history,
+        history: activeHistory,
       );
 
       // Performance and Debugging
@@ -166,12 +224,29 @@ class AIService {
         // If it was a major modification (like a rewrite), we might want to stop streaming
         // and just show the final rewritten content.
         if (context.metadata['safety_triggered'] == true) {
+          // Save assistant response to memory before returning
+          if (conversationId != null) {
+            await _memoryService.addEntry(
+              conversationId: conversationId,
+              role: 'assistant',
+              content: context.content,
+            );
+          }
           return;
         }
       } else {
         // If valid and unmodified, yield the chunk
         yield ValidationResult.valid(chunk);
       }
+    }
+
+    // Save final assistant response to memory
+    if (conversationId != null && accumulatedResponse.isNotEmpty) {
+      await _memoryService.addEntry(
+        conversationId: conversationId,
+        role: 'assistant',
+        content: accumulatedResponse,
+      );
     }
   }
 

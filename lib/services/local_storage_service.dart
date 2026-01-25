@@ -18,6 +18,9 @@ import '../models/citation.dart';
 import '../models/issue_report.dart';
 import '../models/consent_entry.dart';
 import '../models/local_audit_entry.dart';
+import '../models/conversation_memory.dart';
+import '../models/ai_usage_metric.dart';
+import '../models/batch_task.dart';
 import 'platform_detector.dart';
 
 /// Local Storage Service for health records
@@ -37,6 +40,9 @@ class LocalStorageService {
   static const String _citationsBox = 'citations';
   static const String _consentEntriesBox = 'consent_entries';
   static const String _localAuditEntriesBox = 'local_audit_entries';
+  static const String _conversationMemoryBox = 'conversation_memory';
+  static const String _batchTasksBox = 'batch_tasks';
+  static const String _modelManifestsBox = 'model_manifests';
   static const String _appSettingsKey = 'app_settings_object';
   static const String _autoDeleteOriginalKey = 'auto_delete_original';
 
@@ -101,6 +107,24 @@ class LocalStorageService {
     }
     if (!Hive.isAdapterRegistered(17)) {
       Hive.registerAdapter(LocalAuditEntryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(25)) {
+      Hive.registerAdapter(ConversationMemoryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(26)) {
+      Hive.registerAdapter(MemoryEntryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(32)) {
+      Hive.registerAdapter(AIUsageMetricAdapter());
+    }
+    if (!Hive.isAdapterRegistered(33)) {
+      Hive.registerAdapter(BatchTaskStatusAdapter());
+    }
+    if (!Hive.isAdapterRegistered(34)) {
+      Hive.registerAdapter(BatchTaskPriorityAdapter());
+    }
+    if (!Hive.isAdapterRegistered(35)) {
+      Hive.registerAdapter(BatchTaskAdapter());
     }
 
     // Get or create encryption key
@@ -169,6 +193,21 @@ class LocalStorageService {
 
     await Hive.openBox<LocalAuditEntry>(
       _localAuditEntriesBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<ConversationMemory>(
+      _conversationMemoryBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<BatchTask>(
+      _batchTasksBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<ModelMetadata>(
+      _modelManifestsBox,
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
 
@@ -255,6 +294,62 @@ class LocalStorageService {
 
   /// Get record count
   int get recordCount => _recordsBox.length;
+
+  // MARK: - Conversation Memory
+
+  /// Get conversation memory for a specific ID
+  ConversationMemory? getConversationMemory(String conversationId) {
+    final box = Hive.box<ConversationMemory>(_conversationMemoryBox);
+    return box.get(conversationId);
+  }
+
+  /// Save conversation memory
+  Future<void> saveConversationMemory(ConversationMemory memory) async {
+    final box = Hive.box<ConversationMemory>(_conversationMemoryBox);
+    await box.put(memory.conversationId, memory);
+  }
+
+  /// Delete conversation memory
+  Future<void> deleteConversationMemory(String conversationId) async {
+    final box = Hive.box<ConversationMemory>(_conversationMemoryBox);
+    await box.delete(conversationId);
+  }
+
+  /// Get all conversation memories
+  List<ConversationMemory> getAllConversationMemories() {
+    final box = Hive.box<ConversationMemory>(_conversationMemoryBox);
+    return box.values.toList();
+  }
+
+  // MARK: - Batch Tasks
+
+  /// Get batch tasks box
+  Box<BatchTask> get _batchTasks => Hive.box<BatchTask>(_batchTasksBox);
+
+  /// Save a batch task
+  Future<void> saveBatchTask(BatchTask task) async {
+    await _batchTasks.put(task.id, task);
+  }
+
+  /// Get all batch tasks
+  List<BatchTask> getAllBatchTasks() {
+    if (!Hive.isBoxOpen(_batchTasksBox)) return [];
+    return _batchTasks.values.toList();
+  }
+
+  /// Delete a batch task
+  Future<void> deleteBatchTask(String id) async {
+    await _batchTasks.delete(id);
+  }
+
+  /// Clear all batch tasks
+  Future<void> clearBatchTasks() async {
+    await _batchTasks.clear();
+  }
+
+  /// Get listenable for batch tasks
+  ValueListenable<Box<BatchTask>> get batchTasksListenable =>
+      _batchTasks.listenable();
 
   // MARK: - Settings
 

@@ -11,6 +11,8 @@ import '../widgets/compliance/fda_disclaimer_widget.dart';
 import '../widgets/design/recording_disclaimer.dart';
 import '../widgets/auth_gate.dart';
 import '../services/risk_mitigation_service.dart';
+import '../services/conversation_memory_service.dart';
+import '../models/conversation_memory.dart';
 
 class ConversationTranscriptScreen extends StatefulWidget {
   final DoctorConversation conversation;
@@ -26,9 +28,14 @@ class ConversationTranscriptScreen extends StatefulWidget {
 }
 
 class _ConversationTranscriptScreenState
-    extends State<ConversationTranscriptScreen> {
+    extends State<ConversationTranscriptScreen>
+    with SingleTickerProviderStateMixin {
   late List<ConversationSegment> _segments;
   bool _hasChanges = false;
+
+  late TabController _tabController;
+  ConversationMemory? _memory;
+  bool _isLoadingMemory = true;
 
   // Undo/Redo
   final List<List<ConversationSegment>> _undoStack = [];
@@ -69,6 +76,19 @@ class _ConversationTranscriptScreenState
     _initAudio();
     _checkAutoDeleteStatus();
     _loadRiskQuestions();
+    _loadMemory();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  Future<void> _loadMemory() async {
+    final memory =
+        LocalStorageService().getConversationMemory(widget.conversation.id);
+    if (mounted) {
+      setState(() {
+        _memory = memory;
+        _isLoadingMemory = false;
+      });
+    }
   }
 
   Future<void> _loadRiskQuestions() async {
@@ -368,6 +388,18 @@ class _ConversationTranscriptScreenState
                     onPressed: () => _saveChanges(),
                   ),
               ],
+              bottom: TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(
+                      text: 'Transcript',
+                      icon: Icon(Icons.description_outlined)),
+                  Tab(text: 'AI Memory', icon: Icon(Icons.psychology_outlined)),
+                ],
+                indicatorColor: theme.primaryColor,
+                labelColor: theme.primaryColor,
+                unselectedLabelColor: Colors.white70,
+              ),
             ),
             bottomNavigationBar: BottomAppBar(
               color: theme.colorScheme.surface.withOpacity(0.9),
@@ -431,111 +463,313 @@ class _ConversationTranscriptScreenState
                     ],
                   ),
                 Expanded(
-                  child: _segments.isEmpty
-                      ? Center(
-                          child: Text(
-                            "No transcript available",
-                            style: theme.textTheme.bodyLarge
-                                ?.copyWith(color: Colors.white70),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _segments.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == 0) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 24),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    RecordingDisclaimer(
-                                      initialValue: widget.conversation
-                                              .complianceReviewDate !=
-                                          null,
-                                      onConfirmationChanged: (_) {},
-                                    ),
-                                    const SizedBox(height: 16),
-                                    FdaDisclaimerWidget(),
-                                    if (_riskQuestions.isNotEmpty) ...[
-                                      const SizedBox(height: 16),
-                                      Container(
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          color: Colors.amber.shade50
-                                              .withOpacity(0.9),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                              color: Colors.amber.shade200),
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // Tab 1: Transcript
+                      _segments.isEmpty
+                          ? Center(
+                              child: Text(
+                                "No transcript available",
+                                style: theme.textTheme.bodyLarge
+                                    ?.copyWith(color: Colors.white70),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _segments.length + 1,
+                              itemBuilder: (context, index) {
+                                if (index == 0) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 24),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        RecordingDisclaimer(
+                                          initialValue: widget.conversation
+                                                  .complianceReviewDate !=
+                                              null,
+                                          onConfirmationChanged: (_) {},
                                         ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
+                                        const SizedBox(height: 16),
+                                        FdaDisclaimerWidget(),
+                                        if (_riskQuestions.isNotEmpty) ...[
+                                          const SizedBox(height: 16),
+                                          Container(
+                                            padding: const EdgeInsets.all(16),
+                                            decoration: BoxDecoration(
+                                              color: Colors.amber.shade50
+                                                  .withOpacity(0.9),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                  color: Colors.amber.shade200),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                Icon(Icons.lightbulb_outline,
-                                                    color:
-                                                        Colors.amber.shade900),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  'Suggested Questions',
-                                                  style: theme
-                                                      .textTheme.titleMedium
-                                                      ?.copyWith(
-                                                    color:
-                                                        Colors.amber.shade900,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                        Icons.lightbulb_outline,
+                                                        color: Colors
+                                                            .amber.shade900),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      'Doctor-Patient Discussion Guide',
+                                                      style: theme
+                                                          .textTheme.titleSmall
+                                                          ?.copyWith(
+                                                              color: Colors
+                                                                  .amber
+                                                                  .shade900,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                    ),
+                                                  ],
                                                 ),
+                                                const SizedBox(height: 12),
+                                                ..._riskQuestions
+                                                    .map((q) => Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  bottom: 8.0),
+                                                          child: Row(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text('• ',
+                                                                  style: theme
+                                                                      .textTheme
+                                                                      .bodyMedium
+                                                                      ?.copyWith(
+                                                                          color: Colors
+                                                                              .amber
+                                                                              .shade900,
+                                                                          fontWeight:
+                                                                              FontWeight.bold)),
+                                                              Expanded(
+                                                                  child: Text(q,
+                                                                      style: theme
+                                                                          .textTheme
+                                                                          .bodyMedium
+                                                                          ?.copyWith(
+                                                                              color: Colors.amber.shade900))),
+                                                            ],
+                                                          ),
+                                                        )),
                                               ],
                                             ),
-                                            const SizedBox(height: 8),
-                                            ..._riskQuestions
-                                                .map((q) => Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 8),
-                                                      child: Row(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text('• ',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .amber
-                                                                      .shade900)),
-                                                          Expanded(
-                                                            child: Text(
-                                                              q,
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .amber
-                                                                      .shade900),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    )),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              );
-                            }
-                            final segment = _segments[index - 1];
-                            return _buildSegmentItem(index - 1, segment);
-                          },
-                        ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  );
+                                }
+                                final segment = _segments[index - 1];
+                                return _buildSegmentItem(index - 1, segment);
+                              },
+                            ),
+                      // Tab 2: AI Memory
+                      _buildMemoryHistoryTab(theme),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
         ));
+  }
+
+  Widget _buildMemoryHistoryTab(ThemeData theme) {
+    if (_isLoadingMemory) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_memory == null || _memory!.entries.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.psychology_outlined, size: 64, color: Colors.white24),
+            const SizedBox(height: 16),
+            Text(
+              "No AI memory history for this conversation",
+              style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white70),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Context is generated when you ask questions about this recording.",
+              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        _buildMemoryMetricsHeader(theme),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: _memory!.entries.length,
+            itemBuilder: (context, index) {
+              final entry = _memory!.entries[index];
+              return _buildMemoryEntryItem(entry, theme);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMemoryMetricsHeader(ThemeData theme) {
+    final metrics = _memory!.metrics;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildMetricItem(
+            theme,
+            label: 'Messages',
+            value: '${metrics['message_count'] ?? 0}',
+            icon: Icons.message_outlined,
+          ),
+          _buildMetricItem(
+            theme,
+            label: 'Tokens',
+            value: '${metrics['total_tokens'] ?? 0}',
+            icon: Icons.token_outlined,
+          ),
+          _buildMetricItem(
+            theme,
+            label: 'Redacted',
+            value: '${metrics['redaction_count'] ?? 0}',
+            icon: Icons.privacy_tip_outlined,
+            color: (metrics['redaction_count'] ?? 0) > 0 ? Colors.orange : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricItem(ThemeData theme,
+      {required String label,
+      required String value,
+      required IconData icon,
+      Color? color}) {
+    return Column(
+      children: [
+        Icon(icon, size: 16, color: color ?? Colors.white70),
+        const SizedBox(height: 4),
+        Text(value,
+            style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold, color: color ?? Colors.white)),
+        Text(label,
+            style: theme.textTheme.labelSmall?.copyWith(color: Colors.white54)),
+      ],
+    );
+  }
+
+  Widget _buildMemoryEntryItem(MemoryEntry entry, ThemeData theme) {
+    final isAssistant = entry.role == 'assistant';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment:
+            isAssistant ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isAssistant)
+                const Icon(Icons.psychology, size: 14, color: Colors.blue),
+              if (!isAssistant)
+                const Icon(Icons.person, size: 14, color: Colors.green),
+              const SizedBox(width: 4),
+              Text(
+                entry.role.toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isAssistant ? Colors.blue : Colors.green,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatTime(entry.timestamp),
+                style:
+                    theme.textTheme.labelSmall?.copyWith(color: Colors.white38),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isAssistant
+                  ? Colors.blue.withOpacity(0.1)
+                  : Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isAssistant
+                    ? Colors.blue.withOpacity(0.3)
+                    : Colors.green.withOpacity(0.3),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.content,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    fontStyle:
+                        entry.isRedacted ? FontStyle.italic : FontStyle.normal,
+                  ),
+                ),
+                if (entry.isRedacted)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Privacy redacted',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.orange.withOpacity(0.7),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                if (entry.metadata['truncated'] == true)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Context window truncated',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.red.withOpacity(0.7),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(DateTime dt) {
+    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
   }
 
   Widget _buildSegmentItem(int index, ConversationSegment segment) {

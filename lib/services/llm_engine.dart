@@ -6,9 +6,11 @@ import 'package:crypto/crypto.dart';
 import 'package:path_provider/path_provider.dart';
 import '../utils/secure_logger.dart';
 import '../models/model_option.dart';
+import '../models/generation_parameters.dart';
 import 'platform_detector.dart';
 import 'token_counter_service.dart';
 import 'analytics_service.dart';
+import 'generation_parameters_service.dart';
 
 /// Exception thrown by the LLMEngine.
 class LLMEngineException implements Exception {
@@ -129,6 +131,7 @@ class LLMEngine {
       }
 
       // 3. Fallback strategies for low-resource devices
+      _initializationController.add(0.4);
       final contextParams = ContextParams();
       contextParams.nCtx = _maxContextTokens;
 
@@ -145,11 +148,19 @@ class LLMEngine {
             code: 'FILE_NOT_FOUND');
       }
 
+      final genParams = GenerationParametersService().currentParameters;
+      final samplerParams = SamplerParams();
+      samplerParams.temp = genParams.temperature;
+      samplerParams.topP = genParams.topP;
+      samplerParams.topK = genParams.topK;
+      // Note: presence/frequency penalty and seed might need to be handled during generation
+      // depending on llama_cpp_dart version, but setting them here if supported.
+
       final loadCommand = LlamaLoad(
         path: modelPath,
         modelParams: ModelParams(),
         contextParams: contextParams,
-        samplingParams: SamplerParams(),
+        samplingParams: samplerParams,
       );
 
       try {

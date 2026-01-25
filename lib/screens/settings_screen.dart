@@ -16,10 +16,16 @@ import 'biometric_settings_screen.dart';
 import 'security_dashboard_screen.dart';
 import 'desktop_settings_screen.dart';
 import '../services/session_manager.dart';
+import '../services/generation_parameters_service.dart';
+import '../widgets/ai/generation_controls.dart';
+import '../services/model_quantization_service.dart';
+import '../services/model_update_service.dart';
 import 'pin_setup_screen.dart';
 import 'privacy_manifest_screen.dart';
 import 'issue_reporting_review_screen.dart';
 import 'compliance_checklist_screen.dart';
+import 'ai_diagnostics_screen.dart';
+import 'model_license_screen.dart';
 import '../services/keyboard_shortcut_service.dart';
 
 /// Settings Screen - App preferences
@@ -165,6 +171,201 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _showRetentionPolicyDialog(BuildContext context) async {
+    final settings = storageService.getAppSettings();
+    final options = [5, 15, 30, 60, 0]; // 0 means Never
+    int? selectedMinutes = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        return SimpleDialog(
+          title:
+              Text('Model Retention Policy', style: theme.textTheme.titleLarge),
+          backgroundColor: theme.cardColor,
+          children: options.map((mins) {
+            String label =
+                mins == 0 ? 'Keep loaded (Never unload)' : '$mins minutes';
+            return SimpleDialogOption(
+              onPressed: () {
+                Navigator.pop(context, mins);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      settings.modelRetentionMinutes == mins
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(label, style: theme.textTheme.bodyLarge),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    if (selectedMinutes != null &&
+        selectedMinutes != settings.modelRetentionMinutes) {
+      settings.modelRetentionMinutes = selectedMinutes;
+      await storageService.saveAppSettings(settings);
+      setState(() {});
+    }
+  }
+
+  Future<void> _showMemoryDepthDialog(BuildContext context) async {
+    final settings = storageService.getAppSettings();
+    final options = [10, 20, 50, 100];
+    int? selected = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        return SimpleDialog(
+          title: Text('Conversation Memory Depth',
+              style: theme.textTheme.titleLarge),
+          backgroundColor: theme.cardColor,
+          children: options.map((count) {
+            return SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, count),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      settings.aiMaxMessages == count
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text('$count messages', style: theme.textTheme.bodyLarge),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    if (selected != null && selected != settings.aiMaxMessages) {
+      settings.aiMaxMessages = selected;
+      await storageService.saveAppSettings(settings);
+      setState(() {});
+    }
+  }
+
+  Future<void> _showMemoryWindowDialog(BuildContext context) async {
+    final settings = storageService.getAppSettings();
+    final options = [1024, 2048, 4096, 8192];
+    int? selected = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        return SimpleDialog(
+          title:
+              Text('Context Token Window', style: theme.textTheme.titleLarge),
+          backgroundColor: theme.cardColor,
+          children: options.map((tokens) {
+            return SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, tokens),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      settings.aiMaxTokens == tokens
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text('$tokens tokens', style: theme.textTheme.bodyLarge),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    if (selected != null && selected != settings.aiMaxTokens) {
+      settings.aiMaxTokens = selected;
+      await storageService.saveAppSettings(settings);
+      setState(() {});
+    }
+  }
+
+  Future<void> _showQuantizationDialog(BuildContext context) async {
+    final settings = storageService.getAppSettings();
+    final options = QuantizationFormat.values;
+    final service = ModelQuantizationService();
+
+    QuantizationFormat? selected = await showDialog<QuantizationFormat>(
+      context: context,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        return SimpleDialog(
+          title: Text('Model Quantization', style: theme.textTheme.titleLarge),
+          backgroundColor: theme.cardColor,
+          children: options.map((format) {
+            final tradeoffs = service.getTradeoffs(format);
+            return SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, format),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          settings.preferredQuantization == format.name
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_unchecked,
+                          color: theme.colorScheme.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(format.label,
+                            style: theme.textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 32.0, top: 4.0),
+                      child: Text(
+                        tradeoffs.description,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    if (selected != null && selected.name != settings.preferredQuantization) {
+      settings.preferredQuantization = selected.name;
+      await storageService.saveAppSettings(settings);
+      setState(() {});
+    }
+  }
+
   Future<void> _showIssueReportingDialog(BuildContext context) async {
     final TextEditingController controller = TextEditingController();
 
@@ -201,6 +402,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _handleModelUpdateCheck(BuildContext context) async {
+    final updateService = ModelUpdateService();
+    final updates = await updateService.checkForUpdates();
+
+    if (!mounted) return;
+
+    if (updates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All models are up to date and verified.'),
+          backgroundColor: AppTheme.healthGreen,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          title: const Text('Updates Available'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: updates.map((model) {
+              return ListTile(
+                title: Text(model.name),
+                subtitle: Text('New version: v${model.metadata.version}'),
+                trailing: TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    final success = await updateService.performUpdate(model);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(success
+                              ? 'Successfully updated ${model.name}'
+                              : 'Failed to update ${model.name}. Check logs.'),
+                          backgroundColor: success ? Colors.green : Colors.red,
+                        ),
+                      );
+                      setState(() {});
+                    }
+                  },
+                  child: const Text('Update'),
+                ),
+              );
+            }).toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -619,9 +880,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildDivider(context),
                       _buildSettingsItem(
                         context,
+                        icon: Icons.memory_outlined,
+                        title: 'Memory Management',
+                        subtitle:
+                            storageService.getAppSettings().unloadOnLowMemory
+                                ? 'Auto-unload enabled'
+                                : 'Always keep in memory',
+                        trailing: Switch(
+                          value:
+                              storageService.getAppSettings().unloadOnLowMemory,
+                          onChanged: (value) async {
+                            final settings = storageService.getAppSettings();
+                            settings.unloadOnLowMemory = value;
+                            await storageService.saveAppSettings(settings);
+                            setState(() {});
+                          },
+                          activeTrackColor:
+                              AppTheme.accentTeal.withValues(alpha: 0.5),
+                          activeThumbColor: AppTheme.accentTeal,
+                        ),
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.timer_outlined,
+                        title: 'Retention Policy',
+                        subtitle: storageService
+                                    .getAppSettings()
+                                    .modelRetentionMinutes ==
+                                0
+                            ? 'Never unload'
+                            : 'Unload after ${storageService.getAppSettings().modelRetentionMinutes}m idle',
+                        onTap: () => _showRetentionPolicyDialog(context),
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.history_outlined,
+                        title: 'Conversation Memory Depth',
+                        subtitle:
+                            '${storageService.getAppSettings().aiMaxMessages ?? 20} messages retained',
+                        onTap: () => _showMemoryDepthDialog(context),
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.compress_outlined,
+                        title: 'Context Token Window',
+                        subtitle:
+                            '${storageService.getAppSettings().aiMaxTokens ?? 2048} tokens per prompt',
+                        onTap: () => _showMemoryWindowDialog(context),
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
                         icon: Icons.download_outlined,
                         title: 'Download Model',
                         subtitle: 'Get AI model for offline use',
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.update_outlined,
+                        title: 'Check for Model Updates',
+                        subtitle: 'Verify integrity and version compatibility',
+                        onTap: () => _handleModelUpdateCheck(context),
                       ),
                       _buildDivider(context),
                       _buildSettingsItem(
@@ -669,11 +992,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                       ],
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.tune_outlined,
+                        title: 'Advanced Generation Controls',
+                        subtitle: 'Fine-tune AI output parameters',
+                        trailing: Switch(
+                          value: storageService
+                              .getAppSettings()
+                              .advancedAiSettingsEnabled,
+                          onChanged: (value) async {
+                            final settings = storageService.getAppSettings();
+                            settings.advancedAiSettingsEnabled = value;
+                            await storageService.saveAppSettings(settings);
+                            // Also update the service
+                            GenerationParametersService()
+                                .toggleAdvancedSettings(value);
+                            setState(() {});
+                          },
+                          activeTrackColor:
+                              AppTheme.accentTeal.withValues(alpha: 0.5),
+                          activeThumbColor: AppTheme.accentTeal,
+                        ),
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.analytics_outlined,
+                        title: 'AI Usage Analytics',
+                        subtitle: 'Local performance & usage metrics',
+                        trailing: Switch(
+                          value:
+                              storageService.getAppSettings().enableAiAnalytics,
+                          onChanged: (value) async {
+                            final settings = storageService.getAppSettings();
+                            settings.enableAiAnalytics = value;
+                            await storageService.saveAppSettings(settings);
+                            setState(() {});
+                          },
+                          activeTrackColor:
+                              AppTheme.accentTeal.withValues(alpha: 0.5),
+                          activeThumbColor: AppTheme.accentTeal,
+                        ),
+                      ),
+                      if (storageService
+                          .getAppSettings()
+                          .enableAiAnalytics) ...[
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.dashboard_customize_outlined,
+                          title: 'AI Diagnostics Dashboard',
+                          subtitle: 'View performance charts & logs',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const AIDiagnosticsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
                 const ModelInfoPanel(compact: true),
+
+                if (storageService
+                    .getAppSettings()
+                    .advancedAiSettingsEnabled) ...[
+                  const SizedBox(height: 16),
+                  const GenerationControls(),
+                ],
 
                 const SizedBox(height: DesignConstants.sectionSpacing),
 
@@ -795,6 +1188,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             MaterialPageRoute(
                               builder: (context) =>
                                   const PrivacyManifestScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildDivider(context),
+                      _buildSettingsItem(
+                        context,
+                        icon: Icons.gavel_outlined,
+                        title: 'Model Licenses',
+                        subtitle: 'Open-source and usage terms',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const ModelLicenseScreen(),
                             ),
                           );
                         },

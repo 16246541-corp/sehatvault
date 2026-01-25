@@ -1,8 +1,129 @@
 # Changelog - Sehat Locker
 
+## [1.7.0] - 2026-01-26
+
+### Added
+- **Model License Compliance**: Implemented a comprehensive tracking and transparency system for AI model licenses.
+  - Created `ModelLicenseService` for centralized license management, version tracking, and plain language summaries.
+  - Developed `ModelLicenseScreen` with search capability and detailed view of key restrictions and attribution requirements.
+  - Implemented export functionality for legal compliance documentation in `.txt` format.
+  - Integrated license links into `ModelInfoPanel` for contextual access during model selection or use.
+  - Added "Model Licenses" entry point to the "About" section in `SettingsScreen`.
+  - Connected license access and exports to `SecureLogger` for audit-ready compliance tracking.
+  - Updated `ComplianceService` and `DEVELOPER_COMPLIANCE_CHECKLIST.md` with license validation checks.
+- **Model Update Verification System**: Implemented a comprehensive security framework for local AI model updates and integrity.
+  - Created `ModelUpdateService` for offline-first update checking and secure manifest management.
+  - Developed `ModelVerificationService` with cryptographic signature verification (RSA/Ed25519) and SHA-256 integrity checks.
+  - Implemented a tamper-evident verification system that detects model corruption and triggers recovery mechanisms.
+  - Added version compatibility checking to ensure models are compatible with the current app version.
+  - Integrated update status indicators and manual update actions into `ModelInfoPanel`.
+  - Added manual model update verification and integrity checks to the `SettingsScreen`.
+  - Connected verification events to `SecureLogger` for audit-ready security logging.
+  - Implemented secure, encrypted storage for model manifests using Hive.
+- **Model Quantization Support**: Implemented a comprehensive system for local LLM quantization.
+  - Created `ModelQuantizationService` for managing quantization levels, quality assessments, and device compatibility.
+  - Implemented `QuantizationFormat` system with support for 2-bit through 16-bit precision levels (Q2_K to F16).
+  - Added quality vs. performance tradeoff metrics and automatic recommendation engine based on device RAM and CPU.
+  - Updated `ModelOption` to support per-model quantization capability mapping.
+  - Integrated quantization information and tradeoff metrics into `ModelInfoPanel`.
+  - Added quantization preference selection to `SettingsScreen` with educational tooltips.
+  - Updated `ModelWarmupScreen` to provide loading feedback specific to quantization levels.
+  - Implemented disk space and RAM compatibility validation with user warnings.
+  - Added comprehensive testing suite for quantization levels and compatibility logic.
+- **Batch Processing System**: Implemented a robust system for background document processing and storage.
+  - Queue management with priority sorting (High/Normal/Low).
+  - Parallel task processing with resource-aware throttling (Memory & Battery).
+  - Real-time status monitoring with progress tracking and desktop notifications.
+  - Persistence across app restarts using encrypted Hive storage.
+  - Cancellation support for in-progress and pending tasks.
+  - Retry mechanism for failed tasks.
+  - Partial success reporting with detailed error logs.
+  - Seamless integration with DocumentScanner and Vault services.
+  - Created `BatchProcessingService` with queue management, priority-based sorting, and resource throttling.
+  - Implemented `BatchTask` model with Hive persistence and AES encryption support.
+  - Developed `BatchProcessingScreen` for real-time monitoring and management of the processing queue.
+  - Integrated batch processing into `DocumentScannerScreen` for asynchronous document handling.
+  - Added a persistent batch status indicator to the `DocumentsScreen` for background task visibility.
+  - Implemented pause/resume, retry, and cancellation controls for the processing queue.
+  - Integrated with `DesktopNotificationService` for completion alerts.
+  - Added resource-aware processing that throttles based on device capabilities and storage availability.
+- **Conversation Memory Management**: Implemented persistent, privacy-aware conversation history for AI interactions.
+  - Created `ConversationMemoryService` for managing context windows with strategic retention and token limits.
+  - Implemented `ConversationMemory` and `MemoryEntry` Hive models with AES encryption support in `LocalStorageService`.
+  - Added privacy-aware memory with automatic redaction via `SafetyFilterService` integration.
+  - Developed a visual conversation history interface in `ConversationTranscriptScreen` with a dedicated "AI Memory" tab.
+  - Added memory depth controls and context window settings to the `SettingsScreen`.
+  - Integrated memory management into the `AIService` pipeline for contextual AI responses.
+  - Implemented memory usage metrics collection (message count, token usage, redaction count).
+  - Optimized context window handling using `TokenCounterService` for multilingual support.
+  - Added support for session continuity with persistent conversation memory across app restarts.
+- **AI Usage Analytics**: Implemented privacy-focused local performance tracking for AI models.
+  - Created `AIAnalyticsService` for metric logging and storage with AES encryption.
+  - Implemented `AIUsageMetric` Hive model for tracking inference speed, memory usage, and load times.
+  - Developed `AIDiagnosticsScreen` with `fl_chart` visualizations for tokens/sec and peak memory trends.
+  - Added opt-in controls and automatic data retention policies (7, 30, 90 days) in `SettingsScreen`.
+  - Integrated metric logging into `ModelManager` for tracking model load success rates and initialization performance.
+  - Added compliance validation for AI analytics to `ComplianceService` and the developer checklist.
+  - Implemented anonymized data export functionality for performance debugging.
+
+## [1.6.0] - 2026-01-26
+
+### Added
+- **Hallucination Prevention System**: Implemented a multi-layered verification system for AI factual accuracy.
+  - Created `HallucinationValidationService` with adaptive confidence threshold analysis based on content type.
+  - Implemented medical fact verification against the structured `MedicalKnowledgeBase`.
+  - Integrated `HallucinationValidationStage` into the `AIService` output pipeline for real-time verification.
+  - Added user feedback mechanism in `AIResponseBubble` for reporting suspected inaccuracies.
+  - Connected with `MedicalFieldExtractor` for validating physiological limits of extracted lab values.
+  - Implemented speculative language detection to handle reasonable but uncertain statements.
+  - Added comprehensive logging of hallucination patterns and analytics collection via `AnalyticsService`.
+  - Integrated hallucination prevention checks into the `DEVELOPER_COMPLIANCE_CHECKLIST.md`.
+  - Added a suite of automated tests for hallucination detection and threshold management.
+
+## [1.5.0] - 2026-01-25
+
+### Added
+- **Citation Injection System**: Implemented a comprehensive medical citation and factual verification system.
+  - Created a pattern-based factual claim detection engine using NLP patterns in `CitationService`.
+  - Implemented a source matching algorithm with confidence scoring based on medical authority and review status.
+  - Developed a structured medical knowledge base in `lib/data/knowledge_base/` with initial support for WHO, ADA, AHA, and Mayo Clinic guidelines.
+  - Integrated interactive visual citations in `AIResponseBubble` with detailed source inspection and confidence indicators.
+  - Connected `CitationService` with `ReferenceRangeService`, `MedicalFieldExtractor`, and `SafetyFilterService` for cross-validation.
+  - Enhanced `ExportService` and `PdfExportService` to include professional medical references in exported documents.
+  - Added a knowledge base update mechanism for future remote synchronization.
+  - Implemented comprehensive performance tracking for citation detection and matching.
+
+## [1.4.0] - 2026-01-25
+
+### Added
+- **Advanced Generation Controls**: Implemented comprehensive AI parameter management.
+  - Created `GenerationParameters` model with Hive support for persistence.
+  - Implemented `GenerationParametersService` for centralized parameter management and validation.
+  - Added `GenerationControls` widget with parameter sliders and preset system (Balanced, Creative, Precise, Fast).
+  - Integrated parameter validation with safety boundaries in `ComplianceService`.
+  - Added support for temporary session overrides in `SessionManager`.
+  - Integrated parameter configuration with `LLMEngine` for real-time inference optimization.
+  - Added advanced toggle and controls to `SettingsScreen`.
+  - Implemented comprehensive testing for parameter combinations and validation logic.
+- **Knowledge Cutoff Notice**: Implemented a comprehensive system for tracking and displaying AI model knowledge cutoff dates.
+  - Created `KnowledgeCutoffNotice` widget with context-aware display and expandable details.
+  - Implemented dismissal tracking with re-show logic using Hive persistence in `AppSettings`.
+  - Integrated real-time date comparison in `AIScreen` to detect conversations mentioning data newer than the model's knowledge cutoff.
+  - Added knowledge cutoff information to PDF and Text headers in `ExportService`.
+  - Integrated knowledge cutoff compliance checks into `ComplianceService` and developer checklist.
+  - Added support for model-specific cutoff tracking in `DoctorConversation` history.
+  - Implemented semantic accessibility and localized date formatting.
+
 ## [1.3.0] - 2026-01-25
 
 ### Added
+- **Memory-Efficient Model Management**: Implemented strategic resource management for local AI models.
+  - Created `MemoryMonitorService` for real-time memory pressure monitoring across platforms.
+  - Integrated platform-specific memory APIs via `system_info2` for accurate RAM tracking.
+  - Implemented strategic model unloading in `ModelManager` with usage prediction and retention timers.
+  - Added user-configurable memory retention policies and low-memory fallback strategies.
+    - Integrated memory status indicators into `ModelInfoPanel` with color-coded pressure alerts.
+    - Added UI controls for memory management and retention policy in `SettingsScreen`.
 - **Output Processing Pipeline**: Implemented a modular middleware system for AI response processing in `AIService`.
   - Added modular pipeline architecture with configurable stages and priority-based ordering.
   - Implemented parallel processing for independent validation stages to optimize performance.
@@ -29,13 +150,43 @@
   - Implemented strategic truncation preserving conversation starts and ends.
   - Added content compression for repetitive phrases in LLM context.
   - Integrated context usage tracking in `ModelMetrics`.
+- **Model Warm-up Experience**: Enhanced the first-time AI initialization flow.
+  - Created `ModelWarmupService` for managed state, adaptive time estimates, and background loading.
+  - Implemented `ModelWarmupScreen` with animated progress, educational content, and cancellation handling.
+  - Added state persistence across app restarts via `AppSettings`.
+  - Integrated warmup flow into `SehatLockerApp` onboarding and `ModelManager` loading.
+  - Connected to `SessionManager` for lifecycle-aware resource management during warmup.
+  - Added abandonment metrics and performance tracking for usability testing.
 - **UI Integration**:
   - Added visual context window usage indicators in `ModelInfoPanel`.
   - Implemented real-time token usage progress bars with color-coded alerts (70% warning, 90% critical).
   - Created `TokenUsageIndicator` widget with detailed breakdown and expandable sections.
+  - Implemented Model Fallback System:
+    - Added `ModelFallbackService` for automatic failure detection and model switching.
+    - Enhanced `LLMEngine` with comprehensive error classification (RAM, Memory, Backend failure).
+    - Integrated fallback logic into `ModelManager`, `SessionManager`, and `AIService`.
+    - Added UI indicators for active model and fallback status in `ModelInfoPanel`.
+    - Implemented context preservation during model switching.
+    - Added analytics collection for fallback events and failure patterns.
+    - Verified with performance benchmarks (Evaluation: ~53μs, Context Capture: ~3μs).
+    - Added test coverage for various failure modes and performance benchmarks.
   - Integrated persistent token usage monitoring in `AIScreen`.
 - **Analytics**: Added context usage pattern tracking via `AnalyticsService`.
   - Implemented detailed token usage analytics collection.
+
+## [1.7.0] - 2026-01-26
+
+### Added
+- **AI Error Recovery System**: Implemented a comprehensive recovery framework for AI failures.
+  - Created `AIRecoveryService` for failure mode detection and classification.
+  - Implemented structured `AIError` classification (Memory, Initialization, Inference, Context).
+  - Added user-friendly error messages with contextual recovery advice.
+  - Implemented exponential backoff for automated retry attempts (1s, 2s, 4s).
+  - Integrated recovery logic into `AIService` generation pipeline.
+  - Connected with `ModelFallbackService` for seamless model switching on critical failures.
+  - Implemented graceful degradation with fallback responses when full generation fails.
+  - Added comprehensive unit tests for recovery strategies in `test/services/ai_recovery_service_test.dart`.
+  - Integrated recovery monitoring into the `DeveloperComplianceChecklist`.
 
 ## [1.2.0] - 2026-01-25
 

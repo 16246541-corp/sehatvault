@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/keyboard_shortcut_service.dart';
 import 'package:flutter/services.dart';
 import '../services/permission_service.dart';
@@ -12,6 +13,8 @@ import '../services/local_storage_service.dart';
 import '../services/session_manager.dart';
 import '../services/temp_file_manager.dart';
 import '../services/consent_service.dart';
+import '../services/batch_processing_service.dart';
+import 'batch_processing_screen.dart';
 import '../widgets/design/glass_button.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/desktop/file_drop_zone.dart';
@@ -519,6 +522,77 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
     }
   }
 
+  Future<void> _processAsBatch() async {
+    if (_capturedImages.isEmpty) return;
+
+    setState(() {
+      _isCompressing = true;
+    });
+
+    try {
+      final List<({String title, String filePath})> batchItems = [];
+      final now = DateTime.now();
+      final dateStr = DateFormat('yyyyMMdd_HHmm').format(now);
+
+      for (int i = 0; i < _capturedImages.length; i++) {
+        final image = _capturedImages[i];
+        final compressedPath =
+            await ImageService.compressImage(File(image.path));
+
+        // Preserve compressed file for batch processing
+        TempFileManager().registerFile(compressedPath);
+        TempFileManager().preserveFile(compressedPath);
+
+        batchItems.add((
+          title: 'Batch Scan $dateStr ${i + 1}',
+          filePath: compressedPath,
+        ));
+      }
+
+      final batchService = BatchProcessingService();
+      await batchService.addBatch(batchItems);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '${batchItems.length} documents added to processing queue'),
+            backgroundColor: Colors.blue,
+            action: SnackBarAction(
+              label: 'View Queue',
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BatchProcessingScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+
+        // Cleanup original images as we've created compressed ones for the batch
+        for (var img in _capturedImages) {
+          TempFileManager().releaseFile(img.path);
+        }
+        await TempFileManager().purgeAll(reason: 'moved_to_batch');
+
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isCompressing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Error adding to batch: $e'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -726,10 +800,21 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
                 children: [
                   // Cancel / Done
                   if (_capturedImages.isNotEmpty)
-                    GlassButton(
-                      label: 'Done',
-                      onPressed: _processImages,
-                      isProminent: true,
+                    Row(
+                      children: [
+                        GlassButton(
+                          label: 'Done',
+                          onPressed: _processImages,
+                          isProminent: true,
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.auto_awesome_motion,
+                              color: Colors.white),
+                          tooltip: 'Process as Batch',
+                          onPressed: _processAsBatch,
+                        ),
+                      ],
                     )
                   else
                     const SizedBox(width: 100), // Spacer

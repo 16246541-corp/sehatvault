@@ -10,10 +10,12 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../models/citation.dart';
 import '../models/document_extraction.dart';
 import '../models/doctor_conversation.dart';
 import '../models/export_audit_entry.dart';
 import '../models/follow_up_item.dart';
+import '../models/model_option.dart';
 import '../models/health_record.dart';
 import '../models/recording_audit_entry.dart';
 import '../models/consent_entry.dart';
@@ -700,8 +702,12 @@ class ExportService {
 
   pw.Widget _buildTranscriptContent(
       DoctorConversation conversation, ExportOptions options) {
+    final List<Citation> citations =
+        _citationService.generateCitationsFromText(conversation.transcript);
+
+    pw.Widget content;
     if (conversation.segments != null && conversation.segments!.isNotEmpty) {
-      return pw.Column(
+      content = pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: conversation.segments!.map((segment) {
           final text = _redactSensitiveData(segment.text);
@@ -732,11 +738,42 @@ class ExportService {
     } else {
       final text = _redactSensitiveData(conversation.transcript);
       final sanitizedText = SafetyFilterService().sanitize(text);
-      return pw.Text(
+      content = pw.Text(
         sanitizedText,
         style: const pw.TextStyle(fontSize: 12),
       );
     }
+
+    if (citations.isEmpty) return content;
+
+    final references = _citationService.formatCitations(
+      citations,
+      style: 'reference',
+    );
+
+    if (references.isEmpty) return content;
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        content,
+        pw.SizedBox(height: 20),
+        pw.Divider(),
+        pw.SizedBox(height: 10),
+        pw.Text(
+          'Medical References',
+          style: pw.TextStyle(
+            fontSize: 14,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 8),
+        pw.Text(
+          references,
+          style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+        ),
+      ],
+    );
   }
 
   String _redactSensitiveData(String text) {
@@ -1099,6 +1136,14 @@ class ExportService {
       );
 
   pw.Widget _buildHeader(DateTime date, DateFormat fmt) {
+    final settings = _storageService.getAppSettings();
+    ModelOption? model;
+    try {
+      model = ModelOption.availableModels.firstWhere(
+        (m) => m.id == settings.selectedModelId,
+      );
+    } catch (_) {}
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -1126,6 +1171,17 @@ class ExportService {
             color: PdfColors.grey700,
           ),
         ),
+        if (model != null && model.knowledgeCutoffDate != null) ...[
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'Current AI Analysis Model: ${model.name} (Knowledge Cutoff: ${fmt.format(model.knowledgeCutoffDate!)})',
+            style: pw.TextStyle(
+              fontSize: 10,
+              color: PdfColors.orange800,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ],
         pw.Divider(thickness: 1, color: PdfColors.grey400),
       ],
     );
@@ -1133,6 +1189,15 @@ class ExportService {
 
   pw.Widget _buildTranscriptHeader(
       DoctorConversation conversation, DateTime date, DateFormat fmt) {
+    ModelOption? model;
+    if (conversation.modelId != null) {
+      try {
+        model = ModelOption.availableModels.firstWhere(
+          (m) => m.id == conversation.modelId,
+        );
+      } catch (_) {}
+    }
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -1161,6 +1226,17 @@ class ExportService {
           'Date: ${fmt.format(conversation.createdAt)}',
           style: const pw.TextStyle(fontSize: 14),
         ),
+        if (model != null && model.knowledgeCutoffDate != null) ...[
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'AI Model: ${model.name} (Knowledge Cutoff: ${fmt.format(model.knowledgeCutoffDate!)})',
+            style: pw.TextStyle(
+              fontSize: 10,
+              color: PdfColors.orange800,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ],
         pw.SizedBox(height: 4),
         pw.Text(
           'Generated on: ${fmt.format(date)}',

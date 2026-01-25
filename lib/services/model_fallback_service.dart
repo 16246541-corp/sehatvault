@@ -92,11 +92,11 @@ class ModelFallbackService extends ChangeNotifier {
   }
 
   /// Finds the next best model to fallback to.
-  ModelOption? _findFallbackModel(
+  Future<ModelOption?> _findFallbackModel(
     ModelOption currentModel,
     FallbackTrigger trigger,
     String? reason,
-  ) {
+  ) async {
     final available = ModelOption.availableModels;
 
     // Find models with lower RAM requirements than the current one
@@ -108,7 +108,7 @@ class ModelFallbackService extends ChangeNotifier {
 
     if (fallbacks.isNotEmpty) {
       final target = fallbacks.first;
-      _handleFallback(currentModel, target, trigger, reason);
+      await _handleFallback(currentModel, target, trigger, reason);
       return target;
     }
 

@@ -21,6 +21,7 @@ dependencies:
   card_swiper: ^3.0.1
   flutter_staggered_animations: ^1.1.1
   smooth_page_indicator: ^1.1.0
+  fl_chart: ^0.70.0
 
   # Local Storage (Privacy-First)
   hive: ^2.2.3

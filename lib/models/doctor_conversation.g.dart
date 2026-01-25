@@ -30,13 +30,14 @@ class DoctorConversationAdapter extends TypeAdapter<DoctorConversation> {
       editedAt: fields[10] as DateTime?,
       complianceVersion: fields[11] as String?,
       complianceReviewDate: fields[12] as DateTime?,
+      modelId: fields[13] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, DoctorConversation obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -62,7 +63,9 @@ class DoctorConversationAdapter extends TypeAdapter<DoctorConversation> {
       ..writeByte(11)
       ..write(obj.complianceVersion)
       ..writeByte(12)
-      ..write(obj.complianceReviewDate);
+      ..write(obj.complianceReviewDate)
+      ..writeByte(13)
+      ..write(obj.modelId);
   }
 
   @override

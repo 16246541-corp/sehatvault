@@ -46,13 +46,25 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       persistWindowState: fields[30] as bool,
       restoreWindowPosition: fields[31] as bool,
       accessibilityEnabled: fields[32] as bool,
+      warmedUpModelIds: (fields[33] as List?)?.cast<String>(),
+      modelRetentionMinutes: fields[34] as int,
+      unloadOnLowMemory: fields[35] as bool,
+      advancedAiSettingsEnabled: fields[36] as bool,
+      generationParameters: fields[37] as GenerationParameters?,
+      dismissedKnowledgeCutoffModelIds: (fields[38] as List?)?.cast<String>(),
+      aiMaxTokens: fields[39] as int?,
+      aiMaxMessages: fields[40] as int?,
+      enableAiAnalytics: fields[41] as bool,
+      aiAnalyticsRetentionDays: fields[42] as int,
+      preferredQuantization: fields[43] as String,
+      modelQuantizationMap: (fields[44] as Map?)?.cast<String, String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(33)
+      ..writeByte(45)
       ..writeByte(0)
       ..write(obj.darkMode)
       ..writeByte(1)
@@ -118,7 +130,31 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(31)
       ..write(obj.restoreWindowPosition)
       ..writeByte(32)
-      ..write(obj.accessibilityEnabled);
+      ..write(obj.accessibilityEnabled)
+      ..writeByte(33)
+      ..write(obj.warmedUpModelIds)
+      ..writeByte(34)
+      ..write(obj.modelRetentionMinutes)
+      ..writeByte(35)
+      ..write(obj.unloadOnLowMemory)
+      ..writeByte(36)
+      ..write(obj.advancedAiSettingsEnabled)
+      ..writeByte(37)
+      ..write(obj.generationParameters)
+      ..writeByte(38)
+      ..write(obj.dismissedKnowledgeCutoffModelIds)
+      ..writeByte(39)
+      ..write(obj.aiMaxTokens)
+      ..writeByte(40)
+      ..write(obj.aiMaxMessages)
+      ..writeByte(41)
+      ..write(obj.enableAiAnalytics)
+      ..writeByte(42)
+      ..write(obj.aiAnalyticsRetentionDays)
+      ..writeByte(43)
+      ..write(obj.preferredQuantization)
+      ..writeByte(44)
+      ..write(obj.modelQuantizationMap);
   }
 
   @override

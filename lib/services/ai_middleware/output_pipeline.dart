@@ -1,10 +1,13 @@
 import 'pipeline_context.dart';
 import 'pipeline_stage.dart';
 import '../../utils/secure_logger.dart';
+import '../ai_analytics_service.dart';
+import '../llm_engine.dart';
 
 /// Orchestrates the AI output processing pipeline.
 class OutputPipeline {
   final List<PipelineStage> _stages = [];
+  final AIAnalyticsService _analytics = AIAnalyticsService();
 
   /// Adds a stage to the pipeline and maintains order.
   void addStage(PipelineStage stage) {
@@ -39,7 +42,29 @@ class OutputPipeline {
       context.addMetric(stage.id, stopwatch.elapsedMilliseconds.toDouble());
     }
 
+    // Log pipeline performance to analytics
+    _logPipelineMetrics(context);
+
     return context;
+  }
+
+  /// Logs pipeline performance metrics to AIAnalyticsService.
+  void _logPipelineMetrics(PipelineContext context) {
+    final totalTime = context.performanceMetrics.values.isEmpty
+        ? 0.0
+        : context.performanceMetrics.values.reduce((a, b) => a + b);
+
+    final metadata = context.performanceMetrics.map(
+      (key, value) => MapEntry(key, '${value.toStringAsFixed(1)}ms'),
+    );
+
+    _analytics.logMetric(
+      ModelMetrics(loadTimeMs: totalTime),
+      LLMEngine().currentModel?.id ?? 'unknown',
+      operationType: 'pipeline_processing',
+      isSuccessful: !context.isBlocked,
+      metadata: metadata,
+    );
   }
 
   /// Gets the performance report for the last run.

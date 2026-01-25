@@ -7,6 +7,9 @@ import 'screens/follow_up_list_screen.dart';
 import 'screens/ai_screen.dart';
 import 'screens/news_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/model_warmup_screen.dart';
+import 'services/model_warmup_service.dart';
+import 'services/model_manager.dart';
 import 'widgets/navigation/glass_bottom_nav.dart';
 import 'widgets/auth_gate.dart';
 import 'services/biometric_service.dart';
@@ -167,7 +170,32 @@ class _SehatLockerAppState extends State<SehatLockerApp>
     }
   }
 
-  void _onItemTapped(int index) {
+  Future<void> _onItemTapped(int index) async {
+    if (index == 2) {
+      // AI Tab
+      final settings = LocalStorageService().getAppSettings();
+      final model = await ModelManager.getRecommendedModel();
+
+      if (!ModelWarmupService().isModelWarmedUp(model.id)) {
+        if (mounted) {
+          final completed = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ModelWarmupScreen(
+                model: model,
+                onComplete: () => Navigator.pop(context, true),
+              ),
+            ),
+          );
+
+          if (completed != true) {
+            // User cancelled or it failed, don't switch to AI tab
+            return;
+          }
+        }
+      }
+    }
+
     setState(() {
       _currentIndex = index;
     });

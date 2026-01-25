@@ -12,6 +12,9 @@ import '../services/vault_service.dart';
 import '../services/search_service.dart';
 import '../services/local_storage_service.dart';
 import '../services/storage_usage_service.dart';
+import '../services/batch_processing_service.dart';
+import '../models/batch_task.dart';
+import 'batch_processing_screen.dart';
 import '../models/health_record.dart';
 import '../widgets/cards/document_grid_card.dart';
 import '../widgets/dashboard/follow_up_dashboard.dart';
@@ -254,6 +257,82 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         ),
                       ),
                     ),
+
+                  // Batch Processing Status
+                  StreamBuilder<List<BatchTask>>(
+                    stream: BatchProcessingService().tasksStream,
+                    builder: (context, snapshot) {
+                      final tasks = snapshot.data ?? [];
+                      final activeTasks = tasks
+                          .where((t) =>
+                              t.status == BatchTaskStatus.pending ||
+                              t.status == BatchTaskStatus.processing)
+                          .toList();
+
+                      if (activeTasks.isEmpty) return const SizedBox.shrink();
+
+                      final processingTask = tasks.firstWhere(
+                        (t) => t.status == BatchTaskStatus.processing,
+                        orElse: () => activeTasks.first,
+                      );
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: GlassCard(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const BatchProcessingScreen(),
+                              ),
+                            );
+                          },
+                          backgroundColor: theme.colorScheme.primaryContainer
+                              .withValues(alpha: 0.3),
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  value: processingTask.status ==
+                                          BatchTaskStatus.processing
+                                      ? processingTask.progress
+                                      : null,
+                                  strokeWidth: 2,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Processing ${activeTasks.length} documents...',
+                                      style:
+                                          theme.textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Currently: ${processingTask.title}',
+                                      style: theme.textTheme.bodySmall,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.chevron_right,
+                                  color: theme.colorScheme.primary),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
 
                   // Dashboard
                   FollowUpDashboard(

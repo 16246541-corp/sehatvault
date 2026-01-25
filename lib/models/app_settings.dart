@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:sehatlocker/models/enhanced_privacy_settings.dart';
 import 'package:sehatlocker/models/model_metadata.dart';
+import 'package:sehatlocker/models/generation_parameters.dart';
+import 'package:sehatlocker/services/model_quantization_service.dart';
 
 part 'app_settings.g.dart';
 
@@ -106,6 +108,42 @@ class AppSettings extends HiveObject {
   @HiveField(32)
   bool accessibilityEnabled;
 
+  @HiveField(33)
+  List<String> warmedUpModelIds;
+
+  @HiveField(34)
+  int modelRetentionMinutes;
+
+  @HiveField(35)
+  bool unloadOnLowMemory;
+
+  @HiveField(36)
+  bool advancedAiSettingsEnabled;
+
+  @HiveField(37)
+  GenerationParameters generationParameters;
+
+  @HiveField(38)
+  List<String> dismissedKnowledgeCutoffModelIds;
+
+  @HiveField(39)
+  int? aiMaxTokens;
+
+  @HiveField(40)
+  int? aiMaxMessages;
+
+  @HiveField(41)
+  bool enableAiAnalytics;
+
+  @HiveField(42)
+  int aiAnalyticsRetentionDays;
+
+  @HiveField(43)
+  String preferredQuantization;
+
+  @HiveField(44)
+  Map<String, String> modelQuantizationMap;
+
   AppSettings({
     this.darkMode = false,
     this.notificationsEnabled = true,
@@ -140,12 +178,29 @@ class AppSettings extends HiveObject {
     this.persistWindowState = true,
     this.restoreWindowPosition = true,
     this.accessibilityEnabled = false,
+    List<String>? warmedUpModelIds,
+    this.modelRetentionMinutes = 15,
+    this.unloadOnLowMemory = true,
+    this.advancedAiSettingsEnabled = false,
+    GenerationParameters? generationParameters,
+    List<String>? dismissedKnowledgeCutoffModelIds,
+    this.aiMaxTokens,
+    this.aiMaxMessages,
+    this.enableAiAnalytics = true,
+    this.aiAnalyticsRetentionDays = 30,
+    this.preferredQuantization = 'q4_k_m',
+    Map<String, String>? modelQuantizationMap,
   })  : keepAudioIds = keepAudioIds ?? [],
         enhancedPrivacySettings =
             enhancedPrivacySettings ?? EnhancedPrivacySettings(),
         modelMetadataMap = modelMetadataMap ?? {},
         completedEducationIds = completedEducationIds ?? [],
-        completedEducationVersions = completedEducationVersions ?? {};
+        completedEducationVersions = completedEducationVersions ?? {},
+        warmedUpModelIds = warmedUpModelIds ?? [],
+        generationParameters = generationParameters ?? GenerationParameters(),
+        dismissedKnowledgeCutoffModelIds =
+            dismissedKnowledgeCutoffModelIds ?? [],
+        modelQuantizationMap = modelQuantizationMap ?? {};
 
   factory AppSettings.defaultSettings() {
     return AppSettings();

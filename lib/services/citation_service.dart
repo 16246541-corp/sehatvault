@@ -1,16 +1,22 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/citation.dart';
+import '../data/knowledge_base/medical_knowledge.dart';
 import 'analytics_service.dart';
 import 'local_storage_service.dart';
 import 'medical_field_extractor.dart';
 import 'reference_range_service.dart';
+import 'safety_filter_service.dart';
 
 class CitationService {
   static const String _citationsMigrationKey = 'citations_migration_completed';
   final LocalStorageService _storageService;
-  final AnalyticsService _analyticsService = AnalyticsService();
+  final AnalyticsService _analyticsService;
+  final SafetyFilterService _safetyFilter;
 
-  CitationService(this._storageService);
+  CitationService(this._storageService,
+      {AnalyticsService? analyticsService, SafetyFilterService? safetyFilter})
+      : _analyticsService = analyticsService ?? AnalyticsService(),
+        _safetyFilter = safetyFilter ?? SafetyFilterService();
 
   Box<Citation> get _box => _storageService.citationsBox;
 
@@ -102,12 +108,85 @@ class CitationService {
 
   List<Citation> generateCitationsFromText(String text) {
     if (text.isEmpty) return [];
+
+    final stopwatch = Stopwatch()..start();
+    final citations = <Citation>[];
+
+    // 1. Pattern-based factual claim detection using NLP-like patterns
+    for (final fact in MedicalKnowledgeBase.facts) {
+      for (final pattern in fact.patterns) {
+        final regex = RegExp(pattern, caseSensitive: false);
+        if (regex.hasMatch(text)) {
+          // Found a potential match
+          for (final sourceId in fact.sourceIds) {
+            final source = MedicalKnowledgeBase.sources.firstWhere(
+              (s) => s.id == sourceId,
+              orElse: () => MedicalKnowledgeBase.sources.first,
+            );
+
+            // Confidence scoring algorithm
+            double confidence = fact.confidence;
+            if (source.isReviewed) confidence += 0.05;
+
+            // Adjust confidence based on match quality (simplified)
+            final matches = regex.allMatches(text);
+            if (matches.length > 1) confidence += 0.02;
+
+            confidence = confidence.clamp(0.0, 1.0);
+
+            // Safety check for the claim being cited
+            final sanitizedClaim = _safetyFilter.sanitize(fact.claim);
+
+            citations.add(Citation(
+              sourceTitle: source.title,
+              sourceUrl: source.url,
+              sourceDate: source.date,
+              type: source.type,
+              authors: source.authors,
+              publication: source.publication,
+              confidenceScore: confidence,
+              textSnippet: sanitizedClaim,
+            ));
+          }
+          break; // Move to next fact once one pattern matches
+        }
+      }
+    }
+
+    // 2. Integration with MedicalFieldExtractor and ReferenceRangeService
     final extracted = MedicalFieldExtractor.extractLabValues(text);
     final values = extracted['values'];
     if (values is List && values.isNotEmpty) {
-      return generateCitationsForLabValues(values);
+      final labCitations = generateCitationsForLabValues(values);
+      citations.addAll(labCitations);
     }
-    return [];
+
+    stopwatch.stop();
+    _analyticsService.logMetric(
+      'citation_detection_time',
+      stopwatch.elapsedMilliseconds.toDouble(),
+    );
+
+    // Filter by confidence threshold and remove duplicates
+    final seenSources = <String>{};
+    return citations.where((c) {
+      if (c.confidenceScore < 0.70) return false;
+      if (seenSources.contains(c.sourceTitle)) return false;
+      seenSources.add(c.sourceTitle);
+      return true;
+    }).toList();
+  }
+
+  /// Updates the local knowledge base with new sources (placeholder for remote sync)
+  Future<void> updateKnowledgeBase() async {
+    // In a real app, this would fetch from an API
+    // For now, we simulate a delay and log the event
+    await Future.delayed(const Duration(seconds: 1));
+    await _analyticsService.logEvent('knowledge_base_updated', parameters: {
+      'sources_count': MedicalKnowledgeBase.sources.length,
+      'facts_count': MedicalKnowledgeBase.facts.length,
+      'last_updated': DateTime.now().toIso8601String(),
+    });
   }
 
   Future<int> migrateExistingDocumentCitations() async {

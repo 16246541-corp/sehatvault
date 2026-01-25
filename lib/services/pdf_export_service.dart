@@ -4,6 +4,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import '../models/document_extraction.dart';
 import '../models/health_record.dart';
+import '../models/citation.dart';
 import 'citation_service.dart';
 import 'local_storage_service.dart';
 
@@ -140,31 +141,37 @@ class PdfExportService {
                 style: const pw.TextStyle(fontSize: 10),
               ),
             ),
-            if (extraction.citations != null &&
-                extraction.citations!.isNotEmpty) ...[
-              ...() {
-                final references = _citationService.formatCitations(
-                  extraction.citations!,
-                  style: 'reference',
-                );
-                if (references.isEmpty) return <pw.Widget>[];
-                return [
-                  pw.SizedBox(height: 20),
-                  pw.Text(
-                    'References',
-                    style: pw.TextStyle(
-                      fontSize: 18,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
+            ...() {
+              // Use existing citations or generate new ones from extracted text
+              final allCitations = <Citation>[...(extraction.citations ?? [])];
+              if (allCitations.isEmpty) {
+                allCitations.addAll(_citationService
+                    .generateCitationsFromText(extraction.extractedText));
+              }
+
+              if (allCitations.isEmpty) return <pw.Widget>[];
+
+              final references = _citationService.formatCitations(
+                allCitations,
+                style: 'reference',
+              );
+              if (references.isEmpty) return <pw.Widget>[];
+              return [
+                pw.SizedBox(height: 20),
+                pw.Text(
+                  'References',
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
                   ),
-                  pw.SizedBox(height: 10),
-                  pw.Text(
-                    references,
-                    style: const pw.TextStyle(fontSize: 10),
-                  ),
-                ];
-              }(),
-            ],
+                ),
+                pw.SizedBox(height: 10),
+                pw.Text(
+                  references,
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ];
+            }(),
           ];
         },
       ),

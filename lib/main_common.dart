@@ -16,6 +16,8 @@ import 'services/session_manager.dart';
 import 'services/window_manager_service.dart';
 import 'services/system_tray_service.dart';
 import 'services/prompt_template_service.dart';
+import 'services/ai_analytics_service.dart';
+import 'services/batch_processing_service.dart';
 import 'widgets/session_guard.dart';
 
 import 'config/app_config.dart';
@@ -61,6 +63,9 @@ Future<void> mainCommon(AppConfig config) async {
   // Initialize prompt templates
   await PromptTemplateService().loadTemplates();
 
+  // Initialize AI analytics
+  await AIAnalyticsService().init();
+
   await CitationService(storageService).migrateExistingDocumentCitations();
 
   // Initialize follow-up reminder service
@@ -68,6 +73,9 @@ Future<void> mainCommon(AppConfig config) async {
   // Ideally request permissions here or on first use.
   // For now, let's request on startup to ensure it works.
   await FollowUpReminderService().requestPermissions();
+
+  // Initialize batch processing service
+  BatchProcessingService().initialize();
 
   // Run daily conversation cleanup
   await ConversationCleanupService(storageService).runDailyCleanup();
