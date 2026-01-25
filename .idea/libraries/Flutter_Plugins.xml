@@ -42,7 +42,6 @@
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/url_launcher_ios-6.3.6" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/file_selector_macos-0.9.5" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/file_selector_android-0.5.2+4" />
-      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/flutter_windowmanager-0.2.0" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/printing-5.14.2" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/whisper_flutter_new-1.0.1" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/file_selector_windows-0.9.3+5" />
@@ -59,6 +58,7 @@
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/app_settings-5.2.0" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/url_launcher_macos-3.2.5" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/flutter_local_notifications_linux-6.0.0" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/flutter_windowmanager_plus-1.0.1" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

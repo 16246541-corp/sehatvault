@@ -2,7 +2,11 @@
 
 ## [1.8.1] - 2026-01-26
 
+### Added
+- **Documentation**: Created a comprehensive project index in `docs/index.md` covering all services, models, database structures, and key workflows.
+
 ### Fixed
+- **Android Build**: Migrated from `flutter_windowmanager` to `flutter_windowmanager_plus` (^1.0.1) and enabled core library desugaring in `build.gradle.kts` to resolve AGP 8.0+ namespace requirements and Java 8+ API compatibility issues.
 - **System Stability**: Resolved critical compilation errors in `AppSettings` and `WidgetDataService` by implementing missing ICE (In Case of Emergency) configuration fields.
 - **Android Build**: Fixed Gradle build errors in `android/app/build.gradle.kts` by resolving `java.util.Properties` reference conflicts and migrating deprecated `kotlinOptions.jvmTarget` to the modern `compilerOptions` DSL for Kotlin 2.0+ compatibility.
 - **App Lifecycle**: Implemented missing `_checkBiometricEnrollment` method in `SehatLockerApp` to correctly prompt users for biometric setup on app resume.

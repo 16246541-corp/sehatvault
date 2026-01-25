@@ -1,4 +1,782 @@
 # Changelog - Sehat Locker
+
+## [1.8.1] - 2026-01-26
+
+### Added
+- **Documentation**: Created a comprehensive project index in `docs/index.md` covering all services, models, database structures, and key workflows.
+
+### Fixed
+- **Android Build**: Migrated from `flutter_windowmanager` to `flutter_windowmanager_plus` (^1.0.1) and enabled core library desugaring in `build.gradle.kts` to resolve AGP 8.0+ namespace requirements and Java 8+ API compatibility issues.
+- **System Stability**: Resolved critical compilation errors in `AppSettings` and `WidgetDataService` by implementing missing ICE (In Case of Emergency) configuration fields.
+- **Android Build**: Fixed Gradle build errors in `android/app/build.gradle.kts` by resolving `java.util.Properties` reference conflicts and migrating deprecated `kotlinOptions.jvmTarget` to the modern `compilerOptions` DSL for Kotlin 2.0+ compatibility.
+- **App Lifecycle**: Implemented missing `_checkBiometricEnrollment` method in `SehatLockerApp` to correctly prompt users for biometric setup on app resume.
+- **Testing**: Fixed `follow_up_extractor_enrichment_test.dart` by implementing missing `saveConversationToVault` mock override.
+- **Testing**: Restored `widget_test.dart` compilation by correcting the application class name entry point.
+- **Data Persistence**: Regenerated Hive adapters to support new ICE contact fields in `AppSettings`.
+
+## [1.8.0] - 2026-01-26
+
+### Added
+- **User Onboarding - Splash Screen**: Implemented an animated splash screen as the first step of the onboarding experience.
+  - Created `AnimatedLogo` widget with scale bounce, glow pulse, and 3D rotation effects.
+  - Created `AnimatedPrivacyShield` widget displaying "Privacy First" indicator.
+  - Implemented `SplashScreen` with staggered text animations for "Sehat Locker" title and "Your Health, Your Device" tagline.
+  - Added animated background orbs with gradient effects matching the Liquid Glass design system.
+  - Integrated smooth fade-out exit transition after minimum 2.5 second display.
+  - Added onboarding tracking fields to `AppSettings`: `hasSeenSplash`, `completedOnboardingSteps`, `isOnboardingComplete`.
+  - Integrated splash screen into `main_common.dart` to display for first-time users only.
+  - Regenerated Hive adapters for new `AppSettings` fields.
+- **User Onboarding - Welcome Carousel**: Implemented a 4-page feature introduction carousel as the second onboarding step.
+  - Created `WelcomeCarouselScreen` with swipeable pages introducing Privacy, Document Vault, AI Assistant, and Recording features.
+  - Created `WelcomePageData` model for JSON-driven content with title, description, icon, and highlights.
+  - Created `AnimatedPageIndicator` widget with animated dot transitions and glow effects.
+  - Created `PillPageIndicator` widget with progress bar style indication.
+  - Added `assets/data/onboarding/welcome_content.json` with feature content and highlights.
+  - Implemented skip button on all pages except the last, with "Get Started" button on final page.
+  - Added fade-in animation on content load and smooth page transitions.
+  - Integrated into `main_common.dart` onboarding flow with `OnboardingStep` enum for step management.
+  - Registered onboarding assets folder in `pubspec.yaml`.
+- **User Onboarding - Privacy Policy & Terms Acceptance**: Implemented a legally-compliant consent flow as the third onboarding step.
+  - Created `ConsentAcceptanceScreen` with scrollable privacy policy and terms of service content.
+  - Created `ConsentChecklistWidget` displaying four key privacy guarantees (AES-256 encryption, no cloud storage, no data leaves device, user owns all data).
+  - Added `privacy_policy_v1.md` template covering data collection, security measures, user rights, consent management, and data retention.
+  - Added `terms_of_service_v1.md` template covering user responsibilities, medical disclaimers, intellectual property, and liability limitations.
+  - Implemented dual checkbox acceptance flow requiring both Privacy Policy and Terms of Service acceptance.
+  - Added "Read Full" modal bottom sheet with full markdown rendering using `flutter_markdown` package.
+  - Integrated `ConsentService.recordConsent()` for audit-compliant consent recording with version hash, timestamp, and device info.
+  - Added version display with policy version number in header.
+  - Expanded `AppSettings` with `hasAcceptedPrivacyPolicy`, `acceptedPrivacyPolicyVersion`, `hasAcceptedTermsOfService`, and `acceptedTermsOfServiceVersion` fields.
+  - Added analytics logging for `consent_privacy_viewed`, `consent_privacy_accepted`, and `consent_terms_accepted` events.
+  - Added `flutter_markdown` dependency for consent document rendering.
+  - Regenerated Hive adapters for new `AppSettings` fields.
+- **User Onboarding - Permissions Request Flow**: Implemented a guided permissions request screen as the fourth onboarding step.
+  - Created `PermissionsRequestScreen` in `lib/screens/onboarding/permissions_request_screen.dart` with step-by-step permission requests.
+  - Created `PermissionCard` widget in `lib/widgets/onboarding/permission_card.dart` for displaying permission icon, title, description, status indicator, and grant button.
+  - Implemented one-at-a-time permission requests for:
+    - Camera: "Scan medical documents, prescriptions, and lab reports directly with your camera"
+    - Microphone: "Record doctor visits and medical consultations for accurate transcription"
+    - Notifications (Optional): "Get reminders for follow-up appointments, medication schedules"
+  - Added `PermissionStatus` enum to track pending, granted, denied, and permanently denied states.
+  - Added notification permission to `PermissionService`:
+    - `requestNotificationPermission()` for requesting notification permission
+    - Status check methods: `isCameraPermissionGranted()`, `isMicPermissionGranted()`, `isNotificationPermissionGranted()`
+    - Permanently denied check methods for all three permission types
+    - `openSettings()` utility to redirect users to app settings for permanently denied permissions
+  - Implemented graceful denial handling with visual status indicators and Settings deep-link for permanently denied permissions.
+  - Added "Skip" button for optional notification permission.
+  - Added progress indicator showing current permission step with visual completion states.
+  - Expanded `AppSettings` with `hasCompletedPermissionsSetup` field (HiveField 52).
+  - Added `OnboardingStep.permissions` to the onboarding step enum.
+  - Added analytics logging for permission events:
+    - `permissions_screen_viewed`, `permission_camera_granted`, `permission_camera_denied`
+    - `permission_mic_granted`, `permission_mic_denied`, `permission_notification_granted`, `permission_notification_denied`
+    - `permission_notification_skipped`, `permissions_setup_completed`
+  - Implemented pulse animation on active permission cards with glow effect.
+  - Regenerated Hive adapters for new `AppSettings field.
+- **User Onboarding - Flow Orchestration**: Implemented `OnboardingNavigator` in `lib/screens/onboarding/onboarding_navigator.dart` to manage the multi-step journey.
+  - Added deterministic step discovery based on `OnboardingService`.
+  - Implemented back/next navigation with state persistence and transition logic.
+  - Integrated into `main_common.dart` to orchestrate a seamless first-run experience.
+- **User Onboarding - Security & PIN Setup**: Implemented the fifth onboarding step focusing on multi-layered local protection.
+  - Created `SecuritySetupScreen` with dynamic progress tracking (Intro, Biometrics, PIN, Completion).
+  - Integrated existing `PinSetupScreen` and `BiometricService` into the onboarding funnel.
+  - Added `SecurityCompletionCard` for visual confirmation of active security layers.
+  - Enforced PIN requirement as a secure fallback even if biometrics are enabled.
+- **User Onboarding - Personalized Profile**: Implemented the sixth onboarding step for local demographic data and calibration.
+  - Created `UserProfile` model (Hive TypeId 40) for local-only storage of display name, sex, and date of birth.
+  - Created `ProfileSetupScreen` with premium HSL-tailored UI for demographic entry.
+  - Updated `ReferenceRangeService` to automatically use user profile demographics for lab result evaluations.
+  - Implemented "Skip" option with clear, prominent privacy guarantees about data staying local.
+- **User Onboarding - Interactive Feature Tour**: Implemented the seventh onboarding step for discovery of key capabilities.
+  - Created `FeatureTourScreen` allowing users to opt into a quick tour of the platform.
+  - Integrated `EducationModal` to display the "Secure Storage", "Document Scanner", and "AI Features" modules.
+  - Added automated analytics tracking for tour engagement and completion milestones.
+- **User Onboarding - Guided First Scan**: Implemented the eighth onboarding step for immediate value realization.
+  - Created `FirstScanGuideScreen` with step-by-step guidance for scanning lab reports or prescriptions.
+  - Enhanced `DocumentScannerScreen` with a `showOnboardingTips` mode utilizing new `CoachMark` overlays.
+  - Created `ConfettiAnimation` with `confetti: ^0.7.0` for celebrating successful first-time document captures.
+- **User Onboarding - Graduation & Celebration**: Implemented the final onboarding step and transition.
+  - Created `OnboardingCompleteScreen` featuring a "Setup Summary" checklist of all completed configurations.
+  - Added full-screen confetti celebration for reaching the final onboarding milestone.
+  - Optimized the transition logic to move directly from completion to the main app dashboard.
+- **Dependencies**: Added `confetti: ^0.7.0` for high-performance celebration animations.
+
+
+## [1.7.0] - 2026-01-26
+
+### Added
+- **Model License Compliance**: Implemented a comprehensive tracking and transparency system for AI model licenses.
+  - Created `ModelLicenseService` for centralized license management, version tracking, and plain language summaries.
+  - Developed `ModelLicenseScreen` with search capability and detailed view of key restrictions and attribution requirements.
+  - Implemented export functionality for legal compliance documentation in `.txt` format.
+  - Integrated license links into `ModelInfoPanel` for contextual access during model selection or use.
+  - Added "Model Licenses" entry point to the "About" section in `SettingsScreen`.
+  - Connected license access and exports to `SecureLogger` for audit-ready compliance tracking.
+  - Updated `ComplianceService` and `DEVELOPER_COMPLIANCE_CHECKLIST.md` with license validation checks.
+- **Model Update Verification System**: Implemented a comprehensive security framework for local AI model updates and integrity.
+  - Created `ModelUpdateService` for offline-first update checking and secure manifest management.
+  - Developed `ModelVerificationService` with cryptographic signature verification (RSA/Ed25519) and SHA-256 integrity checks.
+  - Implemented a tamper-evident verification system that detects model corruption and triggers recovery mechanisms.
+  - Added version compatibility checking to ensure models are compatible with the current app version.
+  - Integrated update status indicators and manual update actions into `ModelInfoPanel`.
+  - Added manual model update verification and integrity checks to the `SettingsScreen`.
+  - Connected verification events to `SecureLogger` for audit-ready security logging.
+  - Implemented secure, encrypted storage for model manifests using Hive.
+- **Model Quantization Support**: Implemented a comprehensive system for local LLM quantization.
+  - Created `ModelQuantizationService` for managing quantization levels, quality assessments, and device compatibility.
+  - Implemented `QuantizationFormat` system with support for 2-bit through 16-bit precision levels (Q2_K to F16).
+  - Added quality vs. performance tradeoff metrics and automatic recommendation engine based on device RAM and CPU.
+  - Updated `ModelOption` to support per-model quantization capability mapping.
+  - Integrated quantization information and tradeoff metrics into `ModelInfoPanel`.
+  - Added quantization preference selection to `SettingsScreen` with educational tooltips.
+  - Updated `ModelWarmupScreen` to provide loading feedback specific to quantization levels.
+  - Implemented disk space and RAM compatibility validation with user warnings.
+  - Added comprehensive testing suite for quantization levels and compatibility logic.
+- **Batch Processing System**: Implemented a robust system for background document processing and storage.
+  - Queue management with priority sorting (High/Normal/Low).
+  - Parallel task processing with resource-aware throttling (Memory & Battery).
+  - Real-time status monitoring with progress tracking and desktop notifications.
+  - Persistence across app restarts using encrypted Hive storage.
+  - Cancellation support for in-progress and pending tasks.
+  - Retry mechanism for failed tasks.
+  - Partial success reporting with detailed error logs.
+  - Seamless integration with DocumentScanner and Vault services.
+  - Created `BatchProcessingService` with queue management, priority-based sorting, and resource throttling.
+  - Implemented `BatchTask` model with Hive persistence and AES encryption support.
+  - Developed `BatchProcessingScreen` for real-time monitoring and management of the processing queue.
+  - Integrated batch processing into `DocumentScannerScreen` for asynchronous document handling.
+  - Added a persistent batch status indicator to the `DocumentsScreen` for background task visibility.
+  - Implemented pause/resume, retry, and cancellation controls for the processing queue.
+  - Integrated with `DesktopNotificationService` for completion alerts.
+  - Added resource-aware processing that throttles based on device capabilities and storage availability.
+- **Conversation Memory Management**: Implemented persistent, privacy-aware conversation history for AI interactions.
+  - Created `ConversationMemoryService` for managing context windows with strategic retention and token limits.
+  - Implemented `ConversationMemory` and `MemoryEntry` Hive models with AES encryption support in `LocalStorageService`.
+  - Added privacy-aware memory with automatic redaction via `SafetyFilterService` integration.
+  - Developed a visual conversation history interface in `ConversationTranscriptScreen` with a dedicated "AI Memory" tab.
+  - Added memory depth controls and context window settings to the `SettingsScreen`.
+  - Integrated memory management into the `AIService` pipeline for contextual AI responses.
+  - Implemented memory usage metrics collection (message count, token usage, redaction count).
+  - Optimized context window handling using `TokenCounterService` for multilingual support.
+  - Added support for session continuity with persistent conversation memory across app restarts.
+- **AI Usage Analytics**: Implemented privacy-focused local performance tracking for AI models.
+  - Created `AIAnalyticsService` for metric logging and storage with AES encryption.
+  - Implemented `AIUsageMetric` Hive model for tracking inference speed, memory usage, and load times.
+  - Developed `AIDiagnosticsScreen` with `fl_chart` visualizations for tokens/sec and peak memory trends.
+  - Added opt-in controls and automatic data retention policies (7, 30, 90 days) in `SettingsScreen`.
+  - Integrated metric logging into `ModelManager` for tracking model load success rates and initialization performance.
+  - Added compliance validation for AI analytics to `ComplianceService` and the developer checklist.
+  - Implemented anonymized data export functionality for performance debugging.
+
+## [1.6.0] - 2026-01-26
+
+### Added
+- **Hallucination Prevention System**: Implemented a multi-layered verification system for AI factual accuracy.
+  - Created `HallucinationValidationService` with adaptive confidence threshold analysis based on content type.
+  - Implemented medical fact verification against the structured `MedicalKnowledgeBase`.
+  - Integrated `HallucinationValidationStage` into the `AIService` output pipeline for real-time verification.
+  - Added user feedback mechanism in `AIResponseBubble` for reporting suspected inaccuracies.
+  - Connected with `MedicalFieldExtractor` for validating physiological limits of extracted lab values.
+  - Implemented speculative language detection to handle reasonable but uncertain statements.
+  - Added comprehensive logging of hallucination patterns and analytics collection via `AnalyticsService`.
+  - Integrated hallucination prevention checks into the `DEVELOPER_COMPLIANCE_CHECKLIST.md`.
+  - Added a suite of automated tests for hallucination detection and threshold management.
+
+## [1.5.0] - 2026-01-25
+
+### Added
+- **Citation Injection System**: Implemented a comprehensive medical citation and factual verification system.
+  - Created a pattern-based factual claim detection engine using NLP patterns in `CitationService`.
+  - Implemented a source matching algorithm with confidence scoring based on medical authority and review status.
+  - Developed a structured medical knowledge base in `lib/data/knowledge_base/` with initial support for WHO, ADA, AHA, and Mayo Clinic guidelines.
+  - Integrated interactive visual citations in `AIResponseBubble` with detailed source inspection and confidence indicators.
+  - Connected `CitationService` with `ReferenceRangeService`, `MedicalFieldExtractor`, and `SafetyFilterService` for cross-validation.
+  - Enhanced `ExportService` and `PdfExportService` to include professional medical references in exported documents.
+  - Added a knowledge base update mechanism for future remote synchronization.
+  - Implemented comprehensive performance tracking for citation detection and matching.
+
+## [1.4.0] - 2026-01-25
+
+### Added
+- **Advanced Generation Controls**: Implemented comprehensive AI parameter management.
+  - Created `GenerationParameters` model with Hive support for persistence.
+  - Implemented `GenerationParametersService` for centralized parameter management and validation.
+  - Added `GenerationControls` widget with parameter sliders and preset system (Balanced, Creative, Precise, Fast).
+  - Integrated parameter validation with safety boundaries in `ComplianceService`.
+  - Added support for temporary session overrides in `SessionManager`.
+  - Integrated parameter configuration with `LLMEngine` for real-time inference optimization.
+  - Added advanced toggle and controls to `SettingsScreen`.
+  - Implemented comprehensive testing for parameter combinations and validation logic.
+- **Knowledge Cutoff Notice**: Implemented a comprehensive system for tracking and displaying AI model knowledge cutoff dates.
+  - Created `KnowledgeCutoffNotice` widget with context-aware display and expandable details.
+  - Implemented dismissal tracking with re-show logic using Hive persistence in `AppSettings`.
+  - Integrated real-time date comparison in `AIScreen` to detect conversations mentioning data newer than the model's knowledge cutoff.
+  - Added knowledge cutoff information to PDF and Text headers in `ExportService`.
+  - Integrated knowledge cutoff compliance checks into `ComplianceService` and developer checklist.
+  - Added support for model-specific cutoff tracking in `DoctorConversation` history.
+  - Implemented semantic accessibility and localized date formatting.
+
+## [1.3.0] - 2026-01-25
+
+### Added
+- **Memory-Efficient Model Management**: Implemented strategic resource management for local AI models.
+  - Created `MemoryMonitorService` for real-time memory pressure monitoring across platforms.
+  - Integrated platform-specific memory APIs via `system_info2` for accurate RAM tracking.
+  - Implemented strategic model unloading in `ModelManager` with usage prediction and retention timers.
+  - Added user-configurable memory retention policies and low-memory fallback strategies.
+    - Integrated memory status indicators into `ModelInfoPanel` with color-coded pressure alerts.
+    - Added UI controls for memory management and retention policy in `SettingsScreen`.
+- **Output Processing Pipeline**: Implemented a modular middleware system for AI response processing in `AIService`.
+  - Added modular pipeline architecture with configurable stages and priority-based ordering.
+  - Implemented parallel processing for independent validation stages to optimize performance.
+  - Added performance metrics tracking for each pipeline stage (Safety, Validation, Citations).
+  - Created `PipelineDebugger` for developer visualization and metrics logging.
+  - Integrated `SafetyFilterStage` for automated medical content sanitization.
+  - Added `ValidationStage` with parallel rule execution for medical advice verification.
+  - Integrated `CitationStage` for automated citation injection into AI outputs.
+  - Added support for real-time streaming response processing.
+  - Integrated pipeline into `ExportService` for processing transcript content before PDF/Text export.
+  - Implemented graceful degradation with comprehensive error handling and redacted logging via `SecureLogger`.
+- **Safe Prompt Templates**: Implemented `PromptTemplateService` for managed, versioned, and secure AI prompts.
+  - Added template versioning with rollback capability and version history tracking.
+  - Implemented a context injection system with safety boundaries and input sanitization.
+  - Added a template testing framework with automated adversarial example validation.
+  - Supported multilingual templates (English and Indonesian initial support).
+  - Integrated with `AIService` as the primary prompt generation layer.
+  - Connected to `MedicalFieldExtractor` for automated structured data injection into prompts.
+  - Added template compliance validation to the developer checklist and `ComplianceService`.
+  - Implemented performance metrics collection for template generation efficiency.
+  - Integrated with `TokenCounterService` for context window optimization.
+- **Context Window Management**: Implemented in `LLMEngine` for optimized local LLM performance.
+  - Added `TokenCounterService` with multilingual support (CJK, Arabic, Hebrew, Latin).
+  - Implemented strategic truncation preserving conversation starts and ends.
+  - Added content compression for repetitive phrases in LLM context.
+  - Integrated context usage tracking in `ModelMetrics`.
+- **Model Warm-up Experience**: Enhanced the first-time AI initialization flow.
+  - Created `ModelWarmupService` for managed state, adaptive time estimates, and background loading.
+  - Implemented `ModelWarmupScreen` with animated progress, educational content, and cancellation handling.
+  - Added state persistence across app restarts via `AppSettings`.
+  - Integrated warmup flow into `SehatLockerApp` onboarding and `ModelManager` loading.
+  - Connected to `SessionManager` for lifecycle-aware resource management during warmup.
+  - Added abandonment metrics and performance tracking for usability testing.
+- **UI Integration**:
+  - Added visual context window usage indicators in `ModelInfoPanel`.
+  - Implemented real-time token usage progress bars with color-coded alerts (70% warning, 90% critical).
+  - Created `TokenUsageIndicator` widget with detailed breakdown and expandable sections.
+  - Implemented Model Fallback System:
+    - Added `ModelFallbackService` for automatic failure detection and model switching.
+    - Enhanced `LLMEngine` with comprehensive error classification (RAM, Memory, Backend failure).
+    - Integrated fallback logic into `ModelManager`, `SessionManager`, and `AIService`.
+    - Added UI indicators for active model and fallback status in `ModelInfoPanel`.
+    - Implemented context preservation during model switching.
+    - Added analytics collection for fallback events and failure patterns.
+    - Verified with performance benchmarks (Evaluation: ~53μs, Context Capture: ~3μs).
+    - Added test coverage for various failure modes and performance benchmarks.
+  - Integrated persistent token usage monitoring in `AIScreen`.
+- **Analytics**: Added context usage pattern tracking via `AnalyticsService`.
+  - Implemented detailed token usage analytics collection.
+
+## [1.7.0] - 2026-01-26
+
+### Added
+- **AI Error Recovery System**: Implemented a comprehensive recovery framework for AI failures.
+  - Created `AIRecoveryService` for failure mode detection and classification.
+  - Implemented structured `AIError` classification (Memory, Initialization, Inference, Context).
+  - Added user-friendly error messages with contextual recovery advice.
+  - Implemented exponential backoff for automated retry attempts (1s, 2s, 4s).
+  - Integrated recovery logic into `AIService` generation pipeline.
+  - Connected with `ModelFallbackService` for seamless model switching on critical failures.
+  - Implemented graceful degradation with fallback responses when full generation fails.
+  - Added comprehensive unit tests for recovery strategies in `test/services/ai_recovery_service_test.dart`.
+  - Integrated recovery monitoring into the `DeveloperComplianceChecklist`.
+
+## [1.2.0] - 2026-01-25
+
+### Added
+- **LLMEngine**: Integrated GGUF model support using `llama_cpp_dart`.
+  - Implemented thread-safe model initialization and inference using managed isolates.
+  - Added real-time initialization progress reporting (0.0 to 1.0).
+  - Implemented model integrity verification with SHA-256 checksums.
+  - Added memory management with low-resource fallback strategies (reduced context size).
+  - Integrated performance metrics collection (load time, tokens per second, total tokens).
+- **ModelWarmupScreen**: New UI for first-time AI model initialization.
+  - Features glassmorphism design with `LiquidGlassBackground` and `GlassProgressBar`.
+  - Shows detailed status updates during the warmup process.
+- **Integration**:
+  - Connected `LLMEngine` to `ModelManager` for automated model loading.
+  - Integrated with `AIService` as the primary local backend for text generation.
+  - Added resource management in `SessionManager` to dispose of AI resources on session end or backgrounding.
+- **Testing**: Added `LLMEngine` unit tests in `test/services/llm_engine_test.dart`.
+
+## [1.1.0] - 2026-01-25
+
+### Added
+- `DesktopNotificationService` for managing advanced desktop-specific notifications.
+- Notification grouping for batch operations (Storage, Model Status, Recording).
+- Action buttons support for desktop notifications.
+- Rate limiting for notifications (5-second window per ID).
+- System "Do Not Disturb" mode detection for macOS and Windows.
+- Accessibility support with screen reader announcements for notifications.
+- User-configurable notification preferences in AppSettings (Privacy masking, Accessibility).
+- Integrated recording status notifications in `ConversationRecorderService`.
+- Added storage usage alerts and model integrity warnings.
+
+### Changed
+- `FollowUpReminderService` modified to allow inheritance by `DesktopNotificationService`.
+- `EnhancedPrivacySettings` extended with `maskNotifications` option.
+- `AppSettings` updated with `accessibilityEnabled` preference.
+
+## [2026-01-26 12:00] - Build Configuration System
+
+### Added
+- **Build System**: Created a comprehensive build configuration system in `build/`.
+  - Implemented platform-specific build scripts (`build_android.sh`, `build_ios.sh`, `build_desktop.sh`).
+  - Added a verification matrix script (`verify_matrix.sh`) for CI/CD readiness.
+  - Implemented automated size optimization (ProGuard) and obfuscation for production builds.
+  - Added build performance metrics (timer) and security scanning (`flutter pub audit`).
+- **Flavor Support**:
+  - Implemented multi-flavor architecture (Dev, Staging, Prod).
+  - Created entry points: `lib/main_dev.dart`, `lib/main_staging.dart`, `lib/main_prod.dart`.
+  - Added `AppConfig` for runtime flavor-specific configuration (API URLs, logging).
+- **Platform Abstraction**:
+  - Implemented `PlatformService` with conditional imports (`mobile`, `desktop`, `web`, `stub`).
+  - Unified platform detection across the codebase.
+- **Security & Compliance**:
+  - Added Android signing configuration management via `key.properties`.
+  - Integrated flavor-aware model selection in `ModelManager`.
+  - Added build verification unit tests in `test/build_config_test.dart`.
+
+### Changed
+- **Main Entry Point**: Refactored `lib/main.dart` into `lib/main_common.dart` to support flavor-based initialization.
+- **Android Gradle**: Updated `build.gradle.kts` with product flavors, signing configs, and optimization rules.
+- **ModelManager**: Enhanced to consider the active build flavor when recommending AI models.
+
+## [2026-01-26 10:30] - System Tray Integration
+
+### Added
+- **SystemTrayService**: Created a new service in `lib/services/system_tray_service.dart` for desktop tray management.
+  - Implements platform-specific tray icons for macOS and Windows using `MethodChannel`.
+  - Features dynamic state indicators for recording (Recording, Paused, Idle).
+  - Integrates a context menu with actions for app visibility, recording control, and session locking.
+  - Includes real-time battery status monitoring with critical level indicators.
+  - Implements privacy-focused tooltips showing session and recording status without sensitive data.
+- **Native Implementation**: 
+  - **macOS**: Implemented tray logic in `AppDelegate.swift` using `NSStatusItem` and `NSMenu`.
+  - **Windows**: Implemented tray logic in `flutter_window.cpp` using Win32 `Shell_NotifyIcon` and popup menus.
+- **Enterprise & Security**:
+  - Implemented enterprise environment detection (MDM on macOS, Domain Join on Windows).
+  - Added accessibility labels and platform-specific keyboard shortcuts in tray menus.
+  - Included security measures to prevent tray icon spoofing via platform-specific verification.
+
+### Changed
+- **Main**: Integrated `SystemTrayService` initialization into the app startup sequence.
+- **ConversationRecorderService**: Refactored to support `ChangeNotifier` for reactive tray state updates.
+
+## [2026-01-25 16:30] - Desktop Menu Bar Integration
+
+### Added
+- **DesktopMenuBar**: Created a native-feeling menu bar in `lib/widgets/desktop/desktop_menu_bar.dart` using `PlatformMenuBar`.
+  - Implements standard macOS/Windows/Linux menu structures (File, Edit, View, Window, Help).
+  - Features dynamic enable/disable states based on session lock and document availability.
+  - Integrates platform-specific shortcuts (Cmd for macOS, Ctrl for Windows/Linux).
+  - Added a "Recent Documents" MRU (Most Recently Used) submenu fetching from `LocalStorageService`.
+- **App Integration**: Successfully integrated `DesktopMenuBar` into the main `SehatLockerApp` in `lib/app.dart`.
+  - Connected menu actions to core app features: New Scan, Export, Settings, Lock Session, and Shortcut Cheat Sheet.
+  - Implemented navigation to document details from the recent documents menu.
+
+### Changed
+- **App Entry Point**: Modified `lib/app.dart` to wrap the main layout with `DesktopMenuBar`, ensuring consistent navigation and shortcut handling across the app.
+- **Shortcut Handling**: Unified desktop menu shortcuts with the existing `KeyboardShortcutService` and `AppShortcutManager`.
+
+## [2026-01-25 15:30] - Desktop Window Management
+
+### Added
+- **WindowManagerService**: Created a new service in `lib/services/window_manager_service.dart` using `window_manager` and `screen_retriever`.
+  - Implements window state persistence (size, position, maximized state).
+  - Features multi-monitor awareness with overlap-based visibility validation.
+  - Includes failsafe position recovery for disconnected or changed display configurations.
+  - Implements DPI scaling awareness for high-resolution displays.
+- **Dependencies**: Added `window_manager` and `screen_retriever` for advanced desktop window control.
+
+### Changed
+- **AppSettings**: Added `persistWindowState` and `restoreWindowPosition` fields to allow user control over window behavior.
+- **DesktopSettingsScreen**: Integrated new window management controls, including toggles for state persistence and a "Reset Window Position" utility.
+- **SessionManager**: Refactored to delegate window state management to the specialized `WindowManagerService`.
+- **Main**: Integrated `WindowManagerService` initialization into the application startup sequence.
+
+## [2026-01-25] - Desktop Keyboard Shortcuts
+
+### Added
+- **KeyboardShortcutService**: Created a singleton service in `lib/services/keyboard_shortcut_service.dart` for centralized shortcut management.
+  - Implements platform-specific mappings (Cmd vs Ctrl).
+  - Features context-aware action registration and execution.
+  - Includes system shortcut conflict detection and haptic feedback integration.
+- **AppShortcutManager**: Implemented a global shortcut manager in `lib/managers/shortcut_manager.dart`.
+  - Provides a visual cheat sheet overlay with glassmorphism styling.
+  - Manages global intents for recording, scanning, settings, and locking.
+- **Contextual Shortcuts**:
+  - `Cmd/Ctrl + R`: Toggle recording (active on AI Screen).
+  - `Cmd/Ctrl + S`: Capture document (active on Scanner Screen) or open scanner (global).
+  - `Cmd/Ctrl + L`: Immediately lock the session.
+  - `Cmd/Ctrl + ,`: Open application settings.
+  - `Cmd/Ctrl + /`: Toggle the keyboard shortcut cheat sheet.
+
+### Changed
+- **SettingsScreen**: Added a toggle to enable/disable keyboard shortcuts.
+- **SessionManager**: Added `lockImmediately()` for secure shortcut-triggered session locking.
+- **AIScreen**: Integrated recording shortcuts via `KeyboardShortcutService`.
+- **DocumentScannerScreen**: Integrated document capture shortcuts via `KeyboardShortcutService`.
+- **AppSettings**: Added `enableKeyboardShortcuts` field to persist user preference.
+
+## [2026-01-26 09:00] - File Drag-and-Drop Interface
+
+### Added
+- **FileDropService**: Created a singleton service in `lib/services/file_drop_service.dart` for batch file processing and validation.
+  - Supports image, PDF, and text file validation.
+  - Implements a processing queue with stream-based progress tracking.
+  - Integrates with `VaultService` for automatic document processing.
+  - Supports directory drops to set custom export destinations.
+- **FileDropZone**: Created a universal drag-and-drop widget in `lib/widgets/desktop/file_drop_zone.dart`.
+  - Features glassmorphism overlay and visual feedback.
+  - Includes keyboard accessibility for non-mouse users.
+  - Provides a queue indicator for background processing tasks.
+
+### Changed
+- **DocumentScannerScreen**: Integrated `FileDropZone` as an alternative to camera-based document scanning.
+- **AIScreen**: Integrated `FileDropZone` for importing transcript files for analysis.
+- **ExportService**: Enhanced to support user-configurable export destinations via folder drag-and-drop.
+  - Refactored all export methods to honor the custom directory set in `AppSettings`.
+- **AppSettings**: Added `maxFileUploadSizeMB` and `lastExportDirectory` fields for better control over file handling and exports.
+- **PdfExportService**: Updated to support custom output paths for generated PDF files.
+
+## [2026-01-26 08:30] - Desktop-Optimized Settings
+
+### Added
+- **DesktopSettingsScreen**: Created a new screen in `lib/screens/desktop_settings_screen.dart` for desktop-specific configurations.
+- **Window Management**: Added state persistence for window dimensions and position in `AppSettings` and `SessionManager`.
+- **Performance Tuning**: Implemented GPU acceleration toggle and increased cache limit options (up to 4GB) for desktop users.
+- **Capability Matrix**: Added a system capability visualization tool in developer tools for debugging hardware support.
+- **Storage Validation**: Integrated system storage checks with desktop-specific threshold alerts.
+
+### Changed
+- **AppSettings**: Extended model with fields for window state, GPU acceleration, and cache limits.
+- **ModelManager**: Enhanced recommendation logic to consider GPU acceleration settings and desktop-only models (e.g., Research-13B).
+- **SettingsScreen**: Integrated conditional access to Desktop Experience settings based on platform detection.
+- **StorageUsageService**: Added `isStorageSufficient` helper for hardware capability validation.
+
+## [2026-01-26 08:00] - Documents Screen UI/UX & Search Enhancements
+
+### Added
+- **Responsive Layout**: Implemented a responsive grid system in `DocumentsScreen` that adapts column count (2 to 4) based on screen width.
+- **Staggered Animations**: Integrated `flutter_staggered_animations` for smooth entry of grid items.
+- **Storage Monitoring**: Added a low-storage warning banner (triggered at 80% usage) using `StorageUsageService`.
+- **Keyboard Accessibility**: Added `FocusableActionDetector` and keyboard shortcuts (Enter/Space) to document and conversation cards.
+- **Scroll Preservation**: Implemented `PageStorageKey` and `ScrollController` to maintain scroll position across orientation changes.
+
+### Changed
+- **Search System**: Refined `_performSearch` in `DocumentsScreen` to correctly integrate fuzzy search results from ObjectBox via `SearchService`.
+- **UI Components**: Converted `FollowUpCard` to use `GlassCard` for visual consistency.
+- **Modern Flutter**: Replaced deprecated `withOpacity` with `withValues` across `DocumentsScreen` and grid cards.
+
+### Fixed
+- **Type Safety**: Resolved type mismatch between `SearchEntry` and `String` IDs in search filtering logic.
+- **Linter Issues**: Fixed several linter warnings including unused imports and statement block formatting.
+
+## [2026-01-26 07:30] - Desktop Detection Service
+
+### Added
+- **PlatformDetector**: Created a new service in `lib/services/platform_detector.dart` for cross-platform capability detection.
+  - Implements detection for RAM, GPU acceleration, and system resources.
+  - Includes lifecycle-aware detection with automatic capability refreshing on app resume.
+  - Provides a capability matrix for feature-based selection (e.g., `highRam`, `gpuAcceleration`).
+  - Includes performance metrics for detection time.
+- **Tests**: Added comprehensive unit tests for `PlatformDetector` in `test/services/platform_detector_test.dart`.
+
+### Changed
+- **ModelManager**: Integrated `PlatformDetector` to dynamically select optimal AI models based on actual device capabilities instead of hardcoded platform checks.
+- **SessionManager**: Integrated `PlatformDetector` initialization and added lifecycle hooks for capability updates.
+- **LocalStorageService**: Added automatic application of platform-specific default settings (e.g., session timeouts) during first-run initialization.
+- **AppSettings**: Migrated `Set<String>` fields to `List<String>` to resolve Hive adapter generation issues and improved session timeout defaults.
+
+## [2026-01-26 07:05] - Compliance Checklist Access & Export Fixes
+
+### Added
+- **AuditTimelineScreen**: Created visual timeline interface with search, sensitivity filtering, and interactive integrity verification.
+- **ExportService**: Added `exportAuditLogReport` for PDF and encrypted JSON audit log exports with integrity pre-checks.
+- **SecurityDashboardScreen**: Added direct access to Security Audit Trail and implemented `_PurgeDialog` for manual security cleanup.
+
+### Changed
+- **LocalAuditService**: Enhanced integrity verification with detailed `IntegrityResult` and periodic checks.
+- **SessionManager**: Integrated periodic audit integrity checks on session start and added `lockImmediately` functionality.
+- **SecurityDashboardScreen**: Improved error handling and resolved several linter issues related to privacy manifests and session management.
+- **AuditTimelineScreen**: Implemented robust session ID display and error handling for audit entries.
+
+## [2026-01-25 12:30] - Audit-Ready Local Logging Foundations
+
+### Added
+- **LocalAuditEntry**: Added Hive model with hash chaining fields for tamper detection.
+- **LocalAuditService**: Added service for redaction, hash chaining, integrity checks, and retention pruning.
+
+### Changed
+- **SessionManager**: Added session IDs for session-bound audit trails.
+- **LocalStorageService**: Added encrypted storage box and adapters for local audit entries.
+- **AuthAuditService**: Mirrors authentication events into local audit log.
+- **ExportService**: Mirrors export audit events into local audit log.
+- **LocalAuditEntry**: Normalized detail hashing for deterministic integrity checks.
+- **LocalAuditService**: Aligned redaction with SecureLogger and added retention anchor handling.
+- **AppSettings**: Added local audit retention and chain anchor fields.
+- **AuthAuditService**: Refined local audit logging integration.
+- **ExportService**: Refined local audit logging integration.
+- **SessionManager**: Logged session start/lock/unlock and triggered audit retention cleanup.
+- **AIScreen**: Logged recording start events into local audit trail.
+- **AIScreen**: Logged recording save events into local audit trail.
+- **AIScreen**: Logged emergency recording deletions into local audit trail.
+
+## [2026-01-26 07:05] - Compliance Checklist Access & Export Fixes
+
+### Added
+- **Dependencies**: Added `url_launcher` for compliance documentation links.
+- **SettingsScreen**: Added four-finger swipe access to the Compliance Checklist in debug mode.
+
+### Changed
+- **ComplianceChecklistScreen**: Added authentication reason to the auth gate.
+- **ExportService**: Routed compliance checklist exports through standard PDF save/share and footer.
+- **ExportService**: Corrected compliance checklist export footer/share method usage.
+- **SettingsScreen**: Scoped Compliance Checklist menu entry to debug mode.
+
+## [2026-01-26 06:25] - Wellness Language Exception Handling
+
+### Fixed
+- **WellnessLanguageValidator**: Preserve exception phrases during replacements to avoid unintended rewrites.
+- **WellnessLanguageValidator Tests**: Cleaned up test setup for exception handling coverage.
+
+### Changed
+- **WellnessLanguageValidator**: Removed unused medical dictionary import.
+
+## [2026-01-26 06:10] - Wellness Language Integration
+
+### Added
+- **WellnessLanguageValidator**: Created validator service (`lib/services/wellness_language_validator.dart`) to identify and replace stigmatizing language with person-first terminology.
+- **Wellness Terminology**: Added `assets/data/wellness_terminology.json` with initial set of replacements and exceptions.
+- **AppSettings**: Added `enableWellnessLanguageChecks` and `showWellnessDebugInfo` settings to `AppSettings` model.
+- **Settings Integration**: Added toggle controls for wellness checks in `SettingsScreen` under AI Model section.
+
+### Changed
+- **SafetyFilterService**: Integrated `WellnessLanguageValidator` into `sanitize` pipeline.
+- **ExportService**: Applied `SafetyFilterService` sanitization to transcript exports (PDF and plain text).
+
+## [2026-01-26 05:40] - Formatting & Example Fix
+
+### Fixed
+- **Examples**: Corrected `totalFields` calculation in `examples/medical_field_integration_example.dart`.
+
+### Changed
+- **Formatting**: Applied `dart format` across the codebase.
+
+## [2026-01-26 05:20] - Risk Mitigation Fallbacks & Adapter Regeneration
+
+### Added
+- **RiskMitigationService**: Added fallback question selection when no keyword matches are found.
+- **Risk Templates**: Added fallback templates to `assets/data/risk_templates.json` for graceful degradation.
+- **RecorderProgress**: Defined `RecorderProgress` in `lib/services/conversation_recorder_service.dart` for progress streaming.
+
+### Changed
+- **AppSettingsAdapter**: Regenerated Hive adapters via build_runner to restore Set handling.
+
+## [2026-01-26 04:00] - Risk Mitigation Service
+
+### Added
+- **RiskMitigationService**: Created `lib/services/risk_mitigation_service.dart` extending `AIService` to provide risk-mitigation response templates.
+- **RiskTemplateConfiguration**: Implemented template configuration loading from assets (`lib/services/risk_template_configuration.dart`).
+- **Assets**: Added `assets/data/risk_templates.json` containing initial risk templates with keywords and localized messages.
+- **UI Integration**:
+  - **ConversationTranscriptScreen**: Added "Suggested Questions" section generated by `RiskMitigationService`.
+  - **DoctorVisitPrepScreen**: Added "Discussion Prompts" to the generated agenda.
+
+### Changed
+- **AIService**: Refactored to allow subclassing (changed `_internal` constructor to `internal` and `@protected`).
+
+## [2026-01-26 03:00] - Model Transparency Panel
+
+### Added
+- **ModelInfoPanel**: Created `ModelInfoPanel` widget in `lib/widgets/ai/model_info_panel.dart` to display detailed model information.
+  - **Features**: Expandable details, dynamic content loading, knowledge cutoff indicators, license compliance, and performance metrics.
+  - **Metrics**: Added display for load time, inference speed, and memory usage.
+- **ModelOption**: Updated model definition to include `knowledgeCutoffDate` and `license` fields.
+- **AppSettings**: Updated `AppSettings` model to include `selectedModelId`, `modelMetadataMap`, `autoStopRecordingMinutes`, and `enableBatteryWarnings`.
+- **Docs**: Created `docs/DEVELOPER_COMPLIANCE_CHECKLIST.md` for feature validation and compliance tracking.
+
+### Changed
+- **AIScreen**: Integrated `ModelInfoPanel` to replace simple status card, providing more transparency.
+- **SettingsScreen**: Added `ModelInfoPanel` to AI settings section for detailed model inspection.
+
+## [2026-01-26 02:10] - Consent Tracking Enhancements
+
+### Added
+- **ConsentEntry**: Added sync status fields for offline queue tracking.
+- **ExportService**: Added consent history export with PDF and encrypted JSON.
+- **SecurityDashboardScreen**: Added Consent History section with timeline and export action.
+- **Tests**: Added unit coverage for consent validity checks.
+
+### Changed
+- **ConsentService**: Added offline-aware consent recording and sync helpers.
+- **ModelSelectionScreen**: Enforced consent capture before model changes.
+
+## [2026-01-26 01:20] - Emergency Banner Overlay & Localization
+
+### Added
+- **Localization**: Added Flutter localization delegates and supported locales to app bootstrap.
+- **Dependencies**: Added `flutter_localizations` to enable localization scaffolding.
+- **Dependencies**: Updated `intl` to ^0.20.2 for Flutter localization compatibility.
+- **Compliance Docs**: Added developer checklist entry for mandatory Emergency Use Banner.
+- **Tests**: Added widget coverage for Emergency Use Banner across light and dark themes.
+
+### Changed
+- **AIScreen**: Rendered `EmergencyUseBanner` via Overlay with top priority placement.
+- **EmergencyUseBanner**: Localized all disclaimer strings and upgraded announcement API usage.
+- **ExportService**: Localized emergency warning text for exported headers.
+
+## [2026-01-26 00:55] - Export Emergency Warning Headers
+
+### Changed
+- **ExportService**: Added emergency warning banner to follow-up and compliance export headers.
+
+## [2026-01-26 00:30] - Emergency Use Banner Implementation
+
+### Added
+- **GlassBanner**: Created `GlassBanner` widget in `lib/widgets/design/glass_banner.dart` extending `GlassCard` for consistent alert UI.
+- **EmergencyUseBanner**: Implemented mandatory non-dismissible banner in `lib/widgets/compliance/emergency_use_banner.dart`.
+  - **Interaction**: Added "Double tap for details" pattern with haptic feedback.
+  - **Compliance**: Added "Not for Medical Emergencies" warning with amber styling.
+  - **Details**: Added dialog with safety bullet points.
+
+### Changed
+- **AIScreen**: Integrated `EmergencyUseBanner` at the top of the stack (non-dismissible).
+- **ExportService**: Added `EmergencyUseBanner` warning content to exported PDF headers (Follow-Up, Transcript, Compliance reports).
+- **SessionManager**: Added `onResume` stream to trigger lifecycle-aware UI updates.
+- **EmergencyUseBanner**: Connected to `SessionManager.onResume` to trigger accessibility announcements on app resume.
+
+## [2026-01-25 23:50] - Privacy Manifest & Dashboard Integration
+
+### Added
+- **PrivacyManifestService**: Created service to aggregate privacy metrics, storage usage, and access logs into a verifiable manifest.
+  - **Privacy Score**: Implemented dynamic scoring algorithm based on privacy settings and security events.
+  - **Manifest Export**: Added PDF export functionality for privacy manifests.
+- **PrivacyManifestScreen**: Added dedicated screen for visualizing privacy data with Liquid Glass design.
+  - **Visualizations**: Added interactive score card, storage breakdown, and access history log.
+  - **Developer Mode**: Added toggle to view raw technical details.
+
+### Changed
+- **SettingsScreen**: Added navigation entry for Privacy Manifest.
+- **SecurityDashboardScreen**: Integrated Privacy Manifest into Data Management section.
+
+## [2026-01-25 23:30] - Data Minimization Protocol
+
+### Added
+- **TempFileManager**: Implemented `TempFileManager` service in `lib/services/temp_file_manager.dart` for secure lifecycle management of temporary files.
+  - **Secure Deletion**: Implemented DoD 5220.22-M compliant 3-pass overwrite (Random, Zero, Random) and post-deletion integrity verification.
+  - **Retention Policy**: Integrated with `EnhancedPrivacySettings` to respect user-configurable retention periods.
+  - **Orphan Cleanup**: Added background scanning for orphaned temporary files (wav, jpg, enc) to prevent storage leaks.
+  - **File Locking**: Implemented file preservation mechanism to prevent purging active files during recording/scanning.
+- **EnhancedPrivacySettings**: Added `tempFileRetentionMinutes` field for granular retention control.
+- **SecurityDashboardScreen**: Added "Data Management" section with manual purge functionality and glassmorphic progress indicator.
+
+### Changed
+- **ConversationRecorderService**: Integrated `TempFileManager` to manage and secure-delete raw WAV segments.
+- **DocumentScannerScreen**: Integrated `TempFileManager` to securely manage captured and compressed images.
+- **SessionManager**: Added background trigger for `TempFileManager.purgeAll` on app pause.
+
+## [2026-01-25 22:10] - User Education Modals
+
+### Changed
+- **IssueReportingService**: Added preview/build flow, toggle-aware payloads, and JSON export alongside PDF.
+- **IssueReportingService**: Added queue/submission audit events and encrypted JSON export format.
+- **IssueReportingReviewScreen**: Refreshes previews on toggle changes and supports format selection on export.
+- **IssueReportAdapter**: Generated Hive adapter for issue report storage.
+
+## [2026-01-25 22:10] - User Education Modals
+
+### Changed
+- **AppSettings**: Store education completion versions for feature education gating.
+- **EducationService**: Added version-aware completion checks and analytics events.
+- **EducationModal**: Added accessibility labels and analytics display logging.
+- **EducationGate**: Updated to async completion checks for versioned education.
+- **SecurityDashboardScreen**: Added education completion status with async version checks.
+- **GlassBottomNav**: Added attention indicators for incomplete education.
+- **SehatLockerApp**: Added navigation education indicators for AI and Documents.
+- **SessionManager**: Added education modal trigger for first-use flows.
+- **AIScreen**: Added session-triggered education display on first use.
+- **DocumentScannerScreen**: Added session-triggered education display on first use.
+- **ConversationRecorderService**: Enforced education gating before recording.
+- **AuthGate**: Added optional education gating for secured features.
+- **AppSettingsAdapter**: Regenerated for education completion fields.
+- **EducationModal**: Avoided using BuildContext after async gaps.
+- **SecurityDashboardScreen**: Removed unused import after education refactor.
+- **DocumentsScreen**: Removed unused education gate import.
+- **AppSettingsAdapter**: Normalize education and audio IDs to Sets on read.
+
+## [2026-01-25 21:20] - Citation System Integration
+
+### Added
+- **CitationService**: Added citation migration for existing documents and text-based citation generation.
+- **CitationAdapter**: Added Hive adapter for Citation storage.
+- **ExportService**: Added document extraction export with citation preservation across formats.
+
+### Changed
+- **AIService**: Added citation post-processing step to append reference sections.
+- **DocumentExtraction**: Updated Hive adapter to persist citations.
+- **PdfExportService**: Added reference section rendering for document exports.
+- **VaultService**: Generates and stores citations during auto-category document saves.
+- **main.dart**: Runs citation migration during app startup.
+
+## [2026-01-25 20:00] - Model Output Validation System
+
+### Added
+- **AIService**: Implemented `AIService` with validation middleware and streaming interruption support.
+- **Validation System**:
+  - **ValidationRule**: Created abstract base class for extensible rules.
+  - **Rules**: Implemented `TreatmentRecommendationRule` (blocks specific treatment advice), `TriageAdviceRule` (flags emergencies), and `DiagnosticLanguageRule` (rewrites diagnostic statements).
+  - **Configuration**: Added `assets/data/validation_rules.json` for rule management.
+- **UI**:
+  - **AIResponseBubble**: Created a widget with visual indicators (shield icon) for modified or warned content.
+
+### Changed
+- **SessionManager**: Updated to track validation failures per session.
+- **Integration**:
+  - **SafetyFilterService**: Integrated as a complementary layer in `DiagnosticLanguageRule`.
+  - **SecureLogger**: Integrated to log validation failures and performance warnings (redacted).
+- **Testing**:
+  - Added `test/services/ai_service_validation_test.dart` with coverage for all rules and streaming flow.
+
+## [2026-01-25 19:00] - FDA Disclaimer Component
+
+### Added
+- **FdaDisclaimerWidget**: Created a reusable, accessible widget extending `GlassCard` to display FDA disclaimers.
+  - **Accessibility**: Includes `Semantics` for screen readers and WCAG 2.1 compliant contrast.
+  - **Interactivity**: Supports tappable "Learn more" link with haptic feedback.
+  - **Logging**: Automatically logs displays via `ComplianceService`.
+- **ComplianceService**: Service to manage disclaimer versions and track user acknowledgments/displays via `AuthAuditService`.
+
+### Changed
+- **ConversationTranscriptScreen**: Integrated `FdaDisclaimerWidget` below the recording disclaimer.
+- **ExportService**: Added FDA disclaimer text to the footer of all generated PDFs.
+- **AIScreen**: Added `FdaDisclaimerWidget` to the bottom of the quick actions list for visibility.
+
+## [2026-01-25 18:30] - Safety Filter Service
+
+### Added
+- **SafetyFilterService**: Implemented a service to scan and sanitize AI outputs for prohibited diagnostic language.
+  - **Detection**: Flags phrases like "you have", "diagnosis", "likely condition", etc.
+  - **Replacement**: Replaces prohibited content with educational alternatives ("Some people with similar concerns...").
+  - **Performance**: Optimized for < 50ms processing time.
+  - **Logging**: Logs triggers in debug mode (redacted in release).
+- **Unit Tests**: Added comprehensive tests covering all prohibited patterns and performance requirements.
+
+### Changed
+- **FollowUpCard**: Integrated `SafetyFilterService` to sanitize titles and descriptions before display.
+- **ConversationTranscriptScreen**: Added placeholder for future integration of safety filter with AI summaries.
+
+# Changelog - Sehat Locker
 ## [2026-01-25 18:00] - Lock Screen Widget (ICE)
 
 ### Added

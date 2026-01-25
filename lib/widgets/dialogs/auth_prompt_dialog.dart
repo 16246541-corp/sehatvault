@@ -71,7 +71,7 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
   Future<void> _secureScreen() async {
     try {
       // Disable screenshots (Android only)
-      await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
+      await FlutterWindowManagerPlus.addFlags(FlutterWindowManagerPlus.FLAG_SECURE);
     } on PlatformException catch (_) {
       // Ignore on non-Android platforms
     } catch (e) {
@@ -81,7 +81,7 @@ class _AuthPromptDialogState extends State<AuthPromptDialog> {
 
   Future<void> _unsecureScreen() async {
     try {
-      await FlutterWindowManager.clearFlags(FlutterWindowManager.FLAG_SECURE);
+      await FlutterWindowManagerPlus.clearFlags(FlutterWindowManagerPlus.FLAG_SECURE);
     } on PlatformException catch (_) {
       // Ignore
     } catch (e) {

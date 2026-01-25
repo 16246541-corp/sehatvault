@@ -1,15 +1,26 @@
+import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'platform_detector.dart';
 
+part 'model_quantization_service.g.dart';
+
 /// Supported quantization formats for local LLM models.
+@HiveType(typeId: 41)
 enum QuantizationFormat {
+  @HiveField(0)
   q2_k,
+  @HiveField(1)
   q3_k_m,
+  @HiveField(2)
   q4_k_m,
+  @HiveField(3)
   q5_k_m,
+  @HiveField(4)
   q6_k,
+  @HiveField(5)
   q8_0,
+  @HiveField(6)
   f16;
 
   /// Human-readable label for the quantization level.

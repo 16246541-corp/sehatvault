@@ -21,6 +21,8 @@ import 'services/batch_processing_service.dart';
 import 'widgets/session_guard.dart';
 import 'screens/onboarding/onboarding_navigator.dart';
 import 'services/onboarding_service.dart';
+import 'services/platform_detector.dart';
+import 'widgets/ai/incompatible_device_screen.dart';
 
 
 import 'config/app_config.dart';
@@ -111,15 +113,34 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool _isOnboardingComplete = false;
-
   bool _initialized = false;
+  bool _isIncompatible = false;
+  double _detectedRam = 0;
 
   @override
   void initState() {
     super.initState();
     // Start session monitoring
     SessionManager().startSession();
-    _checkOnboardingStatus();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    // 1. Check for hardware compatibility (8GB RAM Min for Mobile)
+    final caps = await PlatformDetector().getCapabilities();
+    
+    if (caps.isMobile && caps.ramGB < 7.5) { // 7.5 to account for variants, targeting 8GB devices
+      if (mounted) {
+        setState(() {
+          _isIncompatible = true;
+          _detectedRam = caps.ramGB;
+          _initialized = true;
+        });
+      }
+      return;
+    }
+
+    await _checkOnboardingStatus();
   }
 
   Future<void> _checkOnboardingStatus() async {
@@ -163,6 +184,13 @@ class _MyAppState extends State<MyApp> {
         home: const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         ),
+      );
+    }
+
+    if (_isIncompatible) {
+      return IncompatibleDeviceScreen(
+        detectedRam: _detectedRam,
+        requiredRam: 8.0,
       );
     }
 

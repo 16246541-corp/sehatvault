@@ -23,6 +23,8 @@ import '../models/ai_usage_metric.dart';
 import '../models/batch_task.dart';
 import '../models/user_profile.dart';
 import 'platform_detector.dart';
+import 'model_quantization_service.dart';
+import '../models/generation_parameters.dart';
 
 
 /// Local Storage Service for health records
@@ -98,6 +100,9 @@ class LocalStorageService {
     if (!Hive.isAdapterRegistered(10)) {
       Hive.registerAdapter(RecordingAuditEntryAdapter());
     }
+    if (!Hive.isAdapterRegistered(12)) {
+      Hive.registerAdapter(EnhancedPrivacySettingsAdapter());
+    }
     if (!Hive.isAdapterRegistered(13)) {
       Hive.registerAdapter(AuthAuditEntryAdapter());
     }
@@ -119,6 +124,9 @@ class LocalStorageService {
     if (!Hive.isAdapterRegistered(26)) {
       Hive.registerAdapter(MemoryEntryAdapter());
     }
+    if (!Hive.isAdapterRegistered(31)) {
+      Hive.registerAdapter(GenerationParametersAdapter());
+    }
     if (!Hive.isAdapterRegistered(32)) {
       Hive.registerAdapter(AIUsageMetricAdapter());
     }
@@ -133,6 +141,9 @@ class LocalStorageService {
     }
     if (!Hive.isAdapterRegistered(40)) {
       Hive.registerAdapter(UserProfileAdapter());
+    }
+    if (!Hive.isAdapterRegistered(41)) {
+      Hive.registerAdapter(QuantizationFormatAdapter());
     }
 
 
