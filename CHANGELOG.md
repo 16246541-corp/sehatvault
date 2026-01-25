@@ -1,5 +1,17 @@
 # Changelog - Sehat Locker
 
+## [1.8.2] - 2026-01-26
+
+### Added
+- **Hardware Verification**: Implemented strict 8GB RAM minimum requirement for mobile devices to ensure stable local AI (LLM, Whisper, OCR) processing.
+- **Incompatible Device Screen**: Created a premium glassmorphic blocking screen to gracefully inform users on under-powered devices about hardware requirements.
+- **Android Memory Optimization**: Enabled `largeHeap` in `AndroidManifest.xml` to allow the app to utilize more memory for intensive AI tasks.
+
+### Fixed
+- **macOS Build Stability**: Resolved a critical build failure in `flutter_sound` by patching the podspec name mismatch (`taudio` vs `flutter_sound`).
+- **macOS AppDelegate**: Fixed variable name collision (`channel` vs `trayChannel`) and implemented a more robust, non-Dill-based Do Not Disturb check.
+- **macOS Release**: Successfully verified native build for M1/M2/M3/M4 Apple Silicon architecture.
+
 ## [1.8.1] - 2026-01-26
 
 ### Added
