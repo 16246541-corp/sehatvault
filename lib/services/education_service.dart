@@ -77,7 +77,14 @@ class EducationService {
     );
   }
 
+  Future<void> markMultipleCompleted(List<String> contentIds) async {
+    for (final id in contentIds) {
+      await markEducationCompleted(id);
+    }
+  }
+
   Future<void> _migrateLegacyCompletion(String contentId, int version) async {
+
     final settings = _localStorageService.getAppSettings();
     final newVersions =
         Map<String, int>.from(settings.completedEducationVersions);

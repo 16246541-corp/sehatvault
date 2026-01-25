@@ -62,13 +62,29 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       aiAnalyticsRetentionDays: fields[42] as int,
       preferredQuantization: fields[43] as String,
       modelQuantizationMap: (fields[44] as Map?)?.cast<String, String>(),
+      hasSeenSplash: fields[45] as bool,
+      completedOnboardingSteps: (fields[46] as List?)?.cast<String>(),
+      isOnboardingComplete: fields[47] as bool,
+      hasAcceptedPrivacyPolicy: fields[48] as bool,
+      acceptedPrivacyPolicyVersion: fields[49] as String,
+      hasAcceptedTermsOfService: fields[50] as bool,
+      acceptedTermsOfServiceVersion: fields[51] as String,
+      hasCompletedPermissionsSetup: fields[52] as bool,
+      hasCompletedSecuritySetup: fields[53] as bool,
+      hasCompletedProfileSetup: fields[54] as bool,
+      hasCompletedFeatureTour: fields[55] as bool,
+      hasCompletedFirstScan: fields[56] as bool,
+      onboardingCompletedAt: fields[57] as DateTime?,
+      showIceOnLockScreen: fields[58] as bool,
+      iceContactName: fields[59] as String?,
+      iceContactPhone: fields[60] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(45)
+      ..writeByte(61)
       ..writeByte(0)
       ..write(obj.darkMode)
       ..writeByte(1)
@@ -158,7 +174,39 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(43)
       ..write(obj.preferredQuantization)
       ..writeByte(44)
-      ..write(obj.modelQuantizationMap);
+      ..write(obj.modelQuantizationMap)
+      ..writeByte(45)
+      ..write(obj.hasSeenSplash)
+      ..writeByte(46)
+      ..write(obj.completedOnboardingSteps)
+      ..writeByte(47)
+      ..write(obj.isOnboardingComplete)
+      ..writeByte(48)
+      ..write(obj.hasAcceptedPrivacyPolicy)
+      ..writeByte(49)
+      ..write(obj.acceptedPrivacyPolicyVersion)
+      ..writeByte(50)
+      ..write(obj.hasAcceptedTermsOfService)
+      ..writeByte(51)
+      ..write(obj.acceptedTermsOfServiceVersion)
+      ..writeByte(52)
+      ..write(obj.hasCompletedPermissionsSetup)
+      ..writeByte(53)
+      ..write(obj.hasCompletedSecuritySetup)
+      ..writeByte(54)
+      ..write(obj.hasCompletedProfileSetup)
+      ..writeByte(55)
+      ..write(obj.hasCompletedFeatureTour)
+      ..writeByte(56)
+      ..write(obj.hasCompletedFirstScan)
+      ..writeByte(57)
+      ..write(obj.onboardingCompletedAt)
+      ..writeByte(58)
+      ..write(obj.showIceOnLockScreen)
+      ..writeByte(59)
+      ..write(obj.iceContactName)
+      ..writeByte(60)
+      ..write(obj.iceContactPhone);
   }
 
   @override

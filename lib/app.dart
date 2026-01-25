@@ -13,8 +13,6 @@ import 'services/model_manager.dart';
 import 'widgets/navigation/glass_bottom_nav.dart';
 import 'widgets/auth_gate.dart';
 import 'services/biometric_service.dart';
-import 'services/pin_auth_service.dart';
-import 'screens/pin_setup_screen.dart';
 import 'widgets/dialogs/biometric_enrollment_dialog.dart';
 import 'services/education_service.dart';
 import 'widgets/education/education_gate.dart';
@@ -40,9 +38,10 @@ class SehatLockerApp extends StatefulWidget {
 class _SehatLockerAppState extends State<SehatLockerApp>
     with WidgetsBindingObserver {
   int _currentIndex = 0;
-  bool _pinSetupRequired = false;
-  bool _pinSetupChecked = false;
-  bool _isCheckingEnrollment = false;
+
+
+
+
 
   late final List<Widget> _screens;
 
@@ -65,10 +64,9 @@ class _SehatLockerAppState extends State<SehatLockerApp>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOverdueItems();
-      _checkBiometricEnrollment();
     });
 
-    _checkPinSetupRequirement();
+
   }
 
   @override
@@ -91,50 +89,42 @@ class _SehatLockerAppState extends State<SehatLockerApp>
     }
   }
 
+
   Future<void> _checkBiometricEnrollment({bool isResume = false}) async {
-    if (_isCheckingEnrollment) return;
-    if (_pinSetupRequired) return;
-
-    _isCheckingEnrollment = true;
-
-    try {
-      final settings = LocalStorageService().getAppSettings();
-
-      if (settings.hasSeenBiometricEnrollmentPrompt && !isResume) {
-        return;
-      }
-
-      final status = await BiometricService().getBiometricStatus();
-
-      if (status == BiometricStatus.availableButNotEnrolled) {
-        if (settings.hasSeenBiometricEnrollmentPrompt) return;
-
-        if (!mounted) return;
-
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => BiometricEnrollmentDialog(
-            onEnroll: () async {
-              Navigator.pop(context);
-              await BiometricService().openSecuritySettings();
-            },
-            onUsePin: () async {
-              Navigator.pop(context);
-              settings.hasSeenBiometricEnrollmentPrompt = true;
-              await LocalStorageService().saveAppSettings(settings);
-              await _checkPinSetupRequirement();
-            },
-            onDismiss: () async {
-              Navigator.pop(context);
-              settings.hasSeenBiometricEnrollmentPrompt = true;
-              await LocalStorageService().saveAppSettings(settings);
-            },
-          ),
-        );
-      }
-    } finally {
-      _isCheckingEnrollment = false;
+    final settings = LocalStorageService().getAppSettings();
+    
+    // Skip if user has already seen the prompt
+    if (settings.hasSeenBiometricEnrollmentPrompt) return;
+    
+    // Check if biometrics are available but not enrolled
+    final biometricService = BiometricService();
+    final status = await biometricService.getBiometricStatus();
+    
+    if (status == BiometricStatus.availableButNotEnrolled && mounted) {
+      // Show the enrollment dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => BiometricEnrollmentDialog(
+          onEnroll: () async {
+            Navigator.of(ctx).pop();
+            // Navigate to system settings for biometric enrollment
+            await biometricService.openSecuritySettings();
+          },
+          onUsePin: () {
+            Navigator.of(ctx).pop();
+            // Mark as seen so we don't prompt again
+            settings.hasSeenBiometricEnrollmentPrompt = true;
+            LocalStorageService().saveAppSettings(settings);
+          },
+          onDismiss: () {
+            Navigator.of(ctx).pop();
+            // Mark as seen so we don't prompt again
+            settings.hasSeenBiometricEnrollmentPrompt = true;
+            LocalStorageService().saveAppSettings(settings);
+          },
+        ),
+      );
     }
   }
 
@@ -173,7 +163,7 @@ class _SehatLockerAppState extends State<SehatLockerApp>
   Future<void> _onItemTapped(int index) async {
     if (index == 2) {
       // AI Tab
-      final settings = LocalStorageService().getAppSettings();
+
       final model = await ModelManager.getRecommendedModel();
 
       if (!ModelWarmupService().isModelWarmedUp(model.id)) {
@@ -216,16 +206,7 @@ class _SehatLockerAppState extends State<SehatLockerApp>
     };
   }
 
-  Future<void> _checkPinSetupRequirement() async {
-    final hasBiometrics = await BiometricService().hasEnrolledBiometrics;
-    final hasPin = await PinAuthService().hasPin();
-    if (mounted) {
-      setState(() {
-        _pinSetupRequired = !hasBiometrics && !hasPin;
-        _pinSetupChecked = true;
-      });
-    }
-  }
+
 
   Widget _buildAIScreen() {
     return ValueListenableBuilder<Box>(
@@ -247,25 +228,8 @@ class _SehatLockerAppState extends State<SehatLockerApp>
 
   @override
   Widget build(BuildContext context) {
-    if (!_pinSetupChecked) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_pinSetupRequired) {
-      return PinSetupScreen(
-        mode: PinSetupMode.setup,
-        showAppBar: false,
-        onComplete: () {
-          setState(() {
-            _pinSetupRequired = false;
-          });
-        },
-      );
-    }
-
     final isLocked = SessionManager().isLocked;
+
 
     return ValueListenableBuilder(
       valueListenable: LocalStorageService().recordsListenable,

@@ -12,7 +12,6 @@ import '../services/vault_service.dart';
 import '../widgets/design/emergency_stop_button.dart';
 import '../utils/design_constants.dart';
 import '../widgets/ai/model_info_panel.dart';
-import '../widgets/ai/token_usage_indicator.dart';
 import '../widgets/compliance/knowledge_cutoff_notice.dart';
 import '../models/model_option.dart';
 import '../services/medical_field_extractor.dart';

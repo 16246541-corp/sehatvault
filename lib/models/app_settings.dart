@@ -1,9 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:sehatlocker/models/enhanced_privacy_settings.dart';
 import 'package:sehatlocker/models/model_metadata.dart';
 import 'package:sehatlocker/models/generation_parameters.dart';
-import 'package:sehatlocker/services/model_quantization_service.dart';
 
 part 'app_settings.g.dart';
 
@@ -144,6 +142,70 @@ class AppSettings extends HiveObject {
   @HiveField(44)
   Map<String, String> modelQuantizationMap;
 
+  /// Whether the user has seen the splash screen (for onboarding flow)
+  @HiveField(45)
+  bool hasSeenSplash;
+
+  /// List of completed onboarding step names
+  @HiveField(46)
+  List<String> completedOnboardingSteps;
+
+  /// Whether onboarding is fully complete
+  @HiveField(47)
+  bool isOnboardingComplete;
+
+  /// Whether the user has accepted the privacy policy
+  @HiveField(48)
+  bool hasAcceptedPrivacyPolicy;
+
+  /// Version of the accepted privacy policy
+  @HiveField(49)
+  String acceptedPrivacyPolicyVersion;
+
+  /// Whether the user has accepted the terms of service
+  @HiveField(50)
+  bool hasAcceptedTermsOfService;
+
+  /// Version of the accepted terms of service
+  @HiveField(51)
+  String acceptedTermsOfServiceVersion;
+
+  /// Whether the user has completed the permissions setup during onboarding
+  @HiveField(52)
+  bool hasCompletedPermissionsSetup;
+
+  /// Whether the user has completed the security setup during onboarding
+  @HiveField(53)
+  bool hasCompletedSecuritySetup;
+
+  /// Whether the user has completed the profile setup during onboarding
+  @HiveField(54)
+  bool hasCompletedProfileSetup;
+
+  /// Whether the user has completed the feature tour during onboarding
+  @HiveField(55)
+  bool hasCompletedFeatureTour;
+
+  /// Whether the user has completed the first scan guide during onboarding
+  @HiveField(56)
+  bool hasCompletedFirstScan;
+
+  /// When the onboarding was completed
+  @HiveField(57)
+  DateTime? onboardingCompletedAt;
+
+  /// ICE (In Case of Emergency) - Show on lock screen widget
+  @HiveField(58)
+  bool showIceOnLockScreen;
+
+  /// ICE Contact Name
+  @HiveField(59)
+  String? iceContactName;
+
+  /// ICE Contact Phone Number
+  @HiveField(60)
+  String? iceContactPhone;
+
   AppSettings({
     this.darkMode = false,
     this.notificationsEnabled = true,
@@ -190,6 +252,22 @@ class AppSettings extends HiveObject {
     this.aiAnalyticsRetentionDays = 30,
     this.preferredQuantization = 'q4_k_m',
     Map<String, String>? modelQuantizationMap,
+    this.hasSeenSplash = false,
+    List<String>? completedOnboardingSteps,
+    this.isOnboardingComplete = false,
+    this.hasAcceptedPrivacyPolicy = false,
+    this.acceptedPrivacyPolicyVersion = '',
+    this.hasAcceptedTermsOfService = false,
+    this.acceptedTermsOfServiceVersion = '',
+    this.hasCompletedPermissionsSetup = false,
+    this.hasCompletedSecuritySetup = false,
+    this.hasCompletedProfileSetup = false,
+    this.hasCompletedFeatureTour = false,
+    this.hasCompletedFirstScan = false,
+    this.onboardingCompletedAt,
+    this.showIceOnLockScreen = false,
+    this.iceContactName,
+    this.iceContactPhone,
   })  : keepAudioIds = keepAudioIds ?? [],
         enhancedPrivacySettings =
             enhancedPrivacySettings ?? EnhancedPrivacySettings(),
@@ -200,7 +278,8 @@ class AppSettings extends HiveObject {
         generationParameters = generationParameters ?? GenerationParameters(),
         dismissedKnowledgeCutoffModelIds =
             dismissedKnowledgeCutoffModelIds ?? [],
-        modelQuantizationMap = modelQuantizationMap ?? {};
+        modelQuantizationMap = modelQuantizationMap ?? {},
+        completedOnboardingSteps = completedOnboardingSteps ?? [];
 
   factory AppSettings.defaultSettings() {
     return AppSettings();

@@ -21,13 +21,15 @@ class ModelMetadataAdapter extends TypeAdapter<ModelMetadata> {
       checksum: fields[1] as String,
       releaseDate: fields[2] as DateTime,
       quantization: fields[3] as QuantizationFormat,
+      signature: fields[4] as String?,
+      publicKey: fields[5] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ModelMetadata obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.version)
       ..writeByte(1)
@@ -35,7 +37,11 @@ class ModelMetadataAdapter extends TypeAdapter<ModelMetadata> {
       ..writeByte(2)
       ..write(obj.releaseDate)
       ..writeByte(3)
-      ..write(obj.quantization);
+      ..write(obj.quantization)
+      ..writeByte(4)
+      ..write(obj.signature)
+      ..writeByte(5)
+      ..write(obj.publicKey);
   }
 
   @override

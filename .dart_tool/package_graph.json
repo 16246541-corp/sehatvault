@@ -12,6 +12,7 @@
         "battery_plus",
         "camera",
         "card_swiper",
+        "confetti",
         "connectivity_plus",
         "crypto",
         "cupertino_icons",
@@ -24,13 +25,14 @@
         "flutter_image_compress",
         "flutter_local_notifications",
         "flutter_localizations",
+        "flutter_markdown",
         "flutter_secure_storage",
         "flutter_sound",
         "flutter_staggered_animations",
         "flutter_staggered_grid_view",
         "flutter_tesseract_ocr",
         "flutter_tts",
-        "flutter_windowmanager",
+        "flutter_windowmanager_plus",
         "google_fonts",
         "hive",
         "hive_flutter",
@@ -177,6 +179,16 @@
       ]
     },
     {
+      "name": "flutter_markdown",
+      "version": "0.7.7+1",
+      "dependencies": [
+        "flutter",
+        "markdown",
+        "meta",
+        "path"
+      ]
+    },
+    {
       "name": "llama_cpp_dart",
       "version": "0.2.2",
       "dependencies": [
@@ -254,8 +266,8 @@
       ]
     },
     {
-      "name": "flutter_windowmanager",
-      "version": "0.2.0",
+      "name": "flutter_windowmanager_plus",
+      "version": "1.0.1",
       "dependencies": [
         "flutter"
       ]
@@ -606,6 +618,23 @@
       "dependencies": [
         "crypto",
         "meta"
+      ]
+    },
+    {
+      "name": "confetti",
+      "version": "0.7.0",
+      "dependencies": [
+        "flutter",
+        "vector_math"
+      ]
+    },
+    {
+      "name": "fl_chart",
+      "version": "0.70.2",
+      "dependencies": [
+        "equatable",
+        "flutter",
+        "vector_math"
       ]
     },
     {
@@ -1093,6 +1122,14 @@
       "dependencies": [
         "clock",
         "collection"
+      ]
+    },
+    {
+      "name": "markdown",
+      "version": "7.3.0",
+      "dependencies": [
+        "args",
+        "meta"
       ]
     },
     {
@@ -1794,6 +1831,14 @@
       ]
     },
     {
+      "name": "equatable",
+      "version": "2.0.8",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
       "name": "sky_engine",
       "version": "0.0.0",
       "dependencies": []
@@ -2009,23 +2054,6 @@
       "dependencies": [
         "collection",
         "hooks"
-      ]
-    },
-    {
-      "name": "fl_chart",
-      "version": "0.70.2",
-      "dependencies": [
-        "equatable",
-        "flutter",
-        "vector_math"
-      ]
-    },
-    {
-      "name": "equatable",
-      "version": "2.0.8",
-      "dependencies": [
-        "collection",
-        "meta"
       ]
     }
   ],

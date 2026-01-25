@@ -21,7 +21,9 @@ import '../models/local_audit_entry.dart';
 import '../models/conversation_memory.dart';
 import '../models/ai_usage_metric.dart';
 import '../models/batch_task.dart';
+import '../models/user_profile.dart';
 import 'platform_detector.dart';
+
 
 /// Local Storage Service for health records
 /// Uses Hive with encryption for privacy-first data storage
@@ -44,7 +46,10 @@ class LocalStorageService {
   static const String _batchTasksBox = 'batch_tasks';
   static const String _modelManifestsBox = 'model_manifests';
   static const String _appSettingsKey = 'app_settings_object';
+  static const String _userProfileKey = 'user_profile_object';
   static const String _autoDeleteOriginalKey = 'auto_delete_original';
+  static const String _userProfileBox = 'user_profile';
+
 
   // Singleton instance
   static final LocalStorageService _instance = LocalStorageService._internal();
@@ -126,6 +131,10 @@ class LocalStorageService {
     if (!Hive.isAdapterRegistered(35)) {
       Hive.registerAdapter(BatchTaskAdapter());
     }
+    if (!Hive.isAdapterRegistered(40)) {
+      Hive.registerAdapter(UserProfileAdapter());
+    }
+
 
     // Get or create encryption key
     final encryptionKey = await _getOrCreateEncryptionKey();
@@ -210,6 +219,12 @@ class LocalStorageService {
       _modelManifestsBox,
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
+
+    await Hive.openBox<UserProfile>(
+      _userProfileBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
 
     _isInitialized = true;
 
@@ -382,6 +397,17 @@ class LocalStorageService {
       debugPrint('Failed to update widget data: $e');
     }
   }
+
+  /// Get User Profile
+  UserProfile getUserProfile() {
+    return Hive.box<UserProfile>(_userProfileBox).get(_userProfileKey) ?? UserProfile();
+  }
+
+  /// Save User Profile
+  Future<void> saveUserProfile(UserProfile profile) async {
+    await Hive.box<UserProfile>(_userProfileBox).put(_userProfileKey, profile);
+  }
+
 
   /// Get Auto Delete Original setting
   bool get autoDeleteOriginal {

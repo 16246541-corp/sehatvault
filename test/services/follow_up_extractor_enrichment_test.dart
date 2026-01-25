@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sehatlocker/models/document_extraction.dart';
 import 'package:sehatlocker/models/follow_up_item.dart';
+import 'package:sehatlocker/models/doctor_conversation.dart';
 import 'package:sehatlocker/models/health_record.dart';
 import 'package:sehatlocker/services/follow_up_extractor.dart';
 import 'package:sehatlocker/services/vault_service.dart';
@@ -51,6 +52,13 @@ class MockVaultService implements VaultService {
 
   @override
   Future<void> deleteDocument(String healthRecordId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<HealthRecord> saveConversationToVault(
+      DoctorConversation conversation,
+      {void Function(String status)? onProgress}) {
     throw UnimplementedError();
   }
 }

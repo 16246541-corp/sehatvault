@@ -1,0 +1,51 @@
+{
+    "id": "welcome",
+    "title": "Welcome to Sehat Locker",
+    "version": 1,
+    "pages": [
+        {
+            "id": "privacy",
+            "title": "Your Health, Secured",
+            "description": "All your sensitive health data is encrypted with military-grade AES-256 encryption. Your encryption keys are stored in your device's secure enclave — never on any server.",
+            "iconName": "shield",
+            "highlights": [
+                "AES-256 encryption at rest",
+                "Keys stored in secure enclave",
+                "No cloud storage required"
+            ]
+        },
+        {
+            "id": "vault",
+            "title": "Smart Document Vault",
+            "description": "Scan prescriptions, lab results, and medical records with your camera. We automatically extract key information like medications, test results, and doctor names.",
+            "iconName": "folder_special",
+            "highlights": [
+                "Automatic text extraction (OCR)",
+                "Smart categorization",
+                "Duplicate detection"
+            ]
+        },
+        {
+            "id": "ai",
+            "title": "AI That Respects Privacy",
+            "description": "Our AI assistant runs entirely on your device. Ask health questions, get insights from your records, and never worry about your data leaving your phone.",
+            "iconName": "psychology",
+            "highlights": [
+                "100% on-device processing",
+                "No internet required",
+                "Your data never trains AI models"
+            ]
+        },
+        {
+            "id": "recording",
+            "title": "Record Doctor Visits",
+            "description": "Capture your medical appointments and get automatic transcriptions with speaker identification. We extract action items like medications, tests, and follow-ups.",
+            "iconName": "mic",
+            "highlights": [
+                "Encrypted audio recording",
+                "On-device transcription",
+                "Automatic follow-up extraction"
+            ]
+        }
+    ]
+}

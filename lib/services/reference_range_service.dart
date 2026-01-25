@@ -1,9 +1,12 @@
+import 'local_storage_service.dart';
+
 /// Service for looking up reference ranges for lab tests and determining
 /// if values are within normal limits.
 ///
 /// This service contains embedded reference ranges for common lab tests
 /// and provides methods to match lab values against these ranges.
 class ReferenceRangeService {
+
   /// Embedded reference ranges for common lab tests.
   /// Each entry contains:
   /// - testNames: List of common names/aliases for the test
@@ -585,13 +588,16 @@ class ReferenceRangeService {
 
     // Filter by gender if specified
     Map<String, dynamic>? selectedRange;
-    if (gender != null) {
-      final genderLower = gender.toLowerCase();
+    final effectiveGender = gender ?? LocalStorageService().getUserProfile().sex;
+    
+    if (effectiveGender != null && effectiveGender != 'unspecified') {
+      final genderLower = effectiveGender.toLowerCase();
       selectedRange = matches.firstWhere(
         (range) => range['gender'] == genderLower || range['gender'] == 'both',
         orElse: () => matches.first,
       );
     } else {
+
       // Prefer 'both' gender ranges if no gender specified
       selectedRange = matches.firstWhere(
         (range) => range['gender'] == 'both',

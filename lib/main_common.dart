@@ -19,6 +19,9 @@ import 'services/prompt_template_service.dart';
 import 'services/ai_analytics_service.dart';
 import 'services/batch_processing_service.dart';
 import 'widgets/session_guard.dart';
+import 'screens/onboarding/onboarding_navigator.dart';
+import 'services/onboarding_service.dart';
+
 
 import 'config/app_config.dart';
 
@@ -97,6 +100,8 @@ Future<void> mainCommon(AppConfig config) async {
   runApp(const MyApp());
 }
 
+
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -105,12 +110,41 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  bool _isOnboardingComplete = false;
+
+  bool _initialized = false;
+
   @override
   void initState() {
     super.initState();
     // Start session monitoring
     SessionManager().startSession();
+    _checkOnboardingStatus();
   }
+
+  Future<void> _checkOnboardingStatus() async {
+    final isComplete = await OnboardingService().isOnboardingComplete();
+    if (mounted) {
+      setState(() {
+        _isOnboardingComplete = isComplete;
+        _initialized = true;
+      });
+    }
+  }
+
+
+  Widget _getScreenForStep() {
+    if (!_isOnboardingComplete) {
+      return OnboardingNavigator(onComplete: () {
+        setState(() {
+          _isOnboardingComplete = true;
+        });
+      });
+    }
+    return const SehatLockerApp();
+  }
+
+
 
   @override
   void dispose() {
@@ -121,6 +155,17 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_initialized) {
+      // Show a minimal loading state while checking onboarding status
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.darkTheme,
+        home: const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
     return SessionGuard(
       child: MaterialApp(
         navigatorKey: SessionManager().navigatorKey,
@@ -137,7 +182,7 @@ class _MyAppState extends State<MyApp> {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
-        home: const SehatLockerApp(),
+        home: _getScreenForStep(),
       ),
     );
   }

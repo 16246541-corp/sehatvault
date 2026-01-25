@@ -1,5 +1,103 @@
 # Changelog - Sehat Locker
 
+## [1.8.1] - 2026-01-26
+
+### Fixed
+- **System Stability**: Resolved critical compilation errors in `AppSettings` and `WidgetDataService` by implementing missing ICE (In Case of Emergency) configuration fields.
+- **Android Build**: Fixed Gradle build errors in `android/app/build.gradle.kts` by resolving `java.util.Properties` reference conflicts and migrating deprecated `kotlinOptions.jvmTarget` to the modern `compilerOptions` DSL for Kotlin 2.0+ compatibility.
+- **App Lifecycle**: Implemented missing `_checkBiometricEnrollment` method in `SehatLockerApp` to correctly prompt users for biometric setup on app resume.
+- **Testing**: Fixed `follow_up_extractor_enrichment_test.dart` by implementing missing `saveConversationToVault` mock override.
+- **Testing**: Restored `widget_test.dart` compilation by correcting the application class name entry point.
+- **Data Persistence**: Regenerated Hive adapters to support new ICE contact fields in `AppSettings`.
+
+## [1.8.0] - 2026-01-26
+
+### Added
+- **User Onboarding - Splash Screen**: Implemented an animated splash screen as the first step of the onboarding experience.
+  - Created `AnimatedLogo` widget with scale bounce, glow pulse, and 3D rotation effects.
+  - Created `AnimatedPrivacyShield` widget displaying "Privacy First" indicator.
+  - Implemented `SplashScreen` with staggered text animations for "Sehat Locker" title and "Your Health, Your Device" tagline.
+  - Added animated background orbs with gradient effects matching the Liquid Glass design system.
+  - Integrated smooth fade-out exit transition after minimum 2.5 second display.
+  - Added onboarding tracking fields to `AppSettings`: `hasSeenSplash`, `completedOnboardingSteps`, `isOnboardingComplete`.
+  - Integrated splash screen into `main_common.dart` to display for first-time users only.
+  - Regenerated Hive adapters for new `AppSettings` fields.
+- **User Onboarding - Welcome Carousel**: Implemented a 4-page feature introduction carousel as the second onboarding step.
+  - Created `WelcomeCarouselScreen` with swipeable pages introducing Privacy, Document Vault, AI Assistant, and Recording features.
+  - Created `WelcomePageData` model for JSON-driven content with title, description, icon, and highlights.
+  - Created `AnimatedPageIndicator` widget with animated dot transitions and glow effects.
+  - Created `PillPageIndicator` widget with progress bar style indication.
+  - Added `assets/data/onboarding/welcome_content.json` with feature content and highlights.
+  - Implemented skip button on all pages except the last, with "Get Started" button on final page.
+  - Added fade-in animation on content load and smooth page transitions.
+  - Integrated into `main_common.dart` onboarding flow with `OnboardingStep` enum for step management.
+  - Registered onboarding assets folder in `pubspec.yaml`.
+- **User Onboarding - Privacy Policy & Terms Acceptance**: Implemented a legally-compliant consent flow as the third onboarding step.
+  - Created `ConsentAcceptanceScreen` with scrollable privacy policy and terms of service content.
+  - Created `ConsentChecklistWidget` displaying four key privacy guarantees (AES-256 encryption, no cloud storage, no data leaves device, user owns all data).
+  - Added `privacy_policy_v1.md` template covering data collection, security measures, user rights, consent management, and data retention.
+  - Added `terms_of_service_v1.md` template covering user responsibilities, medical disclaimers, intellectual property, and liability limitations.
+  - Implemented dual checkbox acceptance flow requiring both Privacy Policy and Terms of Service acceptance.
+  - Added "Read Full" modal bottom sheet with full markdown rendering using `flutter_markdown` package.
+  - Integrated `ConsentService.recordConsent()` for audit-compliant consent recording with version hash, timestamp, and device info.
+  - Added version display with policy version number in header.
+  - Expanded `AppSettings` with `hasAcceptedPrivacyPolicy`, `acceptedPrivacyPolicyVersion`, `hasAcceptedTermsOfService`, and `acceptedTermsOfServiceVersion` fields.
+  - Added analytics logging for `consent_privacy_viewed`, `consent_privacy_accepted`, and `consent_terms_accepted` events.
+  - Added `flutter_markdown` dependency for consent document rendering.
+  - Regenerated Hive adapters for new `AppSettings` fields.
+- **User Onboarding - Permissions Request Flow**: Implemented a guided permissions request screen as the fourth onboarding step.
+  - Created `PermissionsRequestScreen` in `lib/screens/onboarding/permissions_request_screen.dart` with step-by-step permission requests.
+  - Created `PermissionCard` widget in `lib/widgets/onboarding/permission_card.dart` for displaying permission icon, title, description, status indicator, and grant button.
+  - Implemented one-at-a-time permission requests for:
+    - Camera: "Scan medical documents, prescriptions, and lab reports directly with your camera"
+    - Microphone: "Record doctor visits and medical consultations for accurate transcription"
+    - Notifications (Optional): "Get reminders for follow-up appointments, medication schedules"
+  - Added `PermissionStatus` enum to track pending, granted, denied, and permanently denied states.
+  - Added notification permission to `PermissionService`:
+    - `requestNotificationPermission()` for requesting notification permission
+    - Status check methods: `isCameraPermissionGranted()`, `isMicPermissionGranted()`, `isNotificationPermissionGranted()`
+    - Permanently denied check methods for all three permission types
+    - `openSettings()` utility to redirect users to app settings for permanently denied permissions
+  - Implemented graceful denial handling with visual status indicators and Settings deep-link for permanently denied permissions.
+  - Added "Skip" button for optional notification permission.
+  - Added progress indicator showing current permission step with visual completion states.
+  - Expanded `AppSettings` with `hasCompletedPermissionsSetup` field (HiveField 52).
+  - Added `OnboardingStep.permissions` to the onboarding step enum.
+  - Added analytics logging for permission events:
+    - `permissions_screen_viewed`, `permission_camera_granted`, `permission_camera_denied`
+    - `permission_mic_granted`, `permission_mic_denied`, `permission_notification_granted`, `permission_notification_denied`
+    - `permission_notification_skipped`, `permissions_setup_completed`
+  - Implemented pulse animation on active permission cards with glow effect.
+  - Regenerated Hive adapters for new `AppSettings field.
+- **User Onboarding - Flow Orchestration**: Implemented `OnboardingNavigator` in `lib/screens/onboarding/onboarding_navigator.dart` to manage the multi-step journey.
+  - Added deterministic step discovery based on `OnboardingService`.
+  - Implemented back/next navigation with state persistence and transition logic.
+  - Integrated into `main_common.dart` to orchestrate a seamless first-run experience.
+- **User Onboarding - Security & PIN Setup**: Implemented the fifth onboarding step focusing on multi-layered local protection.
+  - Created `SecuritySetupScreen` with dynamic progress tracking (Intro, Biometrics, PIN, Completion).
+  - Integrated existing `PinSetupScreen` and `BiometricService` into the onboarding funnel.
+  - Added `SecurityCompletionCard` for visual confirmation of active security layers.
+  - Enforced PIN requirement as a secure fallback even if biometrics are enabled.
+- **User Onboarding - Personalized Profile**: Implemented the sixth onboarding step for local demographic data and calibration.
+  - Created `UserProfile` model (Hive TypeId 40) for local-only storage of display name, sex, and date of birth.
+  - Created `ProfileSetupScreen` with premium HSL-tailored UI for demographic entry.
+  - Updated `ReferenceRangeService` to automatically use user profile demographics for lab result evaluations.
+  - Implemented "Skip" option with clear, prominent privacy guarantees about data staying local.
+- **User Onboarding - Interactive Feature Tour**: Implemented the seventh onboarding step for discovery of key capabilities.
+  - Created `FeatureTourScreen` allowing users to opt into a quick tour of the platform.
+  - Integrated `EducationModal` to display the "Secure Storage", "Document Scanner", and "AI Features" modules.
+  - Added automated analytics tracking for tour engagement and completion milestones.
+- **User Onboarding - Guided First Scan**: Implemented the eighth onboarding step for immediate value realization.
+  - Created `FirstScanGuideScreen` with step-by-step guidance for scanning lab reports or prescriptions.
+  - Enhanced `DocumentScannerScreen` with a `showOnboardingTips` mode utilizing new `CoachMark` overlays.
+  - Created `ConfettiAnimation` with `confetti: ^0.7.0` for celebrating successful first-time document captures.
+- **User Onboarding - Graduation & Celebration**: Implemented the final onboarding step and transition.
+  - Created `OnboardingCompleteScreen` featuring a "Setup Summary" checklist of all completed configurations.
+  - Added full-screen confetti celebration for reaching the final onboarding milestone.
+  - Optimized the transition logic to move directly from completion to the main app dashboard.
+- **Dependencies**: Added `confetti: ^0.7.0` for high-performance celebration animations.
+
+
 ## [1.7.0] - 2026-01-26
 
 ### Added

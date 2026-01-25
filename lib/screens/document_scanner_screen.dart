@@ -14,7 +14,10 @@ import '../services/session_manager.dart';
 import '../services/temp_file_manager.dart';
 import '../services/consent_service.dart';
 import '../services/batch_processing_service.dart';
+import '../widgets/onboarding/coach_mark.dart';
+import '../widgets/onboarding/tooltip_overlay.dart';
 import 'batch_processing_screen.dart';
+
 import '../widgets/design/glass_button.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/desktop/file_drop_zone.dart';
@@ -22,7 +25,9 @@ import '../widgets/dialogs/save_to_vault_dialog.dart';
 import '../utils/theme.dart';
 
 class DocumentScannerScreen extends StatefulWidget {
-  const DocumentScannerScreen({super.key});
+  final bool showOnboardingTips;
+  const DocumentScannerScreen({super.key, this.showOnboardingTips = false});
+
 
   @override
   State<DocumentScannerScreen> createState() => _DocumentScannerScreenState();
@@ -42,6 +47,7 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
   bool _isStreaming = false;
   DateTime? _lastAnalysisTime;
   bool _wasDark = false;
+  OverlayEntry? _coachMarkEntry;
 
   @override
   void initState() {
@@ -52,8 +58,28 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
     KeyboardShortcutService().registerAction('capture_document', _takePicture);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SessionManager().showEducationIfNeeded('document_scanner');
+      if (widget.showOnboardingTips) {
+        _showCaptureCoachMark();
+      }
     });
   }
+
+  void _showCaptureCoachMark() {
+    _coachMarkEntry = OverlayEntry(
+      builder: (context) => const CoachMark(
+        text: 'Tap here to capture your first document',
+        alignment: Alignment.bottomCenter,
+        icon: Icons.camera_alt_rounded,
+      ),
+    );
+    Overlay.of(context).insert(_coachMarkEntry!);
+  }
+
+  void _hideCoachMark() {
+    _coachMarkEntry?.remove();
+    _coachMarkEntry = null;
+  }
+
 
   Future<void> _checkConsent() async {
     final service = ConsentService();
@@ -107,12 +133,14 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
 
   @override
   void dispose() {
+    _hideCoachMark();
     _voiceGuidance.stop();
     WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
     _cleanupTempFiles();
     super.dispose();
   }
+
 
   Future<void> _cleanupTempFiles() async {
     // Release all captured images so they can be purged
@@ -304,11 +332,13 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
       setState(() {
         _capturedImages.add(image);
       });
+      _hideCoachMark();
       // Turn off flash torch if it was on
       if (_controller!.value.flashMode == FlashMode.torch) {
         await _controller!.setFlashMode(FlashMode.off);
       }
     } catch (e) {
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error taking picture: $e')),

@@ -96,4 +96,55 @@ class PermissionService {
       ),
     );
   }
+
+  /// Requests notification permission
+  /// 
+  /// Returns `true` if permission is granted, `false` otherwise.
+  static Future<bool> requestNotificationPermission() async {
+    var status = await Permission.notification.status;
+    if (status.isGranted) return true;
+    status = await Permission.notification.request();
+    return status.isGranted;
+  }
+
+  /// Check if camera permission is granted
+  static Future<bool> isCameraPermissionGranted() async {
+    final status = await Permission.camera.status;
+    return status.isGranted;
+  }
+
+  /// Check if microphone permission is granted
+  static Future<bool> isMicPermissionGranted() async {
+    final status = await Permission.microphone.status;
+    return status.isGranted;
+  }
+
+  /// Check if notification permission is granted
+  static Future<bool> isNotificationPermissionGranted() async {
+    final status = await Permission.notification.status;
+    return status.isGranted;
+  }
+
+  /// Check if camera permission is permanently denied
+  static Future<bool> isCameraPermissionPermanentlyDenied() async {
+    final status = await Permission.camera.status;
+    return status.isPermanentlyDenied;
+  }
+
+  /// Check if microphone permission is permanently denied
+  static Future<bool> isMicPermissionPermanentlyDenied() async {
+    final status = await Permission.microphone.status;
+    return status.isPermanentlyDenied;
+  }
+
+  /// Check if notification permission is permanently denied
+  static Future<bool> isNotificationPermissionPermanentlyDenied() async {
+    final status = await Permission.notification.status;
+    return status.isPermanentlyDenied;
+  }
+
+  /// Open app settings for user to manually enable permissions
+  static Future<bool> openSettings() async {
+    return await openAppSettings();
+  }
 }
