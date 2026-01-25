@@ -26,7 +26,8 @@ class OCRService {
           "psm": "3", // Fully automatic page segmentation
           "preserve_interword_spaces": "1",
           // Whitelist characters common in medical reports to speed up processing
-          "tessedit_char_whitelist": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,:;()[]{}!@#\$%^&*-+=<>?/|_ '\"\n",
+          "tessedit_char_whitelist":
+              "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,:;()[]{}!@#\$%^&*-+=<>?/|_ '\"\n",
         },
       );
 
@@ -54,8 +55,9 @@ class OCRService {
   /// Full pipeline: Extracts text and then runs data extraction to get structured fields.
   static Future<DocumentExtraction> processDocument(File image) async {
     final String extractedText = await extractTextFromImage(image);
-    final Map<String, dynamic> structuredData = DataExtractionService.extractStructuredData(extractedText);
-    
+    final Map<String, dynamic> structuredData =
+        DataExtractionService.extractStructuredData(extractedText);
+
     // Simple confidence score heuristic:
     // Base 0.5, +0.2 if text found, +0.2 if structured data found
     double confidenceScore = 0.5;
@@ -95,7 +97,7 @@ class OCRService {
       // 3. Low-light preprocessing: Enhance contrast and brightness
       // Medical documents often have faint text or are captured in poor lighting.
       image = img.adjustColor(
-        image, 
+        image,
         contrast: 1.5, // 50% boost
         brightness: 1.1, // 10% boost
         gamma: 1.2,
@@ -110,11 +112,9 @@ class OCRService {
 
       // Save to a temporary file for Tesseract to read
       final directory = await getTemporaryDirectory();
-      final tempPath = p.join(
-        directory.path, 
-        "ocr_prep_${DateTime.now().millisecondsSinceEpoch}.jpg"
-      );
-      
+      final tempPath = p.join(directory.path,
+          "ocr_prep_${DateTime.now().millisecondsSinceEpoch}.jpg");
+
       final preprocessedFile = File(tempPath);
       await preprocessedFile.writeAsBytes(img.encodeJpg(image, quality: 90));
 
@@ -141,10 +141,12 @@ class OCRService {
     }).toList();
 
     // 3. Rejoin and apply global regex cleaning
-    return cleanedLines.join('\n')
+    return cleanedLines
+        .join('\n')
         .replaceAll(RegExp(r'\n{3,}'), '\n\n') // Max two consecutive newlines
-        .replaceAll(RegExp(r'[ \t]+'), ' ')     // Normalize spaces
-        .replaceAll(RegExp(r'[\|\\\/~_]'), '')  // Remove common OCR "noise" characters
+        .replaceAll(RegExp(r'[ \t]+'), ' ') // Normalize spaces
+        .replaceAll(
+            RegExp(r'[\|\\\/~_]'), '') // Remove common OCR "noise" characters
         .trim();
   }
 

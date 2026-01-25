@@ -7,7 +7,7 @@ Future<void> main() async {
 
   // 1. Read the JSON file from assets
   var filePath = 'assets/data/medical_dictionary.json';
-  
+
   // If run from examples/ folder, adjust path
   if (!File(filePath).existsSync()) {
     if (File('../$filePath').existsSync()) {
@@ -17,26 +17,26 @@ Future<void> main() async {
       return;
     }
   }
-  
+
   print('Reading dictionary from: $filePath');
   final file = File(filePath);
   final jsonString = await file.readAsString();
-  
+
   // 2. Load into registry
   final registry = MedicalDictionaryRegistry();
   registry.loadFromJsonString(jsonString);
-  
+
   if (!registry.isLoaded) {
     print('Failed to load registry.');
     return;
   }
-  
+
   // 3. Demonstrate Usage
   print('\nStatistics:');
   print('- Total Tests: ${registry.getAllTests().length}');
   final categories = registry.getCategories();
   print('- Categories (${categories.length}): ${categories.join(', ')}');
-  
+
   // Lookup Examples
   print('\n--- Test Lookup Examples ---');
   _lookupAndPrint(registry, 'Hb');
@@ -46,7 +46,7 @@ Future<void> main() async {
   _lookupAndPrint(registry, 'TLC');
   _lookupAndPrint(registry, 'Platelets');
   _lookupAndPrint(registry, 'Vitamin D');
-  _lookupAndPrint(registry, 'Cholesterol'); 
+  _lookupAndPrint(registry, 'Cholesterol');
   _lookupAndPrint(registry, 'Glucose Fasting');
   _lookupAndPrint(registry, 'Unknown Test');
 
@@ -56,14 +56,14 @@ Future<void> main() async {
   _expandAndPrint(registry, 'LFT');
   _expandAndPrint(registry, 'HbA1c');
   _expandAndPrint(registry, 'BUN');
-  _expandAndPrint(registry, 'CBC'); 
+  _expandAndPrint(registry, 'CBC');
 
   // Unit Validation
   print('\n--- Unit Validation ---');
   _validateUnit(registry, 'mg/dL');
   _validateUnit(registry, 'g/dL');
   _validateUnit(registry, 'mmol/L');
-  _validateUnit(registry, 'kg/m2'); 
+  _validateUnit(registry, 'kg/m2');
 }
 
 void _lookupAndPrint(MedicalDictionaryRegistry registry, String query) {

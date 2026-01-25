@@ -15,7 +15,8 @@ class ImageService {
     }
 
     final tempDir = await getTemporaryDirectory();
-    final targetPath = p.join(tempDir.path, 'compressed_${const Uuid().v4()}.jpg');
+    final targetPath =
+        p.join(tempDir.path, 'compressed_${const Uuid().v4()}.jpg');
 
     // flutter_image_compress will resize such that it fits within minWidth/minHeight
     // while maintaining aspect ratio. 1632x1224 targets ~2MP for 4:3 images.

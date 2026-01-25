@@ -26,12 +26,24 @@ void main() {
 
     dictionaryService = MedicalDictionaryService(initialData: {
       'medications': [
-        {'canonical_name': 'Metformin', 'aliases': [], 'category': 'Antidiabetic'},
-        {'canonical_name': 'Lisinopril', 'aliases': [], 'category': 'Antihypertensive'},
+        {
+          'canonical_name': 'Metformin',
+          'aliases': [],
+          'category': 'Antidiabetic'
+        },
+        {
+          'canonical_name': 'Lisinopril',
+          'aliases': [],
+          'category': 'Antihypertensive'
+        },
       ],
       'specialists': ['Cardiologist', 'Dermatologist'],
       'tests': [
-        {'canonical_name': 'Blood Pressure', 'aliases': ['BP'], 'category': 'Vitals'},
+        {
+          'canonical_name': 'Blood Pressure',
+          'aliases': ['BP'],
+          'category': 'Vitals'
+        },
         {'canonical_name': 'HbA1c', 'aliases': [], 'category': 'Biochemistry'},
       ],
       'procedures': ['ECG'],
@@ -78,35 +90,35 @@ void main() {
       expect(item.object, 'HbA1c');
       expect(item.category, FollowUpCategory.test);
     });
-    
+
     test('extracts body part for monitoring', () {
-       const transcript = "Check your heart rate."; 
-       final items = extractor.extractFromTranscript(transcript, 'conv-1');
-       
-       expect(items.length, 1);
-       final item = items.first;
-       expect(item.verb, 'check');
-       expect(item.object, 'heart rate'); 
+      const transcript = "Check your heart rate.";
+      final items = extractor.extractFromTranscript(transcript, 'conv-1');
+
+      expect(items.length, 1);
+      final item = items.first;
+      expect(item.verb, 'check');
+      expect(item.object, 'heart rate');
     });
-    
+
     test('falls back to heuristic if no dictionary match', () {
-       const transcript = "Take the blue pill.";
-       final items = extractor.extractFromTranscript(transcript, 'conv-1');
-       
-       expect(items.length, 1);
-       final item = items.first;
-       expect(item.verb, 'take');
-       expect(item.object, 'the blue pill'); // Fallback
+      const transcript = "Take the blue pill.";
+      final items = extractor.extractFromTranscript(transcript, 'conv-1');
+
+      expect(items.length, 1);
+      final item = items.first;
+      expect(item.verb, 'take');
+      expect(item.object, 'the blue pill'); // Fallback
     });
-    
+
     test('handles object before verb (scanning context)', () {
-       const transcript = "Metformin, you should take.";
-       final items = extractor.extractFromTranscript(transcript, 'conv-1');
-       
-       expect(items.length, 1);
-       final item = items.first;
-       expect(item.verb, 'take');
-       expect(item.object, 'Metformin');
+      const transcript = "Metformin, you should take.";
+      final items = extractor.extractFromTranscript(transcript, 'conv-1');
+
+      expect(items.length, 1);
+      final item = items.first;
+      expect(item.verb, 'take');
+      expect(item.object, 'Metformin');
     });
   });
 }

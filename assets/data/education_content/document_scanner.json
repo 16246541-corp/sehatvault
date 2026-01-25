@@ -1,0 +1,22 @@
+{
+  "id": "document_scanner",
+  "title": "Document Scanner",
+  "version": 1,
+  "pages": [
+    {
+      "title": "Scan Medical Records",
+      "description": "Digitize your paper prescriptions, lab results, and reports instantly.",
+      "iconName": "scanner"
+    },
+    {
+      "title": "Secure Vault",
+      "description": "Scanned documents are encrypted and stored in your secure vault, accessible only by you.",
+      "iconName": "security"
+    },
+    {
+      "title": "Smart Extraction",
+      "description": "We automatically extract key details like doctor names, dates, and medical terms.",
+      "iconName": "ai"
+    }
+  ]
+}

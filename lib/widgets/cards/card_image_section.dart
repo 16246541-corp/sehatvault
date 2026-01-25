@@ -22,9 +22,7 @@ class CardImageSection extends StatelessWidget {
       height: height,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark 
-            ? const Color(0xFF1E293B) 
-            : const Color(0xFFE2E8F0),
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
         image: imageUrl != null
             ? DecorationImage(
                 image: NetworkImage(imageUrl!),
@@ -62,7 +60,7 @@ class CardImageSection extends StatelessWidget {
               child: Icon(
                 Icons.article_outlined,
                 size: 64,
-                color: isDark 
+                color: isDark
                     ? Colors.white.withValues(alpha: 0.3)
                     : Colors.black.withValues(alpha: 0.2),
               ),

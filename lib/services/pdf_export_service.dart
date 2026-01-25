@@ -4,8 +4,13 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import '../models/document_extraction.dart';
 import '../models/health_record.dart';
+import 'citation_service.dart';
+import 'local_storage_service.dart';
 
 class PdfExportService {
+  final CitationService _citationService =
+      CitationService(LocalStorageService());
+
   Future<String> generatePdf({
     required DocumentExtraction extraction,
     HealthRecord? record,
@@ -134,6 +139,31 @@ class PdfExportService {
                 style: const pw.TextStyle(fontSize: 10),
               ),
             ),
+            if (extraction.citations != null &&
+                extraction.citations!.isNotEmpty) ...[
+              ...() {
+                final references = _citationService.formatCitations(
+                  extraction.citations!,
+                  style: 'reference',
+                );
+                if (references.isEmpty) return <pw.Widget>[];
+                return [
+                  pw.SizedBox(height: 20),
+                  pw.Text(
+                    'References',
+                    style: pw.TextStyle(
+                      fontSize: 18,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  pw.Text(
+                    references,
+                    style: const pw.TextStyle(fontSize: 10),
+                  ),
+                ];
+              }(),
+            ],
           ];
         },
       ),
@@ -141,7 +171,8 @@ class PdfExportService {
 
     // Save
     final output = await getApplicationDocumentsDirectory();
-    final fileName = 'sehatlocker_export_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final fileName =
+        'sehatlocker_export_${DateTime.now().millisecondsSinceEpoch}.pdf';
     final file = File('${output.path}/$fileName');
     await file.writeAsBytes(await pdf.save());
 

@@ -10,11 +10,11 @@ void main() {
 
         expect(result['count'], 2);
         final values = result['values'] as List;
-        
+
         expect(values[0]['field'], 'Hemoglobin');
         expect(values[0]['value'], '13.5');
         expect(values[0]['unit'], 'g/dL');
-        
+
         expect(values[1]['field'], 'Glucose');
         expect(values[1]['value'], '95');
         expect(values[1]['unit'], 'mg/dL');
@@ -33,12 +33,12 @@ void main() {
       test('should handle variations in separators', () {
         const text = 'Hb:12.5 g/dL\nWBC  6.5 x10^3/uL';
         final result = MedicalFieldExtractor.extractLabValues(text);
-        
+
         expect(result['count'], 2);
         final values = result['values'] as List;
         expect(values[0]['field'], 'Hb');
         expect(values[0]['value'], '12.5');
-        
+
         expect(values[1]['field'], 'WBC');
         expect(values[1]['value'], '6.5');
       });
@@ -88,7 +88,8 @@ void main() {
 
     group('extractDates', () {
       test('should extract dates in various formats', () {
-        const text = 'Report Date: 12/05/2023\nDOB: 15 Jan 1980\nVisit: 2023-06-20';
+        const text =
+            'Report Date: 12/05/2023\nDOB: 15 Jan 1980\nVisit: 2023-06-20';
         final result = MedicalFieldExtractor.extractDates(text);
 
         expect(result['count'], 3);
@@ -98,8 +99,9 @@ void main() {
         expect(dates.any((d) => d['value'] == '12/05/2023'), isTrue);
         expect(dates.any((d) => d['value'] == '15 Jan 1980'), isTrue);
         expect(dates.any((d) => d['value'] == '2023-06-20'), isTrue);
-        
-        expect(formats, containsAll(['numeric_slash', 'day_month_year', 'iso_date']));
+
+        expect(formats,
+            containsAll(['numeric_slash', 'day_month_year', 'iso_date']));
       });
 
       test('should deduplicate identical dates', () {
@@ -124,13 +126,13 @@ void main() {
           MEDICATIONS:
           Aspirin 81 mg daily
         ''';
-        
+
         final result = MedicalFieldExtractor.extractAll(text);
-        
+
         expect(result['labValues']['count'], 1);
         expect(result['medications']['count'], 1);
         expect(result['dates']['count'], 1);
-        
+
         final summary = result['summary'] as Map<String, dynamic>;
         expect(summary['hasData'], isTrue);
         expect(summary['totalLabValues'], 1);

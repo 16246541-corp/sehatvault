@@ -5,7 +5,7 @@ class VoiceGuidanceService {
   bool _isSpeaking = false;
   DateTime? _lastSpeakTime;
   String? _lastMessage;
-  
+
   // Minimum time between same messages to avoid repetition annoyance
   static const Duration _repeatInterval = Duration(seconds: 5);
   // Minimum time between any messages
@@ -41,7 +41,7 @@ class VoiceGuidanceService {
       if (_lastSpeakTime != null) {
         if (now.difference(_lastSpeakTime!) < _minInterval) return;
       }
-      
+
       if (_lastMessage == message && _lastSpeakTime != null) {
         if (now.difference(_lastSpeakTime!) < _repeatInterval) return;
       }

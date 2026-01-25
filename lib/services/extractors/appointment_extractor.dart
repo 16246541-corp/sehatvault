@@ -6,9 +6,18 @@ class AppointmentExtractor extends BaseExtractor {
 
   @override
   List<String> get verbs => [
-    "schedule", "book", "see", "visit", "refer", "consult", 
-    "return", "come back", "call", "contact"
-  ];
+        "schedule",
+        "book",
+        "see",
+        "visit",
+        "refer",
+        "consult",
+        "return",
+        "come back",
+        "call",
+        "contact",
+        "set"
+      ];
 
   @override
   FollowUpCategory get category => FollowUpCategory.appointment;
@@ -18,7 +27,7 @@ class AppointmentExtractor extends BaseExtractor {
     int start = (verbIndex - 80).clamp(0, sentence.length);
     int end = (verbIndex + verb.length + 80).clamp(0, sentence.length);
     String context = sentence.substring(start, end);
-    
+
     // 1. Try finding a specialist
     String? specialist = dictionaryService.findSpecialist(context);
     if (specialist != null) return specialist;
@@ -26,7 +35,8 @@ class AppointmentExtractor extends BaseExtractor {
     // 2. Try finding "Dr. [Name]"
     // Matches "Dr. Smith", "Dr. Jane Doe"
     final doctorPattern = RegExp(r'\bDr\.\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b');
-    final doctorMatch = doctorPattern.firstMatch(sentence); // Check full sentence for name
+    final doctorMatch =
+        doctorPattern.firstMatch(sentence); // Check full sentence for name
     if (doctorMatch != null) {
       return doctorMatch.group(0);
     }

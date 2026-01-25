@@ -55,7 +55,7 @@ class _TexturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = isDark 
+      ..color = isDark
           ? Colors.white.withValues(alpha: 0.03)
           : Colors.black.withValues(alpha: 0.03)
       ..style = PaintingStyle.fill;

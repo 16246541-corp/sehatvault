@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:sehatlocker/models/document_extraction.dart';
 import 'package:sehatlocker/models/health_record.dart';
 import 'package:sehatlocker/services/pdf_export_service.dart';
@@ -36,13 +35,12 @@ void main() async {
       extraction: extraction,
       record: record,
     );
-    
+
     print('PDF generated at: $pdfPath');
-    
+
     // In a real app, you might want to share this file or open it
     // Share.shareFiles([pdfPath], text: 'My Medical Record');
     // OpenFile.open(pdfPath);
-    
   } catch (e) {
     print('Error generating PDF: $e');
   }

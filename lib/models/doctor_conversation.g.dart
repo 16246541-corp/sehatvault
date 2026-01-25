@@ -26,13 +26,17 @@ class DoctorConversationAdapter extends TypeAdapter<DoctorConversation> {
       followUpItems: (fields[6] as List).cast<String>(),
       doctorName: fields[7] as String,
       segments: (fields[8] as List?)?.cast<ConversationSegment>(),
+      originalTranscript: fields[9] as String?,
+      editedAt: fields[10] as DateTime?,
+      complianceVersion: fields[11] as String?,
+      complianceReviewDate: fields[12] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, DoctorConversation obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +54,15 @@ class DoctorConversationAdapter extends TypeAdapter<DoctorConversation> {
       ..writeByte(7)
       ..write(obj.doctorName)
       ..writeByte(8)
-      ..write(obj.segments);
+      ..write(obj.segments)
+      ..writeByte(9)
+      ..write(obj.originalTranscript)
+      ..writeByte(10)
+      ..write(obj.editedAt)
+      ..writeByte(11)
+      ..write(obj.complianceVersion)
+      ..writeByte(12)
+      ..write(obj.complianceReviewDate);
   }
 
   @override
@@ -79,13 +91,14 @@ class ConversationSegmentAdapter extends TypeAdapter<ConversationSegment> {
       startTimeMs: fields[1] as int,
       endTimeMs: fields[2] as int,
       speaker: fields[3] as String,
+      speakerConfidence: fields[4] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ConversationSegment obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.text)
       ..writeByte(1)
@@ -93,7 +106,9 @@ class ConversationSegmentAdapter extends TypeAdapter<ConversationSegment> {
       ..writeByte(2)
       ..write(obj.endTimeMs)
       ..writeByte(3)
-      ..write(obj.speaker);
+      ..write(obj.speaker)
+      ..writeByte(4)
+      ..write(obj.speakerConfidence);
   }
 
   @override

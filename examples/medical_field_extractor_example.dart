@@ -1,8 +1,8 @@
-import '../lib/services/medical_field_extractor.dart';
+import 'package:sehatlocker/services/medical_field_extractor.dart';
 
 void main() {
   // Sample medical text from a lab report
-  final sampleText = '''
+  const sampleText = '''
     Patient Lab Report
     Date: 15 Jan 2024
     Test Date: January 12, 2024
@@ -41,7 +41,7 @@ void main() {
   final labValues = MedicalFieldExtractor.extractLabValues(sampleText);
   print('   Found ${labValues['count']} lab values');
   print('   Categories: ${(labValues['categories'] as Map).keys.join(', ')}');
-  
+
   // Show blood category values
   final bloodValues = (labValues['categories'] as Map)['blood'] as List?;
   if (bloodValues != null && bloodValues.isNotEmpty) {
@@ -51,9 +51,10 @@ void main() {
       print('   - ${v['field']}: ${v['value']} ${v['unit']}');
     }
   }
-  
+
   // Show metabolic values
-  final metabolicValues = (labValues['categories'] as Map)['metabolic'] as List?;
+  final metabolicValues =
+      (labValues['categories'] as Map)['metabolic'] as List?;
   if (metabolicValues != null && metabolicValues.isNotEmpty) {
     print('\n   Metabolic Tests:');
     for (var value in metabolicValues) {
@@ -66,8 +67,9 @@ void main() {
   print('\n2. Extracting Medications:');
   final medications = MedicalFieldExtractor.extractMedications(sampleText);
   print('   Found ${medications['count']} medications');
-  print('   Dosage units used: ${(medications['dosageUnits'] as List).join(', ')}');
-  
+  print(
+      '   Dosage units used: ${(medications['dosageUnits'] as List).join(', ')}');
+
   print('\n   Medications List:');
   for (var med in medications['medications'] as List) {
     final m = med as Map<String, String>;
@@ -80,7 +82,7 @@ void main() {
   final dates = MedicalFieldExtractor.extractDates(sampleText);
   print('   Found ${dates['count']} dates');
   print('   Formats detected: ${(dates['formats'] as List).join(', ')}');
-  
+
   print('\n   Dates Found:');
   for (var date in dates['dates'] as List) {
     final d = date as Map<String, String>;
@@ -91,7 +93,7 @@ void main() {
   print('\n4. Extracting All Fields:');
   final allData = MedicalFieldExtractor.extractAll(sampleText);
   final summary = allData['summary'] as Map<String, dynamic>;
-  
+
   print('   Summary:');
   print('   - Lab Values: ${summary['totalLabValues']}');
   print('   - Medications: ${summary['totalMedications']}');
@@ -100,7 +102,7 @@ void main() {
 
   // Example 5: Working with Individual Extractions
   print('\n5. Accessing Structured Data:');
-  
+
   // Get specific lab value
   final allLabValues = (allData['labValues'] as Map)['values'] as List;
   try {

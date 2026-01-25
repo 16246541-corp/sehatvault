@@ -82,7 +82,8 @@ class ModelErrorDialog extends StatelessWidget {
                       child: Text(
                         'Cancel',
                         style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
                         ),
                       ),
                     ),
@@ -91,7 +92,8 @@ class ModelErrorDialog extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: GlassButton(
-                        label: 'Switch to ${lighterModel!.name.split('-').first}',
+                        label:
+                            'Switch to ${lighterModel!.name.split('-').first}',
                         onPressed: () {
                           onSwitch!();
                           Navigator.of(context).pop();

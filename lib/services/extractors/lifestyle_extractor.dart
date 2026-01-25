@@ -6,9 +6,19 @@ class LifestyleExtractor extends BaseExtractor {
 
   @override
   List<String> get verbs => [
-    "avoid", "reduce", "limit", "exercise", "eat", "drink", 
-    "rest", "sleep", "walk", "try", "quit", "cut back"
-  ];
+        "avoid",
+        "reduce",
+        "limit",
+        "exercise",
+        "eat",
+        "drink",
+        "rest",
+        "sleep",
+        "walk",
+        "try",
+        "quit",
+        "cut back"
+      ];
 
   @override
   FollowUpCategory get category => FollowUpCategory.lifestyle;
@@ -16,14 +26,29 @@ class LifestyleExtractor extends BaseExtractor {
   @override
   String? extractObject(String sentence, String verb, int verbIndex) {
     final lowerSentence = sentence.toLowerCase();
-    
+
     // 1. Check for specific lifestyle keywords
     final keywords = [
-      'sodium', 'salt', 'sugar', 'alcohol', 'smoking', 'cigarettes', 'tobacco',
-      'caffeine', 'carbs', 'carbohydrates', 'fat', 'cholesterol', 'water', 'fluids',
-      'vegetables', 'fruits', 'protein', 'fiber'
+      'sodium',
+      'salt',
+      'sugar',
+      'alcohol',
+      'smoking',
+      'cigarettes',
+      'tobacco',
+      'caffeine',
+      'carbs',
+      'carbohydrates',
+      'fat',
+      'cholesterol',
+      'water',
+      'fluids',
+      'vegetables',
+      'fruits',
+      'protein',
+      'fiber'
     ];
-    
+
     // Context window
     int start = (verbIndex - 80).clamp(0, sentence.length);
     int end = (verbIndex + verb.length + 80).clamp(0, sentence.length);
@@ -41,17 +66,17 @@ class LifestyleExtractor extends BaseExtractor {
     if (durationMatch != null) {
       return durationMatch.group(0);
     }
-    
+
     // 3. Fallback: Capture a few words after the verb
     // e.g. "quit smoking cold turkey" -> "smoking cold turkey"
     // "walk around the block" -> "around the block"
-    
+
     // Get text after verb
     String afterVerb = sentence.substring(verbIndex + verb.length).trim();
-    
+
     // Clean up punctuation
     afterVerb = afterVerb.replaceAll(RegExp(r'^[,\s]+|[,\s.!]+$'), '');
-    
+
     // Take first 3-4 words
     final words = afterVerb.split(' ');
     if (words.isNotEmpty) {

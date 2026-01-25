@@ -18,10 +18,10 @@ class _ModelStatusCardState extends State<ModelStatusCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Get latest settings
     final settings = storageService.getAppSettings();
-    
+
     // Find matching model or default to first
     final currentModel = ModelOption.availableModels.firstWhere(
       (m) => m.id == settings.selectedModelId,
@@ -63,7 +63,8 @@ class _ModelStatusCardState extends State<ModelStatusCard> {
                     Text(
                       'Active Language Model',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -73,7 +74,8 @@ class _ModelStatusCardState extends State<ModelStatusCard> {
                 label: 'Change',
                 onPressed: () async {
                   await Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const ModelSelectionScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const ModelSelectionScreen()),
                   );
                   // Refresh state when coming back
                   setState(() {});
@@ -109,10 +111,13 @@ class _ModelStatusCardState extends State<ModelStatusCard> {
                   final isReady = snapshot.data ?? false;
                   return _buildStatItem(
                     context,
-                    icon: isReady ? Icons.offline_bolt : Icons.download_for_offline,
+                    icon: isReady
+                        ? Icons.offline_bolt
+                        : Icons.download_for_offline,
                     label: 'Status',
                     value: isReady ? 'Ready' : 'Not Loaded',
-                    valueColor: isReady ? AppTheme.healthGreen : AppTheme.warningOrange,
+                    valueColor:
+                        isReady ? AppTheme.healthGreen : AppTheme.warningOrange,
                   );
                 },
               ),
@@ -136,11 +141,9 @@ class _ModelStatusCardState extends State<ModelStatusCard> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon, 
-              size: 14, 
-              color: theme.colorScheme.primary.withValues(alpha: 0.7)
-            ),
+            Icon(icon,
+                size: 14,
+                color: theme.colorScheme.primary.withValues(alpha: 0.7)),
             const SizedBox(width: 6),
             Text(
               label,

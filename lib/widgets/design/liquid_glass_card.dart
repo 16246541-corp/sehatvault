@@ -53,10 +53,11 @@ class _LiquidGlassCardState extends State<LiquidGlassCard>
   @override
   void didUpdateWidget(covariant LiquidGlassCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final animationChanged = widget.enableEntranceAnimation != oldWidget.enableEntranceAnimation ||
-        widget.animationDuration != oldWidget.animationDuration ||
-        widget.animationCurve != oldWidget.animationCurve ||
-        widget.entranceSlideOffset != oldWidget.entranceSlideOffset;
+    final animationChanged =
+        widget.enableEntranceAnimation != oldWidget.enableEntranceAnimation ||
+            widget.animationDuration != oldWidget.animationDuration ||
+            widget.animationCurve != oldWidget.animationCurve ||
+            widget.entranceSlideOffset != oldWidget.entranceSlideOffset;
 
     if (animationChanged) {
       _configureAnimations();
@@ -116,8 +117,8 @@ class _LiquidGlassCardState extends State<LiquidGlassCard>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.borderRadius),
             border: Border.all(
-              color:
-                  Colors.white.withValues(alpha: DesignConstants.glassBorderOpacity),
+              color: Colors.white
+                  .withValues(alpha: DesignConstants.glassBorderOpacity),
               width: DesignConstants.glassBorderWidth,
             ),
             boxShadow: [
@@ -155,7 +156,8 @@ class _LiquidGlassCardState extends State<LiquidGlassCard>
                     child: _buildContentArea(
                         isDark, effectivePadding, widget.borderRadius))
               else
-                _buildContentArea(isDark, effectivePadding, widget.borderRadius),
+                _buildContentArea(
+                    isDark, effectivePadding, widget.borderRadius),
             ],
           ),
         ),
@@ -219,8 +221,10 @@ class _LiquidGlassCardState extends State<LiquidGlassCard>
         Widget contentContainer = Container(
           decoration: BoxDecoration(
             color: isDark
-                ? Colors.black.withValues(alpha: DesignConstants.glassOpacityHeavy)
-                : Colors.black.withValues(alpha: DesignConstants.glassOpacityMedium),
+                ? Colors.black
+                    .withValues(alpha: DesignConstants.glassOpacityHeavy)
+                : Colors.black
+                    .withValues(alpha: DesignConstants.glassOpacityMedium),
             borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(borderRadius),
               bottomRight: Radius.circular(borderRadius),

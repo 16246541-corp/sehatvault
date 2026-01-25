@@ -38,7 +38,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
   Future<void> _loadDocumentDetails() async {
     try {
-      final result = await _vaultService.getCompleteDocument(widget.healthRecordId);
+      final result =
+          await _vaultService.getCompleteDocument(widget.healthRecordId);
       if (mounted) {
         setState(() {
           _record = result.record;
@@ -61,7 +62,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Document'),
-        content: const Text('Are you sure you want to delete this document? This action cannot be undone.'),
+        content: const Text(
+            'Are you sure you want to delete this document? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -154,7 +156,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
+              padding:
+                  const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -163,7 +166,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                     children: [
                       CategoryBadge(
                         label: _record!.category,
-                        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                        backgroundColor:
+                            theme.colorScheme.primary.withOpacity(0.1),
                         textColor: theme.colorScheme.primary,
                       ),
                       const Spacer(),
@@ -211,7 +215,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         children: [
                           if (_extraction!.structuredData.isNotEmpty) ...[
                             ..._extraction!.structuredData.entries.map((e) {
-                              if (e.value is List || e.value is Map) return const SizedBox.shrink();
+                              if (e.value is List || e.value is Map)
+                                return const SizedBox.shrink();
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Row(
@@ -219,7 +224,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                   children: [
                                     Text(
                                       '${e.key}: ',
-                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600),
                                     ),
                                     Expanded(
                                       child: Text(e.value.toString()),

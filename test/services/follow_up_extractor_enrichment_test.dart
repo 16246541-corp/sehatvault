@@ -8,29 +8,44 @@ import 'package:sehatlocker/services/vault_service.dart';
 
 // Manual Mock for VaultService
 class MockVaultService implements VaultService {
-  List<({HealthRecord record, DocumentExtraction? extraction})> _mockDocuments = [];
+  List<({HealthRecord record, DocumentExtraction? extraction})> _mockDocuments =
+      [];
 
-  void setMockDocuments(List<({HealthRecord record, DocumentExtraction? extraction})> docs) {
+  void setMockDocuments(
+      List<({HealthRecord record, DocumentExtraction? extraction})> docs) {
     _mockDocuments = docs;
   }
 
   @override
-  Future<List<({HealthRecord record, DocumentExtraction? extraction})>> getAllDocuments() async {
+  Future<List<({HealthRecord record, DocumentExtraction? extraction})>>
+      getAllDocuments() async {
     return _mockDocuments;
   }
 
   @override
-  Future<HealthRecord> saveDocumentToVault({required File imageFile, required String title, required String category, String? notes, Map<String, dynamic>? additionalMetadata, void Function(String status)? onProgress}) {
+  Future<HealthRecord> saveDocumentToVault(
+      {required File imageFile,
+      required String title,
+      required String category,
+      String? notes,
+      Map<String, dynamic>? additionalMetadata,
+      void Function(String status)? onProgress}) {
     throw UnimplementedError();
   }
 
   @override
-  Future<HealthRecord> saveDocumentWithAutoCategory({required File imageFile, required String title, String? notes, Map<String, dynamic>? additionalMetadata, void Function(String status)? onProgress}) {
+  Future<HealthRecord> saveDocumentWithAutoCategory(
+      {required File imageFile,
+      required String title,
+      String? notes,
+      Map<String, dynamic>? additionalMetadata,
+      void Function(String status)? onProgress}) {
     throw UnimplementedError();
   }
 
   @override
-  Future<({DocumentExtraction? extraction, HealthRecord record})> getCompleteDocument(String healthRecordId) {
+  Future<({DocumentExtraction? extraction, HealthRecord record})>
+      getCompleteDocument(String healthRecordId) {
     throw UnimplementedError();
   }
 
@@ -62,7 +77,7 @@ void main() {
         recordType: HealthRecord.typeDocumentExtraction,
         extractionId: 'ext-1',
       );
-      
+
       final prescriptionExtraction = DocumentExtraction(
         id: 'ext-1',
         originalImagePath: 'path/to/img',
@@ -75,9 +90,8 @@ void main() {
         confidenceScore: 0.9,
       );
 
-      mockVaultService.setMockDocuments([
-        (record: prescriptionRecord, extraction: prescriptionExtraction)
-      ]);
+      mockVaultService.setMockDocuments(
+          [(record: prescriptionRecord, extraction: prescriptionExtraction)]);
 
       // Create a follow-up item
       final item = FollowUpItem(
@@ -110,7 +124,7 @@ void main() {
         recordType: HealthRecord.typeDocumentExtraction,
         extractionId: 'ext-2',
       );
-      
+
       final labExtraction = DocumentExtraction(
         id: 'ext-2',
         originalImagePath: 'path/to/img',
@@ -123,9 +137,8 @@ void main() {
         confidenceScore: 0.9,
       );
 
-      mockVaultService.setMockDocuments([
-        (record: labRecord, extraction: labExtraction)
-      ]);
+      mockVaultService
+          .setMockDocuments([(record: labRecord, extraction: labExtraction)]);
 
       // Create a follow-up item
       final item = FollowUpItem(

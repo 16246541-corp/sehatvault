@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class MedicalDictionaryService {
-  static final MedicalDictionaryService _instance = MedicalDictionaryService._internal();
+  static final MedicalDictionaryService _instance =
+      MedicalDictionaryService._internal();
 
   factory MedicalDictionaryService({Map<String, dynamic>? initialData}) {
     if (initialData != null) {
@@ -11,16 +12,16 @@ class MedicalDictionaryService {
     }
     return _instance;
   }
-  
+
   MedicalDictionaryService._internal();
-  
+
   @visibleForTesting
   MedicalDictionaryService.forTesting(Map<String, dynamic> initialData) {
-     _configure(initialData);
+    _configure(initialData);
   }
 
   void _configure(Map<String, dynamic>? initialData) {
-     if (initialData != null) {
+    if (initialData != null) {
       _data = initialData;
       _parseData();
     }
@@ -137,12 +138,35 @@ class MedicalDictionaryService {
     return match;
   }
 
+  Set<String> findAllTerms(String text) {
+    final Set<String> found = {};
+    _collectMatches(text, _medications, found);
+    _collectMatches(text, _tests, found);
+    _collectMatches(text, _specialists, found);
+    _collectMatches(text, _procedures, found);
+    _collectMatches(text, _bodyParts, found);
+    return found;
+  }
+
+  void _collectMatches(
+      String text, Map<String, String> dictionary, Set<String> found) {
+    final lowerText = text.toLowerCase();
+    for (final key in dictionary.keys) {
+      if (key.length < 3) continue;
+      final pattern = RegExp(r'\b' + RegExp.escape(key) + r'\b');
+      if (pattern.hasMatch(lowerText)) {
+        found.add(dictionary[key]!);
+      }
+    }
+  }
+
   // Helper to find longest matching phrase in the dictionary within the text
   String? _findMatch(String text, Map<String, String> dictionary) {
     final lowerText = text.toLowerCase();
-    
+
     // Sort dictionary keys by length descending to match longest phrases first
-    final sortedKeys = dictionary.keys.toList()..sort((a, b) => b.length.compareTo(a.length));
+    final sortedKeys = dictionary.keys.toList()
+      ..sort((a, b) => b.length.compareTo(a.length));
 
     for (final key in sortedKeys) {
       // Check for whole word match

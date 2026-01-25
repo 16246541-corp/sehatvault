@@ -56,14 +56,15 @@ void main() {
     });
 
     test('extracts multiple items from multiple sentences', () {
-      const transcript = "Please schedule a follow-up. Also check your blood pressure.";
+      const transcript =
+          "Please schedule a follow-up. Also check your blood pressure.";
       final items = extractor.extractFromTranscript(transcript, 'conv-1');
 
       expect(items.length, 2);
-      
+
       expect(items[0].verb, 'schedule');
       expect(items[0].category, FollowUpCategory.appointment);
-      
+
       expect(items[1].verb, 'check');
       expect(items[1].category, FollowUpCategory.monitoring);
     });
@@ -74,12 +75,14 @@ void main() {
 
       expect(items, isEmpty);
     });
-    
+
     test('extracts full sentence as description', () {
-       const transcript = "You must schedule an appointment with the cardiologist.";
-       final items = extractor.extractFromTranscript(transcript, 'conv-1');
-       
-       expect(items.first.description, "You must schedule an appointment with the cardiologist.");
+      const transcript =
+          "You must schedule an appointment with the cardiologist.";
+      final items = extractor.extractFromTranscript(transcript, 'conv-1');
+
+      expect(items.first.description,
+          "You must schedule an appointment with the cardiologist.");
     });
   });
 }

@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "id": "treatment_recommendation",
+      "enabled": true,
+      "priority": 1,
+      "action": "block_and_replace",
+      "replacement": "I cannot provide specific medical treatment recommendations. Please consult your doctor for a treatment plan."
+    },
+    {
+      "id": "triage_advice",
+      "enabled": true,
+      "priority": 2,
+      "action": "flag_and_warn",
+      "warning": "This information is for educational purposes only and not a substitute for professional medical advice."
+    },
+    {
+      "id": "diagnostic_language",
+      "enabled": true,
+      "priority": 3,
+      "action": "rewrite",
+      "patterns": [
+        "you have",
+        "diagnosis is",
+        "likely condition"
+      ]
+    }
+  ]
+}

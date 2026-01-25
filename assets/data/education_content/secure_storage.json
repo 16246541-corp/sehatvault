@@ -1,0 +1,22 @@
+{
+  "id": "secure_storage",
+  "title": "Secure Storage",
+  "version": 1,
+  "pages": [
+    {
+      "title": "Encrypted Vault",
+      "description": "Your health data is encrypted with military-grade AES-256 encryption.",
+      "iconName": "lock"
+    },
+    {
+      "title": "Biometric Access",
+      "description": "Use FaceID or TouchID to securely access your sensitive medical information.",
+      "iconName": "fingerprint"
+    },
+    {
+      "title": "Local Control",
+      "description": "Your data stays on your device. You choose when and how to share it.",
+      "iconName": "storage"
+    }
+  ]
+}

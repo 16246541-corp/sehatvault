@@ -5,44 +5,47 @@ import 'package:google_fonts/google_fonts.dart';
 /// Emphasizes content-first design with judicious use of color
 class AppTheme {
   // MARK: - Color Palette (Judicious Use of Color)
-  
+
   /// Primary color - used sparingly for emphasis
   static const Color primaryColor = Color(0xFF5B21B6); // Deep purple/indigo
-  
+
   /// Accent color - used for CTAs and important actions
   static const Color accentTeal = Color(0xFF14B8A6); // Teal
-  
+
   /// Health accent - for health-related highlights
   static const Color healthGreen = Color(0xFF10B981); // Emerald green
-  
+
+  /// Health error/revoked - for critical alerts
+  static const Color healthRed = Color(0xFFEF4444); // Red 500
+
   /// Warning color
   static const Color warningOrange = Color(0xFFD97706); // Warm orange
-  
+
   // MARK: - Light Mode Colors
-  
+
   /// Light background - allows content to shine
   static const Color lightBackground = Color(0xFFFAFAF9); // Soft cream/white
-  
+
   /// Light surface - for cards and elevated content
   static const Color lightSurface = Colors.white;
-  
+
   /// Light text primary - high contrast for readability
   static const Color lightTextPrimary = Color(0xFF1F2937);
-  
+
   /// Light text secondary - for less important text
   static const Color lightTextSecondary = Color(0xFF6B7280);
-  
+
   // MARK: - Dark Mode Colors
-  
+
   /// Dark background - deep, immersive
   static const Color darkBackground = Color(0xFF0F172A); // Deep blue-black
-  
+
   /// Dark surface - for cards and elevated content
   static const Color darkSurface = Color(0xFF1E293B);
-  
+
   /// Dark text primary - high contrast for readability
   static const Color darkTextPrimary = Color(0xFFF1F5F9);
-  
+
   /// Dark text secondary - for less important text
   static const Color darkTextSecondary = Color(0xFF94A3B8);
 

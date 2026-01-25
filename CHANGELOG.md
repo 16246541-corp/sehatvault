@@ -1,5 +1,708 @@
 # Changelog - Sehat Locker
 
+## [2026-01-25 13:15] - Audit-Ready Local Logging Completion
+
+### Added
+- **AuditTimelineScreen**: Created visual timeline interface with search, sensitivity filtering, and interactive integrity verification.
+- **ExportService**: Added `exportAuditLogReport` for PDF and encrypted JSON audit log exports with integrity pre-checks.
+- **SecurityDashboardScreen**: Added direct access to Security Audit Trail and implemented `_PurgeDialog` for manual security cleanup.
+
+### Changed
+- **LocalAuditService**: Enhanced integrity verification with detailed `IntegrityResult` and periodic checks.
+- **SessionManager**: Integrated periodic audit integrity checks on session start and added `lockImmediately` functionality.
+- **SecurityDashboardScreen**: Improved error handling and resolved several linter issues related to privacy manifests and session management.
+- **AuditTimelineScreen**: Implemented robust session ID display and error handling for audit entries.
+
+## [2026-01-25 12:30] - Audit-Ready Local Logging Foundations
+
+### Added
+- **LocalAuditEntry**: Added Hive model with hash chaining fields for tamper detection.
+- **LocalAuditService**: Added service for redaction, hash chaining, integrity checks, and retention pruning.
+
+### Changed
+- **SessionManager**: Added session IDs for session-bound audit trails.
+- **LocalStorageService**: Added encrypted storage box and adapters for local audit entries.
+- **AuthAuditService**: Mirrors authentication events into local audit log.
+- **ExportService**: Mirrors export audit events into local audit log.
+- **LocalAuditEntry**: Normalized detail hashing for deterministic integrity checks.
+- **LocalAuditService**: Aligned redaction with SecureLogger and added retention anchor handling.
+- **AppSettings**: Added local audit retention and chain anchor fields.
+- **AuthAuditService**: Refined local audit logging integration.
+- **ExportService**: Refined local audit logging integration.
+- **SessionManager**: Logged session start/lock/unlock and triggered audit retention cleanup.
+- **AIScreen**: Logged recording start events into local audit trail.
+- **AIScreen**: Logged recording save events into local audit trail.
+- **AIScreen**: Logged emergency recording deletions into local audit trail.
+
+## [2026-01-26 07:05] - Compliance Checklist Access & Export Fixes
+
+### Added
+- **Dependencies**: Added `url_launcher` for compliance documentation links.
+- **SettingsScreen**: Added four-finger swipe access to the Compliance Checklist in debug mode.
+
+### Changed
+- **ComplianceChecklistScreen**: Added authentication reason to the auth gate.
+- **ExportService**: Routed compliance checklist exports through standard PDF save/share and footer.
+- **ExportService**: Corrected compliance checklist export footer/share method usage.
+- **SettingsScreen**: Scoped Compliance Checklist menu entry to debug mode.
+
+## [2026-01-26 06:25] - Wellness Language Exception Handling
+
+### Fixed
+- **WellnessLanguageValidator**: Preserve exception phrases during replacements to avoid unintended rewrites.
+- **WellnessLanguageValidator Tests**: Cleaned up test setup for exception handling coverage.
+
+### Changed
+- **WellnessLanguageValidator**: Removed unused medical dictionary import.
+
+## [2026-01-26 06:10] - Wellness Language Integration
+
+### Added
+- **WellnessLanguageValidator**: Created validator service (`lib/services/wellness_language_validator.dart`) to identify and replace stigmatizing language with person-first terminology.
+- **Wellness Terminology**: Added `assets/data/wellness_terminology.json` with initial set of replacements and exceptions.
+- **AppSettings**: Added `enableWellnessLanguageChecks` and `showWellnessDebugInfo` settings to `AppSettings` model.
+- **Settings Integration**: Added toggle controls for wellness checks in `SettingsScreen` under AI Model section.
+
+### Changed
+- **SafetyFilterService**: Integrated `WellnessLanguageValidator` into `sanitize` pipeline.
+- **ExportService**: Applied `SafetyFilterService` sanitization to transcript exports (PDF and plain text).
+
+## [2026-01-26 05:40] - Formatting & Example Fix
+
+### Fixed
+- **Examples**: Corrected `totalFields` calculation in `examples/medical_field_integration_example.dart`.
+
+### Changed
+- **Formatting**: Applied `dart format` across the codebase.
+
+## [2026-01-26 05:20] - Risk Mitigation Fallbacks & Adapter Regeneration
+
+### Added
+- **RiskMitigationService**: Added fallback question selection when no keyword matches are found.
+- **Risk Templates**: Added fallback templates to `assets/data/risk_templates.json` for graceful degradation.
+- **RecorderProgress**: Defined `RecorderProgress` in `lib/services/conversation_recorder_service.dart` for progress streaming.
+
+### Changed
+- **AppSettingsAdapter**: Regenerated Hive adapters via build_runner to restore Set handling.
+
+## [2026-01-26 04:00] - Risk Mitigation Service
+
+### Added
+- **RiskMitigationService**: Created `lib/services/risk_mitigation_service.dart` extending `AIService` to provide risk-mitigation response templates.
+- **RiskTemplateConfiguration**: Implemented template configuration loading from assets (`lib/services/risk_template_configuration.dart`).
+- **Assets**: Added `assets/data/risk_templates.json` containing initial risk templates with keywords and localized messages.
+- **UI Integration**:
+  - **ConversationTranscriptScreen**: Added "Suggested Questions" section generated by `RiskMitigationService`.
+  - **DoctorVisitPrepScreen**: Added "Discussion Prompts" to the generated agenda.
+
+### Changed
+- **AIService**: Refactored to allow subclassing (changed `_internal` constructor to `internal` and `@protected`).
+
+## [2026-01-26 03:00] - Model Transparency Panel
+
+### Added
+- **ModelInfoPanel**: Created `ModelInfoPanel` widget in `lib/widgets/ai/model_info_panel.dart` to display detailed model information.
+  - **Features**: Expandable details, dynamic content loading, knowledge cutoff indicators, license compliance, and performance metrics.
+  - **Metrics**: Added display for load time, inference speed, and memory usage.
+- **ModelOption**: Updated model definition to include `knowledgeCutoffDate` and `license` fields.
+- **AppSettings**: Updated `AppSettings` model to include `selectedModelId`, `modelMetadataMap`, `autoStopRecordingMinutes`, and `enableBatteryWarnings`.
+- **Docs**: Created `docs/DEVELOPER_COMPLIANCE_CHECKLIST.md` for feature validation and compliance tracking.
+
+### Changed
+- **AIScreen**: Integrated `ModelInfoPanel` to replace simple status card, providing more transparency.
+- **SettingsScreen**: Added `ModelInfoPanel` to AI settings section for detailed model inspection.
+
+## [2026-01-26 02:10] - Consent Tracking Enhancements
+
+### Added
+- **ConsentEntry**: Added sync status fields for offline queue tracking.
+- **ExportService**: Added consent history export with PDF and encrypted JSON.
+- **SecurityDashboardScreen**: Added Consent History section with timeline and export action.
+- **Tests**: Added unit coverage for consent validity checks.
+
+### Changed
+- **ConsentService**: Added offline-aware consent recording and sync helpers.
+- **ModelSelectionScreen**: Enforced consent capture before model changes.
+
+## [2026-01-26 01:20] - Emergency Banner Overlay & Localization
+
+### Added
+- **Localization**: Added Flutter localization delegates and supported locales to app bootstrap.
+- **Dependencies**: Added `flutter_localizations` to enable localization scaffolding.
+- **Dependencies**: Updated `intl` to ^0.20.2 for Flutter localization compatibility.
+- **Compliance Docs**: Added developer checklist entry for mandatory Emergency Use Banner.
+- **Tests**: Added widget coverage for Emergency Use Banner across light and dark themes.
+
+### Changed
+- **AIScreen**: Rendered `EmergencyUseBanner` via Overlay with top priority placement.
+- **EmergencyUseBanner**: Localized all disclaimer strings and upgraded announcement API usage.
+- **ExportService**: Localized emergency warning text for exported headers.
+
+## [2026-01-26 00:55] - Export Emergency Warning Headers
+
+### Changed
+- **ExportService**: Added emergency warning banner to follow-up and compliance export headers.
+
+## [2026-01-26 00:30] - Emergency Use Banner Implementation
+
+### Added
+- **GlassBanner**: Created `GlassBanner` widget in `lib/widgets/design/glass_banner.dart` extending `GlassCard` for consistent alert UI.
+- **EmergencyUseBanner**: Implemented mandatory non-dismissible banner in `lib/widgets/compliance/emergency_use_banner.dart`.
+  - **Interaction**: Added "Double tap for details" pattern with haptic feedback.
+  - **Compliance**: Added "Not for Medical Emergencies" warning with amber styling.
+  - **Details**: Added dialog with safety bullet points.
+
+### Changed
+- **AIScreen**: Integrated `EmergencyUseBanner` at the top of the stack (non-dismissible).
+- **ExportService**: Added `EmergencyUseBanner` warning content to exported PDF headers (Follow-Up, Transcript, Compliance reports).
+- **SessionManager**: Added `onResume` stream to trigger lifecycle-aware UI updates.
+- **EmergencyUseBanner**: Connected to `SessionManager.onResume` to trigger accessibility announcements on app resume.
+
+## [2026-01-25 23:50] - Privacy Manifest & Dashboard Integration
+
+### Added
+- **PrivacyManifestService**: Created service to aggregate privacy metrics, storage usage, and access logs into a verifiable manifest.
+  - **Privacy Score**: Implemented dynamic scoring algorithm based on privacy settings and security events.
+  - **Manifest Export**: Added PDF export functionality for privacy manifests.
+- **PrivacyManifestScreen**: Added dedicated screen for visualizing privacy data with Liquid Glass design.
+  - **Visualizations**: Added interactive score card, storage breakdown, and access history log.
+  - **Developer Mode**: Added toggle to view raw technical details.
+
+### Changed
+- **SettingsScreen**: Added navigation entry for Privacy Manifest.
+- **SecurityDashboardScreen**: Integrated Privacy Manifest into Data Management section.
+
+## [2026-01-25 23:30] - Data Minimization Protocol
+
+### Added
+- **TempFileManager**: Implemented `TempFileManager` service in `lib/services/temp_file_manager.dart` for secure lifecycle management of temporary files.
+  - **Secure Deletion**: Implemented DoD 5220.22-M compliant 3-pass overwrite (Random, Zero, Random) and post-deletion integrity verification.
+  - **Retention Policy**: Integrated with `EnhancedPrivacySettings` to respect user-configurable retention periods.
+  - **Orphan Cleanup**: Added background scanning for orphaned temporary files (wav, jpg, enc) to prevent storage leaks.
+  - **File Locking**: Implemented file preservation mechanism to prevent purging active files during recording/scanning.
+- **EnhancedPrivacySettings**: Added `tempFileRetentionMinutes` field for granular retention control.
+- **SecurityDashboardScreen**: Added "Data Management" section with manual purge functionality and glassmorphic progress indicator.
+
+### Changed
+- **ConversationRecorderService**: Integrated `TempFileManager` to manage and secure-delete raw WAV segments.
+- **DocumentScannerScreen**: Integrated `TempFileManager` to securely manage captured and compressed images.
+- **SessionManager**: Added background trigger for `TempFileManager.purgeAll` on app pause.
+
+## [2026-01-25 22:10] - User Education Modals
+
+### Changed
+- **IssueReportingService**: Added preview/build flow, toggle-aware payloads, and JSON export alongside PDF.
+- **IssueReportingService**: Added queue/submission audit events and encrypted JSON export format.
+- **IssueReportingReviewScreen**: Refreshes previews on toggle changes and supports format selection on export.
+- **IssueReportAdapter**: Generated Hive adapter for issue report storage.
+
+## [2026-01-25 22:10] - User Education Modals
+
+### Changed
+- **AppSettings**: Store education completion versions for feature education gating.
+- **EducationService**: Added version-aware completion checks and analytics events.
+- **EducationModal**: Added accessibility labels and analytics display logging.
+- **EducationGate**: Updated to async completion checks for versioned education.
+- **SecurityDashboardScreen**: Added education completion status with async version checks.
+- **GlassBottomNav**: Added attention indicators for incomplete education.
+- **SehatLockerApp**: Added navigation education indicators for AI and Documents.
+- **SessionManager**: Added education modal trigger for first-use flows.
+- **AIScreen**: Added session-triggered education display on first use.
+- **DocumentScannerScreen**: Added session-triggered education display on first use.
+- **ConversationRecorderService**: Enforced education gating before recording.
+- **AuthGate**: Added optional education gating for secured features.
+- **AppSettingsAdapter**: Regenerated for education completion fields.
+- **EducationModal**: Avoided using BuildContext after async gaps.
+- **SecurityDashboardScreen**: Removed unused import after education refactor.
+- **DocumentsScreen**: Removed unused education gate import.
+- **AppSettingsAdapter**: Normalize education and audio IDs to Sets on read.
+
+## [2026-01-25 21:20] - Citation System Integration
+
+### Added
+- **CitationService**: Added citation migration for existing documents and text-based citation generation.
+- **CitationAdapter**: Added Hive adapter for Citation storage.
+- **ExportService**: Added document extraction export with citation preservation across formats.
+
+### Changed
+- **AIService**: Added citation post-processing step to append reference sections.
+- **DocumentExtraction**: Updated Hive adapter to persist citations.
+- **PdfExportService**: Added reference section rendering for document exports.
+- **VaultService**: Generates and stores citations during auto-category document saves.
+- **main.dart**: Runs citation migration during app startup.
+
+## [2026-01-25 20:00] - Model Output Validation System
+
+### Added
+- **AIService**: Implemented `AIService` with validation middleware and streaming interruption support.
+- **Validation System**:
+  - **ValidationRule**: Created abstract base class for extensible rules.
+  - **Rules**: Implemented `TreatmentRecommendationRule` (blocks specific treatment advice), `TriageAdviceRule` (flags emergencies), and `DiagnosticLanguageRule` (rewrites diagnostic statements).
+  - **Configuration**: Added `assets/data/validation_rules.json` for rule management.
+- **UI**:
+  - **AIResponseBubble**: Created a widget with visual indicators (shield icon) for modified or warned content.
+
+### Changed
+- **SessionManager**: Updated to track validation failures per session.
+- **Integration**:
+  - **SafetyFilterService**: Integrated as a complementary layer in `DiagnosticLanguageRule`.
+  - **SecureLogger**: Integrated to log validation failures and performance warnings (redacted).
+- **Testing**:
+  - Added `test/services/ai_service_validation_test.dart` with coverage for all rules and streaming flow.
+
+## [2026-01-25 19:00] - FDA Disclaimer Component
+
+### Added
+- **FdaDisclaimerWidget**: Created a reusable, accessible widget extending `GlassCard` to display FDA disclaimers.
+  - **Accessibility**: Includes `Semantics` for screen readers and WCAG 2.1 compliant contrast.
+  - **Interactivity**: Supports tappable "Learn more" link with haptic feedback.
+  - **Logging**: Automatically logs displays via `ComplianceService`.
+- **ComplianceService**: Service to manage disclaimer versions and track user acknowledgments/displays via `AuthAuditService`.
+
+### Changed
+- **ConversationTranscriptScreen**: Integrated `FdaDisclaimerWidget` below the recording disclaimer.
+- **ExportService**: Added FDA disclaimer text to the footer of all generated PDFs.
+- **AIScreen**: Added `FdaDisclaimerWidget` to the bottom of the quick actions list for visibility.
+
+## [2026-01-25 18:30] - Safety Filter Service
+
+### Added
+- **SafetyFilterService**: Implemented a service to scan and sanitize AI outputs for prohibited diagnostic language.
+  - **Detection**: Flags phrases like "you have", "diagnosis", "likely condition", etc.
+  - **Replacement**: Replaces prohibited content with educational alternatives ("Some people with similar concerns...").
+  - **Performance**: Optimized for < 50ms processing time.
+  - **Logging**: Logs triggers in debug mode (redacted in release).
+- **Unit Tests**: Added comprehensive tests covering all prohibited patterns and performance requirements.
+
+### Changed
+- **FollowUpCard**: Integrated `SafetyFilterService` to sanitize titles and descriptions before display.
+- **ConversationTranscriptScreen**: Added placeholder for future integration of safety filter with AI summaries.
+
+## [2026-01-25 18:00] - Lock Screen Widget (ICE)
+
+### Added
+- **Lock Screen Widget**: Implemented widgets for Android and iOS to display emergency contact info when locked.
+  - **Android**: `SehatLockerWidget` provider showing app icon and optional ICE info.
+  - **iOS**: `SehatLockerWidget` using WidgetKit (Accessory & Home Screen families) with App Groups.
+- **Privacy & Security**:
+  - **Redaction**: ICE data is partially redacted (e.g., `***-***-1234`) before being stored in widget data.
+  - **No Medical Data**: Strict policy ensures no medical records are ever sent to the widget.
+  - **Explicit Enablement**: Users must opt-in via Security Dashboard to show ICE info.
+- **IceContactScreen**: New screen to manage Emergency Contact Name and Phone, with widget preview/toggle.
+- **WidgetDataService**: Service to handle secure formatting and updating of widget data from AppSettings.
+- **Dependencies**: Added `home_widget` for cross-platform widget data sharing.
+
+### Changed
+- **SecurityDashboardScreen**: Added entry point for "ICE Contact" management.
+- **AppSettings**: Added `iceContactName`, `iceContactPhone`, and `showIceOnLockScreen` fields.
+- **LocalStorageService**: Trigger widget updates automatically when AppSettings are saved.
+
+## [2026-01-25 17:30] - Auth Audit Trail
+
+### Added
+- **AuthAuditService**: Dedicated service for logging authentication events with device ID and battery level context.
+- **AuthAuditEntry**: Enhanced Hive model with `deviceId`, `batteryLevel`, and `failureReason` fields.
+- **Security Dashboard**: Updated to display enhanced auth audit logs, including action types and failure reasons.
+
+### Changed
+- **BiometricService**: Integrated `AuthAuditService` to log biometric auth attempts (success/failure).
+- **PinAuthService**: Integrated `AuthAuditService` to log PIN verification attempts (success/failure/lockout).
+- **AudioPlaybackService**: Integrated `AuthAuditService` to log recording playback/decryption attempts.
+- **LocalStorageService**: Registered `AuthAuditEntryAdapter` (TypeId 13).
+
+## [2026-01-25 16:30] - Secure Logging
+
+### Added
+- **SecureLogger**: Created a secure logging utility (`SecureLogger`) to prevent sensitive data leakage.
+  - **Redaction**: Automatically redacts SSNs, phone numbers, emails, MRNs, and doctor names.
+  - **Environment Aware**: Logs to console in debug mode (redacted); disables logging in release mode.
+  - **Audit Safety**: Blocks highly sensitive keywords (keys, biometric tokens) from being logged.
+  - **Custom Rules**: Supports adding domain-specific redaction patterns.
+
+## [2026-01-25 16:00] - Biometric Enrollment & Fallback
+
+### Added
+- **Biometric Enrollment Flow**: Implemented proactive detection and guidance for biometric enrollment.
+  - **Proactive Check**: App checks for `availableButNotEnrolled` status on launch and resume.
+  - **Guided Dialog**: `BiometricEnrollmentDialog` explains benefits and links to system settings.
+  - **Platform Integration**: Deep links to Android/iOS/Windows/macOS security settings via `app_settings`.
+  - **Contextual Triggers**: `AuthGate` prompts for enrollment before sensitive operations if available but not set up.
+- **PIN Fallback Integration**:
+  - **AuthGate**: Integrated `PinUnlockScreen` for users who decline biometrics or are locked out.
+  - **Unified Flow**: Seamless transition between Biometric Prompt -> Enrollment -> PIN Fallback.
+- **BiometricStatus**: Added `BiometricStatus` enum (enrolled, availableButNotEnrolled, notAvailable) to `BiometricService`.
+
+### Changed
+- **SehatLockerApp**: Added lifecycle observer to re-check biometric status on app resume.
+- **AuthGate**: Enhanced `_checkAuth` logic to handle enrollment prompts and PIN verification.
+- **BiometricService**: Added `getBiometricStatus()` and `openSecuritySettings()` methods.
+
+## [2026-01-25 15:15] - Security Dashboard
+
+### Added
+- **SecurityDashboardScreen**: New dashboard in Settings providing a comprehensive view of security status.
+  - **Visual Cards**: Displays Auth Status, Device Security, and Storage Security metrics.
+  - **Risk Indicators**: Calculates a security score (0-100) with improvement suggestions.
+  - **Audit Trail**: Shows a timeline of recent security events (Session Unlocks, Exports).
+  - **Quick Actions**: One-tap access to "Lock Now", "Audit Log", and "Security Settings".
+- **SessionManager**: Added `lastUnlockTime` tracking to support "Last authenticated" status.
+- **SettingsScreen**: Added entry point for "Security Dashboard".
+
+### Changed
+- **StorageUsageService**: Utilized for real-time storage encryption metrics.
+
+## [2026-01-25 14:45] - Session Timeout Follow-ups
+
+### Changed
+- **AppSettingsAdapter**: Convert `keepAudioIds` to a Set when reading from Hive.
+
+## [2026-01-25 14:30] - Session Timeout & Lock Screen
+
+### Added
+- **SessionManager**: Implemented inactivity detection service with configurable timeout.
+  - Detects user inactivity using `SessionGuard` (pointer events).
+  - Handles app lifecycle changes (locks on resume if timeout exceeded).
+  - Exempts locking during active recording.
+- **LockScreen**: Created a glassmorphic lock screen with blurred background.
+  - Supports Biometric authentication via `BiometricService`.
+  - Supports PIN fallback via `PinUnlockScreen`.
+- **SessionGuard**: New widget to wrap the app and detect interactions.
+- **Settings**: Added "Session Timeout" slider (1-10 minutes) to Security settings.
+
+### Changed
+- **AppSettings**: Added `sessionTimeoutMinutes` field (default: 2 minutes).
+- **MyApp**: Integrated `SessionManager` and `SessionGuard` at root level.
+- **ConversationRecorderService**: Refactored to Singleton to share state with `SessionManager`.
+
+## [2026-01-25 13:00] - Enhanced Auth Prompt UI
+
+### Added
+- **AuthPromptDialog**: Created a new glassmorphic authentication prompt with enhanced UI.
+  - Features frosted glass background, app icon header, and large biometric indicator.
+  - Implements secure screen protection (Android) to prevent screenshots during auth.
+  - Includes scale animation and haptic feedback.
+  - Supports dynamic text sizing and accessibility labels.
+- **Dependencies**: Added `flutter_windowmanager` for screen security flags.
+
+### Changed
+- **ExportService**: Integrated `AuthPromptDialog` into the export flow (Follow-up & Compliance reports).
+
+## [2026-01-25 12:20] - Fallback PIN Authentication
+
+### Added
+- **PinAuthService**: Secure PIN hashing, lockout/backoff, expiry checks, and security question recovery using `flutter_secure_storage`.
+- **PinSetupScreen**: PIN setup wizard with recovery question and 90-day expiration notice.
+- **PinUnlockScreen**: PIN verification and recovery flow for PIN-gated access.
+- **SettingsScreen**: Added "PIN & Recovery" entry to update PIN and security question.
+
+### Changed
+- **AuthGate**: Added PIN fallback when biometrics are unavailable or locked out.
+- **SehatLockerApp**: Added onboarding PIN wizard for devices without biometrics.
+- **BiometricService**: Added enrolled biometrics check for PIN fallback decisions.
+
+### Testing
+- `flutter analyze` (failed: existing warnings/errors in storage_usage_service.dart, temporal_phrase_patterns_configuration.dart, transcription_service.dart, emergency_stop_button.dart, tests, and vault_service_integration_test.dart)
+- `flutter test` (failed: BiometricService local_auth options errors, app_settings.g.dart keepAudioIds Set/List mismatch, and follow_up_extractor_enrichment_test.dart mock issue)
+
+## [2026-01-25 11:30] - Sensitive Screen Access Controls
+
+### Changed
+- **SehatLockerApp**: Wrapped the AI tab in `AuthGate` with settings-backed enablement.
+- **ConversationTranscriptScreen**: Protected transcript viewing behind `AuthGate`.
+- **BiometricSettingsScreen**: Protected security settings behind `AuthGate`.
+- **ExportService**: Added biometric checks for follow-up and recording compliance exports.
+
+## [2026-01-25 10:15] - Enhanced Privacy Settings
+
+### Added
+- **EnhancedPrivacySettings**: New model to store granular biometric preferences (Hive TypeId: 12).
+- **BiometricSettingsScreen**: New screen to manage security levels with granular toggles.
+  - Controls for Sensitive Data Access, Export Data, Model Management, and Security Settings.
+  - Implements "Admin Mode" requiring auth to change security settings.
+  - Displays warning when disabling security features.
+  - Disables options if biometrics are unavailable on the device.
+
+### Changed
+- **AppSettings**: Integrated `EnhancedPrivacySettings` field.
+- **SettingsScreen**: Replaced simple Biometric toggle with navigation to `BiometricSettingsScreen`.
+- **AudioPlaybackService**: Now respects `requireBiometricsForSensitiveData` setting.
+- **ExportService**: Now respects `requireBiometricsForExport` setting.
+- **AIScreen**: Resume recording now respects `requireBiometricsForSensitiveData` setting.
+- **ModelSelectionScreen**: Model changes now respect `requireBiometricsForModelChange` setting.
+
+## [2026-01-25 09:45] - Biometric Authentication Integration
+
+### Changed
+- **BiometricService**: Added session-bound authentication flow, fallback behavior for missing biometrics, and user-friendly error mapping.
+- **AudioPlaybackService**: Bound biometric prompts to the active app session.
+- **AIScreen**: Bound resume-recording biometric prompt to the active app session.
+- **ExportService**: Bound transcript export biometric prompt to the active app session.
+
+### Testing
+- `flutter test` (failed: existing LocalStorageService/Hive setup errors in vault_service_integration_test.dart and widget_test.dart, widget_test.dart counter assertion, follow_up_extractor_temporal_test.dart assertions, follow_up_extractor_enrichment_test.dart mock issue)
+- `flutter analyze` (failed: existing deprecated_member_use warnings and test warnings/errors, including follow_up_extractor_enrichment_test.dart mock issue)
+
+## [2026-01-24 14:15] - Follow-up Extractor Integration Tests
+
+### Changed
+- **FollowUpExtractor Integration Tests**: Normalized verb assertions to be case-insensitive and aligned with extractor verb selection.
+- **FollowUpExtractor Integration Tests**: Adjusted poor-audio transcript markers to avoid unintended sentence splitting.
+- **FollowUpExtractor Integration Tests**: Updated warning sentence to avoid monitoring verb collision.
+- **FollowUpExtractor Integration Tests**: Allowed full warning verb set in assertions.
+- **FollowUpExtractor Integration Tests**: Allowed appointment object to match doctor name or follow-up keyword.
+
+### Testing
+- `flutter test test/services/follow_up_extractor_integration_test.dart`
+- `flutter analyze` (failed: existing warnings/errors in emergency_stop_button.dart, follow_up_extractor_enrichment_test.dart, follow_up_extractor_deduplication_test.dart, vault_service_integration_test.dart)
+
+## [2026-01-24 14:00] - Storage Usage Indicator
+
+### Added
+- **StorageUsageService**: Created `lib/services/storage_usage_service.dart` to calculate storage usage for conversations, documents, and models.
+- **Settings UI**:
+  - **Storage Usage Indicator**: Added circular progress bar showing app storage usage.
+  - **Breakdown**: Displays detailed usage for Conversations, Documents, and AI Models.
+  - **Threshold Alert**: Shows warning if storage usage exceeds 80% (simulated).
+  - **Actions**: Added "Clear expired recordings" and "Compress old recordings" (stub) buttons.
+
+### Changed
+- **SettingsScreen**: Updated Storage section to include the new usage indicator and actions.
+
+## [2026-01-24 13:45] - Battery Optimization & Monitoring
+
+### Added
+- **BatteryMonitorService**: Created `lib/services/battery_monitor_service.dart` to monitor battery levels and state.
+- **Battery Warnings**: Added "Battery Warnings" toggle to `SettingsScreen` (enabled by default).
+- **Pre-Recording Check**: Added low battery warning dialog (<20%) in `AIScreen` before starting recording.
+- **Real-Time Monitoring**: Added persistent "Recording in Progress" notification with battery % updates.
+- **Critical Battery Stop**: Implemented auto-stop safety mechanism when battery drops below 10%.
+
+### Changed
+- **ConversationRecorderService**: Integrated `BatteryMonitorService` for runtime monitoring and optimization.
+  - Reduces sample rate to 8kHz (from 16kHz) if battery is low (<15%) at start of recording.
+  - Updates system notification with battery level during recording.
+- **AIScreen**: Updated recording flow to include battery check and handle critical stop events.
+- **AppSettings**: Added `enableBatteryWarnings` field.
+
+## [2026-01-24 13:30] - Speaker Diarization
+
+### Added
+- **Speaker Diarization Stub**: Implemented heuristic-based speaker assignment in `TranscriptionService`.
+  - **Rules**:
+    - First segment defaults to User.
+    - Silence gaps (>1.5s) trigger speaker alternation.
+    - High medical terminology density (>10%) assigns to Doctor.
+    - Low confidence (<60%) marks as Unknown.
+- **Transcript UI**:
+  - **Speaker Badges**: Added colored badges (Blue=User, Green=Doctor, Grey=Unknown) to transcript segments.
+  - **Manual Override**: Tapping the speaker label toggles assignment (User -> Doctor -> Unknown).
+  - **Confidence Score**: Displayed speaker confidence percentage next to the label.
+
+### Changed
+- **ConversationSegment**: Added `speakerConfidence` field to Hive model.
+- **TranscriptionService**: Integrated `MedicalDictionaryService` for density analysis.
+
+## [2026-01-24 13:15] - Export Security & Formats
+
+### Added
+- **ExportService Enhancements**:
+  - **Multi-Format Support**: Added support for Plain Text (`.txt`) and Encrypted JSON (`.json.enc`) exports alongside PDF.
+  - **Biometric Security**: Enforced biometric authentication before generating sensitive exports.
+  - **PII Redaction**: Implemented regex-based redaction for phone numbers, emails, and addresses in all export formats.
+  - **Watermarking**: Added "PRIVATE - DO NOT DISTRIBUTE" watermark to PDF exports.
+  - **Audit Logging**: Logs every export action (format, timestamp, recipient type) to `ExportAuditEntry` for compliance tracking.
+- **ExportAuditEntry**: Created `lib/models/export_audit_entry.dart` Hive model (TypeId 11) to store export logs.
+- **LocalStorageService**: Added `export_audit_entries` box and CRUD methods (`saveExportAuditEntry`, `getAllExportAuditEntries`) to persist export logs.
+
+### Changed
+- **ExportService**: Deprecated `exportTranscript` in favor of `exportTranscriptEnhanced` which supports the new options class.
+- **Dependencies**: Fixed `share_plus` usage and `pdf` package text styling compatibility.
+
+## [2026-01-24 13:00] - Recording Disclaimer & Watermark
+
+### Added
+- **RecordingDisclaimer**: Created `lib/widgets/design/recording_disclaimer.dart`, a reusable widget with FDA-compliant disclaimer text ("personal reference only", "not medical advice") and a confirmation checkbox.
+- **ExportService**: Added `exportTranscript` method that generates a PDF transcript with a prominent **"[PERSONAL REFERENCE ONLY]"** watermark (rotated, low-opacity background text) to ensure compliance when sharing.
+- **DoctorConversation**: Added compliance metadata fields:
+  - `complianceVersion`: Tracks the version of the disclaimer agreed to.
+  - `complianceReviewDate`: Tracks when the user reviewed/confirmed the transcript.
+- **ConversationTranscriptScreen**:
+  - Integrated `RecordingDisclaimer` at the top of the transcript list.
+  - Added "Export Transcript" action to the AppBar.
+  - Implemented export flow using the watermarked PDF service.
+
+### Changed
+- **RecordingConsentDialog**: Replaced the simple consent text with the full `RecordingDisclaimer` widget to ensure users acknowledge terms before recording starts.
+- **AIScreen**: Updated to initialize `complianceVersion` and `complianceReviewDate` when a new conversation is created.
+- **ExportService**: Refactored PDF generation to use a shared `_saveAndSharePdf` method and added watermark support via `pw.PageTheme`.
+
+## [2026-01-24 12:45] - Emergency Stop Feature
+
+### Added
+- **EmergencyStopButton**: Created `lib/widgets/design/emergency_stop_button.dart`, a fixed red button for immediate recording termination.
+- **ConversationRecorderService**: Added `emergencyStop` method to stop recording, delete temporary files, and clear memory buffers immediately.
+- **AIScreen**: Integrated emergency stop flow:
+  - Displays red confirmation modal ("DELETE RECORDING?").
+  - Logs "EMERGENCY DELETION" audit entry (no audio metadata).
+  - Navigates back to Documents screen upon completion.
+  - Requires no additional authentication for safety.
+
+## [2026-01-24 12:15] - Empty Conversations State
+
+### Added
+- **EmptyConversationsState**: Created `lib/widgets/empty_states/empty_conversations_state.dart`, a specialized empty state widget featuring:
+  - Large microphone icon with pulse animation and gradient.
+  - Primary call-to-action button: "+ Record Doctor Visit".
+  - Privacy disclaimer and onboarding tooltip.
+  - Accessibility semantics.
+
+### Changed
+- **DocumentsScreen**: Integrated `EmptyConversationsState` to replace the default empty state when no documents are found.
+  - Added `onRecordTap` callback to navigate to the AI/Recording screen.
+- **SehatLockerApp**: Updated `DocumentsScreen` instantiation to pass `onRecordTap`, ensuring navigation to the Recording tab (Index 2).
+
+## [2026-01-24 12:05] - Search Service Lint Cleanup
+
+### Changed
+- **SearchService**: Added braces around index rebuild loops and simplified string interpolation to satisfy analyzer rules.
+
+### Testing
+- `flutter analyze` (failed: undefined_method in VaultService, non_abstract_class_inherits_abstract_member in follow_up_extractor_enrichment_test, unused_import in transcription_service, avoid_print warnings, deprecated_member_use warnings, unused_local_variable warnings)
+
+## [2026-01-24 11:50] - Search Fuzzy Matching
+
+### Added
+- **SearchService**: Added fuzzy matching using token-level similarity scoring for titles, keywords, and content.
+
+### Changed
+- **SearchService**: Wired medical term extraction to `MedicalDictionaryService.findAllTerms()` for keyword indexing.
+
+## [2026-01-24 11:30] - Enhanced Search with ObjectBox
+
+### Added
+- **SearchService**: Re-implemented using **ObjectBox** for high-performance full-text search and fuzzy matching.
+  - **Real-time Indexing**: Automatically updates index when Conversations, Follow-Ups, or Documents are saved/edited.
+  - **Privacy**: Implemented regex-based masking for sensitive data (SSN, account numbers) before indexing.
+  - **Ranking**: Boosts search results based on title match (high), keyword match (medium), and content match (low).
+  - **Medical Term Boosting**: Extracts and indexes medical terms using `MedicalDictionaryService` to prioritize medically relevant results.
+- **SearchEntry**: Created `lib/models/search_entry.dart` ObjectBox entity for unified search index storage.
+- **DocumentsScreen**: Added "Conversations" section to search results with excerpt highlighting (bold text + context).
+- **MedicalDictionaryService**: Added `findAllTerms` method to support keyword extraction.
+
+### Changed
+- **Dependencies**: Added `objectbox` and `objectbox_flutter_libs` (v2.4.0) to `pubspec.yaml` (downgraded to resolve conflict with hive_generator).
+- **Main**: Added `SearchService.init()` to ensure search index availability on startup.
+- **SearchService**: Fixed linter errors by aliasing Hive and ObjectBox imports to resolve `Box` ambiguity.
+
+## [2026-01-24 10:15] - Transcript Editing & Versioning
+
+### Changed
+- **DoctorConversation**: Added `originalTranscript` and `editedAt` fields to support transcript versioning.
+- **ConversationTranscriptScreen**: Added full editing capabilities including:
+  - Editable text fields for segments.
+  - Speaker toggle (User/Doctor).
+  - Undo/Redo functionality.
+  - Validation metrics (Quality Score, Character Count).
+  - "Confirm Transcript" workflow.
+
+## [2026-01-24 10:00] - Background Recording & Data Safety
+
+### Changed
+- **ConversationRecorderService**: Enhanced with full lifecycle awareness.
+  - Automatically pauses recording when app goes to background.
+  - Flushes buffered audio to encrypted segments immediately on pause (Data Safety).
+  - Merges encrypted segments seamlessly upon completion.
+  - Implemented auto-stop after 5 minutes of background inactivity (Battery Saver).
+  - Shows system notification when recording is paused in background.
+- **AIScreen**: Updated to handle secure resume flow.
+  - Requires **Biometric Authentication** to resume recording.
+  - Syncs pause state with service (e.g., when background paused).
+  - Handles auto-stop callback from service.
+- **RecordingControlWidget**: Updated to use `RecorderProgress` model for better type safety.
+
+## [2026-01-24 09:20] - Recording Audit Logs
+
+### Added
+- **RecordingAuditEntry**: Created `lib/models/recording_audit_entry.dart` Hive model and adapter for recording audit logs.
+- **LocalStorageService**: Added `recording_audit_entries` box with save and retrieval helpers.
+- **RecordingHistoryScreen**: Created `lib/screens/recording_history_screen.dart` to display recording audit history and export compliance reports.
+- **ExportService**: Added recording compliance PDF export with redacted doctor name and device ID fields.
+
+### Changed
+- **AIScreen**: Auto-creates audit entries on recording stop with duration, consent flag, file size, and device ID.
+- **SettingsScreen**: Added "Recording History" entry under Privacy & Security.
+- **RecordingHistoryScreen**: Cleaned unused import.
+
+### Testing
+- **flutter analyze**: Fails due to existing issues in biometric_service.dart and tests (unrelated to this change).
+- **flutter test**: Fails due to existing biometric_service.dart errors and test setup issues (unrelated to this change).
+
+## [2026-01-24 08:30] - Auto-Delete Recording Policy
+
+### Added
+- **ConversationCleanupService**: Created `lib/services/conversation_cleanup_service.dart` to manage automated deletion of expired audio recordings.
+  - Deletes audio files older than `autoDeleteRecordingsDays` (default: 365).
+  - Skips conversations with pending follow-up items or those explicitly marked as "Keep Permanently".
+- **AppSettings**: Added `autoDeleteRecordingsDays` and `keepAudioIds` fields to support the policy.
+- **Settings UI**: Added "Auto-delete Recordings" configuration in `SettingsScreen` (Recording section).
+- **Transcript UI**: Added "Keep Permanently" toggle and expiration banner to `ConversationTranscriptScreen`.
+
+### Changed
+- **Main**: Added `ConversationCleanupService.runDailyCleanup()` on app startup.
+- **DoctorConversation**: Made `encryptedAudioPath` mutable to allow clearing the path after deletion.
+
+## [2026-01-24 07:45] - Secure Audio Playback
+
+### Added
+- **EncryptionService**: Created `lib/services/encryption_service.dart` (Singleton) using AES-256-GCM.
+  - Generates and stores a secure master key using `flutter_secure_storage` (Android KeyStore / iOS Secure Enclave).
+  - Handles encryption and decryption with random IVs.
+- **BiometricService**: Created `lib/services/biometric_service.dart` to handle biometric authentication using `local_auth`.
+- **AudioPlaybackService**: Created `lib/services/audio_playback_service.dart` for secure playback logic.
+  - Enforces biometric authentication before decryption.
+  - Returns stub audio (silence) if authentication fails/is disabled (security requirement).
+  - Logs playback attempts (audit trail).
+- **ConversationTranscriptScreen**: Updated to include a secure playback flow.
+  - Added lock/unlock icon for playback.
+  - Integrated biometric prompt.
+  - Uses `flutter_sound` to play decrypted audio in memory.
+
+### Changed
+- **Main**: Initialized `EncryptionService` on app startup to ensure key readiness.
+- **ConversationRecorderService**: Refactored to use `EncryptionService` for consistent audio encryption.
+- **TranscriptionService**: Refactored to use `EncryptionService` for decryption during transcription.
+- **Dependencies**: Added `local_auth` for biometrics.
+
+## [2026-01-24 07:00] - Vault Conversation Linking
+
+### Added
+- **VaultService**: Added `saveConversationToVault` method to link `DoctorConversation`s to `HealthRecord`s.
+  - Creates a `HealthRecord` with `recordType = 'DoctorConversation'`.
+  - Links via `extractionId`.
+  - Stores metadata: duration, doctorName, transcriptLength, hasFollowUps.
+- **HealthRecord**: Added `typeDoctorConversation` constant.
+- **ConversationGridCard**: Created `lib/widgets/cards/conversation_grid_card.dart` to display conversation records in the documents grid.
+  - Displays doctor icon, duration badge, and conversation details.
+- **DocumentsScreen**: Updated to display conversation cards and navigate to `ConversationTranscriptScreen` on tap.
+
+## [2026-01-24 06:15] - Conversation Summary Card
+
+### Added
+- **ConversationSummaryCard**: Created `lib/widgets/cards/conversation_summary_card.dart` to display conversation details.
+  - Shows title, doctor name, date, and duration.
+  - Automatically derives and displays "Key Topics" (FollowUpCategories) from linked follow-up items.
+  - Uses `GlassCard` for a consistent modern UI.
+- **LocalStorageService**: Added `getFollowUpItem(String id)` method to facilitate efficient item retrieval by ID.
+
+## [2026-01-24 06:00] - Follow-Up PDF Export
+
+### Added
+- **ExportService**: Created `lib/services/export_service.dart` to generate and share PDF reports of pending follow-up items.
+  - Groups items by category.
+  - Includes source conversation references.
+- **FollowUpListScreen**: Added "Export Report" button to the AppBar.
+- **Dependencies**: Added `share_plus` and `printing` to `pubspec.yaml` for file sharing and PDF handling.
+
 ## [2026-01-24 05:30] - Follow-Up Search & Indexing
 
 ### Added

@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class TemporalPhrasePatternsConfiguration {
-  static final TemporalPhrasePatternsConfiguration _instance = TemporalPhrasePatternsConfiguration._internal();
+  static final TemporalPhrasePatternsConfiguration _instance =
+      TemporalPhrasePatternsConfiguration._internal();
 
   factory TemporalPhrasePatternsConfiguration() {
     return _instance;
@@ -13,7 +14,8 @@ class TemporalPhrasePatternsConfiguration {
 
   /// Constructor for testing purposes.
   @visibleForTesting
-  TemporalPhrasePatternsConfiguration.forTesting([Map<String, List<String>>? initialPatterns]) {
+  TemporalPhrasePatternsConfiguration.forTesting(
+      [Map<String, List<String>>? initialPatterns]) {
     if (initialPatterns != null) {
       _patterns = initialPatterns;
       _isLoaded = true;
@@ -30,7 +32,8 @@ class TemporalPhrasePatternsConfiguration {
     if (_isLoaded) return;
 
     try {
-      final jsonString = await rootBundle.loadString('assets/data/temporal_phrase_patterns.json');
+      final jsonString = await rootBundle
+          .loadString('assets/data/temporal_phrase_patterns.json');
       final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
 
       final Map<String, List<String>> tempMap = {};
@@ -58,13 +61,13 @@ class TemporalPhrasePatternsConfiguration {
     }
     return _patterns[category] ?? [];
   }
-  
+
   /// Returns all deadline patterns
   List<String> get deadlinePatterns => getPatterns('deadline');
-  
+
   /// Returns all frequency patterns
   List<String> get frequencyPatterns => getPatterns('frequency');
-  
+
   /// Returns all anchor patterns
   List<String> get anchorPatterns => getPatterns('anchor');
 }

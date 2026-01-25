@@ -21,9 +21,9 @@ class CategoryBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: backgroundColor ?? 
-            (isDark 
-                ? Colors.white.withValues(alpha: 0.2) 
+        color: backgroundColor ??
+            (isDark
+                ? Colors.white.withValues(alpha: 0.2)
                 : Colors.black.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -31,8 +31,7 @@ class CategoryBadge extends StatelessWidget {
         label.toUpperCase(),
         style: theme.textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w600,
-          color: textColor ?? 
-              (isDark ? Colors.white : Colors.black87),
+          color: textColor ?? (isDark ? Colors.white : Colors.black87),
           letterSpacing: 0.5,
         ),
       ),

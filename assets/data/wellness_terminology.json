@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "replacements": [
+    {
+      "term": "suffering from",
+      "replacement": "experiencing",
+      "context": "condition",
+      "severity": "medium"
+    },
+    {
+      "term": "suffer from",
+      "replacement": "experience",
+      "context": "condition",
+      "severity": "medium"
+    },
+    {
+      "term": "victim of",
+      "replacement": "survivor of",
+      "context": "general",
+      "severity": "high"
+    },
+    {
+      "term": "battling",
+      "replacement": "managing",
+      "context": "condition",
+      "severity": "medium"
+    },
+    {
+      "term": "diabetic",
+      "replacement": "person with diabetes",
+      "context": "identity",
+      "severity": "low"
+    },
+    {
+      "term": "epileptic",
+      "replacement": "person with epilepsy",
+      "context": "identity",
+      "severity": "low"
+    },
+    {
+      "term": "disabled",
+      "replacement": "person with a disability",
+      "context": "identity",
+      "severity": "low"
+    },
+    {
+      "term": "addict",
+      "replacement": "person with substance use disorder",
+      "context": "identity",
+      "severity": "high"
+    },
+    {
+      "term": "confined to a wheelchair",
+      "replacement": "uses a wheelchair",
+      "context": "mobility",
+      "severity": "medium"
+    },
+    {
+      "term": "wheelchair bound",
+      "replacement": "wheelchair user",
+      "context": "mobility",
+      "severity": "medium"
+    },
+    {
+      "term": "birth defect",
+      "replacement": "congenital condition",
+      "context": "condition",
+      "severity": "medium"
+    },
+    {
+      "term": "brain damage",
+      "replacement": "brain injury",
+      "context": "condition",
+      "severity": "medium"
+    },
+    {
+      "term": "committed suicide",
+      "replacement": "died by suicide",
+      "context": "mental_health",
+      "severity": "high"
+    }
+  ],
+  "exceptions": [
+    "acute suffering",
+    "suffering score",
+    "pain and suffering"
+  ]
+}

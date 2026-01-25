@@ -62,9 +62,7 @@ class GlassButton extends StatelessWidget {
     }
 
     Widget buildGlassContent() {
-      final contentColor = isDark
-          ? Colors.white
-          : theme.colorScheme.onSurface;
+      final contentColor = isDark ? Colors.white : theme.colorScheme.onSurface;
 
       return Container(
         padding: DesignConstants.buttonPadding,
@@ -76,7 +74,8 @@ class GlassButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: isDark ? Colors.white : contentColor.withValues(alpha: 0.9),
+                color:
+                    isDark ? Colors.white : contentColor.withValues(alpha: 0.9),
               ),
               const SizedBox(width: 8),
             ],
@@ -84,9 +83,8 @@ class GlassButton extends StatelessWidget {
               label,
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: isDark
-                    ? Colors.white
-                    : contentColor.withValues(alpha: 0.9),
+                color:
+                    isDark ? Colors.white : contentColor.withValues(alpha: 0.9),
               ),
             ),
           ],

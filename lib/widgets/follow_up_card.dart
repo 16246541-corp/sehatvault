@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/follow_up_item.dart';
 import '../services/local_storage_service.dart';
+import '../services/safety_filter_service.dart';
 import '../screens/conversation_transcript_screen.dart';
 
 class FollowUpCard extends StatelessWidget {
@@ -24,14 +25,17 @@ class FollowUpCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isHighPriority = item.priority == FollowUpPriority.high;
+    final safetyFilter = SafetyFilterService();
 
     // Construct title: Verb + Object
-    final title = [
+    final rawTitle = [
       item.verb.isNotEmpty
           ? '${item.verb[0].toUpperCase()}${item.verb.substring(1)}'
           : item.verb,
       item.object
     ].where((s) => s != null && s.isNotEmpty).join(' ');
+
+    final title = safetyFilter.sanitize(rawTitle);
 
     return Card(
       elevation: 2,
@@ -78,10 +82,10 @@ class FollowUpCard extends StatelessWidget {
                           ),
                         ),
                         if (item.description.isNotEmpty &&
-                            item.description != title) ...[
+                            item.description != rawTitle) ...[
                           const SizedBox(height: 4),
                           Text(
-                            item.description,
+                            safetyFilter.sanitize(item.description),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),

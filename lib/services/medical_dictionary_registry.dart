@@ -8,7 +8,7 @@ class MedicalDictionaryRegistry {
   List<MedicalTestDefinition> _tests = [];
   Map<String, String> _abbreviations = {};
   Set<String> _commonUnits = {};
-  
+
   // Cache for fast lookups
   final Map<String, MedicalTestDefinition> _testLookupCache = {};
 
@@ -34,7 +34,7 @@ class MedicalDictionaryRegistry {
     if (_data!.containsKey('tests')) {
       final testsList = _data!['tests'] as List;
       _tests = testsList.map((t) => MedicalTestDefinition.fromJson(t)).toList();
-      
+
       // Build lookup cache (lowercase keys)
       for (var test in _tests) {
         _testLookupCache[test.canonicalName.toLowerCase()] = test;

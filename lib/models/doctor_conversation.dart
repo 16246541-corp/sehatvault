@@ -14,7 +14,7 @@ class DoctorConversation extends HiveObject {
   final int duration;
 
   @HiveField(3)
-  final String encryptedAudioPath;
+  String encryptedAudioPath;
 
   @HiveField(4)
   String transcript;
@@ -31,6 +31,18 @@ class DoctorConversation extends HiveObject {
   @HiveField(8)
   List<ConversationSegment>? segments;
 
+  @HiveField(9)
+  String? originalTranscript;
+
+  @HiveField(10)
+  DateTime? editedAt;
+
+  @HiveField(11)
+  final String? complianceVersion;
+
+  @HiveField(12)
+  final DateTime? complianceReviewDate;
+
   DoctorConversation({
     required this.id,
     required this.title,
@@ -41,6 +53,10 @@ class DoctorConversation extends HiveObject {
     required this.followUpItems,
     required this.doctorName,
     this.segments,
+    this.originalTranscript,
+    this.editedAt,
+    this.complianceVersion,
+    this.complianceReviewDate,
   });
 }
 
@@ -58,10 +74,14 @@ class ConversationSegment extends HiveObject {
   @HiveField(3)
   String speaker; // "User" or "Doctor"
 
+  @HiveField(4)
+  double? speakerConfidence;
+
   ConversationSegment({
     required this.text,
     required this.startTimeMs,
     required this.endTimeMs,
     required this.speaker,
+    this.speakerConfidence,
   });
 }

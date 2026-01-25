@@ -1,0 +1,52 @@
+{
+  "en": [
+    {
+      "id": "medication_adherence",
+      "keywords": ["stop taking", "missed dose", "skip", "forgot pill", "side effects"],
+      "risk_level": "medium",
+      "template": "I noticed you mentioned '{keyword}'. It is important to discuss any medication changes or side effects with your doctor before stopping."
+    },
+    {
+      "id": "symptom_worsening",
+      "keywords": ["pain increasing", "getting worse", "not helping", "severe", "unbearable"],
+      "risk_level": "high",
+      "template": "You mentioned that the condition is '{keyword}'. If your symptoms are worsening, please consider contacting your healthcare provider immediately."
+    },
+    {
+      "id": "new_symptom",
+      "keywords": ["new pain", "strange feeling", "unexpected", "lump", "rash"],
+      "risk_level": "medium",
+      "template": "You noted a '{keyword}'. Make sure to mention this new symptom to your doctor during your next visit."
+    },
+    {
+      "id": "clarification_needed",
+      "keywords": ["confused", "don't understand", "unclear", "what does that mean"],
+      "risk_level": "low",
+      "template": "It sounds like there was some confusion about '{keyword}'. You might want to ask your doctor to explain this in more detail."
+    },
+    {
+      "id": "procedure_preparation",
+      "keywords": ["surgery", "operation", "procedure", "biopsy"],
+      "risk_level": "medium",
+      "template": "Since you have a '{keyword}' coming up, have you received all the necessary preparation instructions (e.g., fasting, medication adjustments)?"
+    },
+    {
+      "id": "general_follow_up",
+      "keywords": [],
+      "risk_level": "fallback",
+      "template": "Are there any specific warning signs or symptoms I should watch for before my next visit?"
+    },
+    {
+      "id": "medication_guidance",
+      "keywords": [],
+      "risk_level": "fallback",
+      "template": "Should I confirm how to take my medications, including timing and any side effects to monitor?"
+    },
+    {
+      "id": "next_steps",
+      "keywords": [],
+      "risk_level": "fallback",
+      "template": "What are the next steps or follow-ups I should plan after this appointment?"
+    }
+  ]
+}

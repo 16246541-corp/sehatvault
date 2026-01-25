@@ -30,7 +30,7 @@ class FollowUpItemAdapter extends TypeAdapter<FollowUpItem> {
       createdAt: fields[10] as DateTime,
       isCompleted: fields[11] as bool,
       calendarEventId: fields[12] as String?,
-      isPotentialDuplicate: (fields[13] as bool?) ?? false,
+      isPotentialDuplicate: fields[13] as bool,
       linkedRecordId: fields[14] as String?,
       linkedEntityName: fields[15] as String?,
       linkedContext: fields[16] as String?,

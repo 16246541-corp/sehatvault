@@ -19,28 +19,32 @@ class _NewsScreenState extends State<NewsScreen> {
     {
       'category': 'Cardiology',
       'title': 'New Advances in Heart Disease Prevention',
-      'abstract': 'This comprehensive study examines the latest breakthroughs in cardiovascular disease prevention, including lifestyle interventions, novel pharmaceuticals, and emerging technologies for early detection.',
+      'abstract':
+          'This comprehensive study examines the latest breakthroughs in cardiovascular disease prevention, including lifestyle interventions, novel pharmaceuticals, and emerging technologies for early detection.',
       'source': 'Journal of Cardiology',
       'date': 'Jan 2026',
     },
     {
       'category': 'Nutrition',
       'title': 'The Role of Gut Microbiome in Mental Health',
-      'abstract': 'Recent research reveals significant connections between gut bacteria composition and mental health outcomes. This paper explores the gut-brain axis and its implications for treating depression and anxiety.',
+      'abstract':
+          'Recent research reveals significant connections between gut bacteria composition and mental health outcomes. This paper explores the gut-brain axis and its implications for treating depression and anxiety.',
       'source': 'Nature Medicine',
       'date': 'Dec 2025',
     },
     {
       'category': 'Sleep Medicine',
       'title': 'Optimizing Sleep for Cognitive Performance',
-      'abstract': 'A meta-analysis of sleep optimization techniques and their measurable effects on memory consolidation, learning capacity, and overall cognitive function in adults.',
+      'abstract':
+          'A meta-analysis of sleep optimization techniques and their measurable effects on memory consolidation, learning capacity, and overall cognitive function in adults.',
       'source': 'Sleep Research Society',
       'date': 'Nov 2025',
     },
     {
       'category': 'Immunology',
       'title': 'mRNA Technology Beyond Vaccines',
-      'abstract': 'Exploring the expanding applications of mRNA technology in treating cancer, autoimmune diseases, and rare genetic disorders. A look at current clinical trials and future possibilities.',
+      'abstract':
+          'Exploring the expanding applications of mRNA technology in treating cancer, autoimmune diseases, and rare genetic disorders. A look at current clinical trials and future possibilities.',
       'source': 'Cell Reports Medicine',
       'date': 'Jan 2026',
     },
@@ -168,7 +172,8 @@ class _NewsScreenState extends State<NewsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(DesignConstants.buttonCornerRadius),
+          borderRadius:
+              BorderRadius.circular(DesignConstants.buttonCornerRadius),
           border: Border.all(
             color: color.withValues(alpha: 0.3),
             width: 1,

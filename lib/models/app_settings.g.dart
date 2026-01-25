@@ -8,7 +8,7 @@ part of 'app_settings.dart';
 
 class AppSettingsAdapter extends TypeAdapter<AppSettings> {
   @override
-  final int typeId = 2;
+  final int typeId = 1;
 
   @override
   AppSettings read(BinaryReader reader) {
@@ -17,25 +17,58 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return AppSettings(
-      selectedModelId: fields[0] as String,
-      autoSelectModel: fields[1] as bool,
-      modelMetadataMap: (fields[2] as Map?)?.cast<String, ModelMetadata>(),
-      autoStopRecordingMinutes: fields[3] as int,
+      darkMode: fields[0] as bool,
+      notificationsEnabled: fields[1] as bool,
+      language: fields[2] as String,
+      keepAudioIds: (fields[3] as List?)?.cast<String>(),
+      autoDeleteRecordingsDays: fields[4] as int,
+      sessionTimeoutMinutes: fields[5] as int,
+      enhancedPrivacySettings: fields[6] as EnhancedPrivacySettings?,
+      selectedModelId: fields[7] as String,
+      modelMetadataMap: (fields[8] as Map?)?.cast<String, ModelMetadata>(),
+      autoStopRecordingMinutes: fields[9] as int,
+      enableBatteryWarnings: fields[10] as bool,
+      completedEducationIds: (fields[11] as List?)?.cast<String>(),
+      completedEducationVersions: (fields[12] as Map?)?.cast<String, int>(),
+      enableWellnessLanguageChecks: fields[13] as bool,
+      showWellnessDebugInfo: fields[14] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(15)
       ..writeByte(0)
-      ..write(obj.selectedModelId)
+      ..write(obj.darkMode)
       ..writeByte(1)
-      ..write(obj.autoSelectModel)
+      ..write(obj.notificationsEnabled)
       ..writeByte(2)
-      ..write(obj.modelMetadataMap)
+      ..write(obj.language)
       ..writeByte(3)
-      ..write(obj.autoStopRecordingMinutes);
+      ..write(obj.keepAudioIds.toList())
+      ..writeByte(4)
+      ..write(obj.autoDeleteRecordingsDays)
+      ..writeByte(5)
+      ..write(obj.sessionTimeoutMinutes)
+      ..writeByte(6)
+      ..write(obj.enhancedPrivacySettings)
+      ..writeByte(7)
+      ..write(obj.selectedModelId)
+      ..writeByte(8)
+      ..write(obj.modelMetadataMap)
+      ..writeByte(9)
+      ..write(obj.autoStopRecordingMinutes)
+      ..writeByte(10)
+      ..write(obj.enableBatteryWarnings)
+      ..writeByte(11)
+      ..write(obj.completedEducationIds.toList())
+      ..writeByte(12)
+      ..write(obj.completedEducationVersions)
+      ..writeByte(13)
+      ..write(obj.enableWellnessLanguageChecks)
+      ..writeByte(14)
+      ..write(obj.showWellnessDebugInfo);
   }
 
   @override

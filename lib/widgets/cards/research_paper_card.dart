@@ -37,7 +37,7 @@ class ResearchPaperCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final imageHeight = screenHeight * 0.40; // 40% for image, 60% for content
-    
+
     return Dismissible(
       key: UniqueKey(),
       direction: DismissDirection.horizontal,
@@ -81,7 +81,7 @@ class ResearchPaperCard extends StatelessWidget {
                     height: imageHeight,
                     badge: CategoryBadge(label: category),
                   ),
-                  
+
                   // Content section (60% of screen)
                   Expanded(
                     child: CardContentSection(
@@ -95,7 +95,7 @@ class ResearchPaperCard extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               // Floating widget (e.g., save button)
               if (floatingWidget != null)
                 Positioned(

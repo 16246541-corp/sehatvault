@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
 import 'glass_button.dart';
 import 'glass_effect_container.dart';
 import '../../utils/theme.dart';
@@ -55,14 +54,13 @@ class _RecordingControlWidgetState extends State<RecordingControlWidget>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return StreamBuilder<RecordingDisposition>(
+    return StreamBuilder<RecorderProgress>(
       stream: widget.recorderService.onProgress,
       builder: (context, snapshot) {
         final duration = snapshot.hasData
             ? snapshot.data!.duration
             : const Duration(seconds: 0);
-        final decibels =
-            snapshot.hasData ? snapshot.data!.decibels ?? 0.0 : 0.0;
+        final decibels = snapshot.hasData ? snapshot.data!.decibels : 0.0;
 
         // Normalize decibels for visualization (usually -160 to 0 or similar)
         // Let's assume a range and map it to 0.0 - 1.0

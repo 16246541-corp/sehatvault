@@ -7,9 +7,19 @@ class TestExtractor extends BaseExtractor {
 
   @override
   List<String> get verbs => [
-    "tests", "get", "order", "run", "check", "measure", 
-    "repeat", "retest", "confirm", "review", "perform"
-  ];
+        "tests",
+        "get",
+        "order",
+        "run",
+        "check",
+        "measure",
+        "repeat",
+        "retest",
+        "confirm",
+        "review",
+        "perform",
+        "schedule"
+      ];
 
   @override
   FollowUpCategory get category => FollowUpCategory.test;
@@ -22,17 +32,15 @@ class TestExtractor extends BaseExtractor {
 
     // Try finding test first
     String? test = dictionaryService.findTest(context);
-    
+
     // Fallback to procedure
-    if (test == null) {
-      test = dictionaryService.findProcedure(context);
-    }
+    test ??= dictionaryService.findProcedure(context);
 
     if (test != null) {
       // Check if there's a body part mentioned nearby to refine the object
       // e.g. "MRI of knee"
       String? bodyPart = dictionaryService.findBodyPart(context);
-      
+
       if (bodyPart != null) {
         // Avoid duplication if the test name already includes the body part
         if (!test.toLowerCase().contains(bodyPart.toLowerCase())) {
@@ -46,15 +54,21 @@ class TestExtractor extends BaseExtractor {
   }
 
   @override
-  FollowUpItem? process(String sentence, String verb, int verbIndex, String conversationId, DateTime anchorDate) {
+  FollowUpItem? process(String sentence, String verb, int verbIndex,
+      String conversationId, DateTime anchorDate) {
     final temporalInfo = extractTemporalInfo(sentence, anchorDate);
 
     String cleanSentence = sentence;
     if (temporalInfo.timeframeRaw != null) {
-      cleanSentence = cleanSentence.replaceAll(RegExp(RegExp.escape(temporalInfo.timeframeRaw!), caseSensitive: false), ' ');
+      cleanSentence = cleanSentence.replaceAll(
+          RegExp(RegExp.escape(temporalInfo.timeframeRaw!),
+              caseSensitive: false),
+          ' ');
     }
     if (temporalInfo.frequency != null) {
-      cleanSentence = cleanSentence.replaceAll(RegExp(RegExp.escape(temporalInfo.frequency!), caseSensitive: false), ' ');
+      cleanSentence = cleanSentence.replaceAll(
+          RegExp(RegExp.escape(temporalInfo.frequency!), caseSensitive: false),
+          ' ');
     }
 
     final object = extractObject(cleanSentence, verb, verbIndex);

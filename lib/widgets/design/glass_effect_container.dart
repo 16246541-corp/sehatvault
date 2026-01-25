@@ -50,15 +50,18 @@ class GlassEffect extends StatelessWidget {
     final effectiveTintColor = tintColor ?? Colors.white;
 
     return ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.circular(DesignConstants.cornerRadius),
+      borderRadius:
+          borderRadius ?? BorderRadius.circular(DesignConstants.cornerRadius),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
         child: Container(
           decoration: BoxDecoration(
             color: effectiveTintColor.withValues(alpha: effectiveOpacity),
-            borderRadius: borderRadius ?? BorderRadius.circular(DesignConstants.cornerRadius),
+            borderRadius: borderRadius ??
+                BorderRadius.circular(DesignConstants.cornerRadius),
             border: Border.all(
-              color: Colors.white.withValues(alpha: DesignConstants.glassBorderOpacity),
+              color: Colors.white
+                  .withValues(alpha: DesignConstants.glassBorderOpacity),
               width: DesignConstants.glassBorderWidth,
             ),
           ),
@@ -67,7 +70,8 @@ class GlassEffect extends StatelessWidget {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {},
-                    borderRadius: borderRadius ?? BorderRadius.circular(DesignConstants.cornerRadius),
+                    borderRadius: borderRadius ??
+                        BorderRadius.circular(DesignConstants.cornerRadius),
                     child: child,
                   ),
                 )

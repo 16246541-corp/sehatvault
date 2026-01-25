@@ -36,7 +36,7 @@ class CardContentSection extends StatelessWidget {
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
-          
+
           if (description != null) ...[
             const SizedBox(height: DesignConstants.headlineBodySpacing),
             Expanded(
@@ -48,9 +48,11 @@ class CardContentSection extends StatelessWidget {
               ),
             ),
           ],
-          
+
           // Footer with source and actions
-          if (source != null || footerText != null || actionButtons != null) ...[
+          if (source != null ||
+              footerText != null ||
+              actionButtons != null) ...[
             const SizedBox(height: DesignConstants.sectionSpacing),
             Row(
               children: [

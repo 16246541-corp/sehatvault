@@ -3,23 +3,38 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_card.dart';
 import '../widgets/design/recording_control_widget.dart';
+import '../widgets/design/emergency_stop_button.dart';
 import '../utils/design_constants.dart';
-import '../widgets/cards/model_status_card.dart';
+import '../widgets/ai/model_info_panel.dart';
 import '../services/conversation_recorder_service.dart';
 import '../services/transcription_service.dart';
 import '../services/follow_up_extractor.dart';
+import '../services/biometric_service.dart';
+import '../services/battery_monitor_service.dart';
+import '../services/session_manager.dart';
+import '../services/local_audit_service.dart';
 import '../models/doctor_conversation.dart';
 import '../models/follow_up_item.dart';
+import '../models/recording_audit_entry.dart';
 import '../widgets/sheets/follow_up_review_sheet.dart';
 import '../widgets/dialogs/recording_consent_dialog.dart';
 import '../main.dart'; // for storageService
+import '../widgets/compliance/fda_disclaimer_widget.dart';
+import '../widgets/compliance/emergency_use_banner.dart';
+import 'issue_reporting_review_screen.dart';
 
 /// AI Screen - Local LLM interface placeholder
 class AIScreen extends StatefulWidget {
-  const AIScreen({super.key});
+  final VoidCallback? onEmergencyExit;
+
+  const AIScreen({
+    super.key,
+    this.onEmergencyExit,
+  });
 
   @override
   State<AIScreen> createState() => _AIScreenState();
@@ -35,15 +50,61 @@ class _AIScreenState extends State<AIScreen> {
   bool _isPaused = false;
   bool _isProcessing = false;
   StreamSubscription? _recorderSubscription;
+  Duration _lastDuration = Duration.zero;
+  bool _lastConsentConfirmed = false;
 
   @override
   void initState() {
     super.initState();
     _initRecorder();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SessionManager().showEducationIfNeeded('ai_features');
+    });
   }
 
   Future<void> _initRecorder() async {
     await _recorderService.init();
+
+    // Set up lifecycle callbacks
+    _recorderService.onAutoStop = () {
+      if (mounted) {
+        _handleStopRecording();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Recording auto-stopped due to background inactivity')),
+        );
+      }
+    };
+
+    _recorderService.onPauseStateChanged = () {
+      if (mounted) {
+        setState(() {
+          _isPaused = _recorderService.isPaused;
+        });
+      }
+    };
+
+    _recorderService.onCriticalBatteryStop = () {
+      if (mounted) {
+        _handleStopRecording();
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Battery Critically Low'),
+            content:
+                const Text('Recording stopped to preserve battery and data.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    };
   }
 
   @override
@@ -60,6 +121,7 @@ class _AIScreenState extends State<AIScreen> {
   void _startAutoStopListener() {
     _stopAutoStopListener();
     _recorderSubscription = _recorderService.onProgress?.listen((e) {
+      _lastDuration = e.duration;
       final settings = storageService.getAppSettings();
       final limit = settings.autoStopRecordingMinutes;
       if (e.duration.inMinutes >= limit) {
@@ -82,8 +144,38 @@ class _AIScreenState extends State<AIScreen> {
   }
 
   Future<void> _handleResumeRecording() async {
-    await _recorderService.resumeRecording();
-    setState(() => _isPaused = false);
+    bool authenticated = false;
+    final biometricService = BiometricService();
+    final settings = storageService.getAppSettings();
+
+    if (!settings.enhancedPrivacySettings.requireBiometricsForSensitiveData) {
+      authenticated = true;
+    } else {
+      try {
+        authenticated = await biometricService.authenticate(
+          reason: 'Authenticate to resume recording',
+          sessionId: biometricService.sessionId,
+        );
+      } on BiometricAuthException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message)),
+          );
+        }
+        return;
+      }
+    }
+
+    if (authenticated) {
+      await _recorderService.resumeRecording();
+      setState(() => _isPaused = false);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication required to resume')),
+        );
+      }
+    }
   }
 
   Future<void> _handleStopRecording() async {
@@ -98,13 +190,8 @@ class _AIScreenState extends State<AIScreen> {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final path = '${dir.path}/recording_$timestamp.wav.enc';
 
-      // Using a dummy key for now - in production this should be securely managed
-      // 32 chars = 256 bits
-      const key = '12345678901234567890123456789012';
-
       await _recorderService.stopRecordingAndSaveEncrypted(
         destinationPath: path,
-        encryptionKey: key,
       );
 
       if (mounted) {
@@ -113,10 +200,47 @@ class _AIScreenState extends State<AIScreen> {
         );
       }
 
+      try {
+        final file = File(path);
+        final size = await file.length();
+
+        final deviceInfo = DeviceInfoPlugin();
+        String deviceId = 'Unknown Device';
+        if (Platform.isIOS) {
+          final iosInfo = await deviceInfo.iosInfo;
+          deviceId = iosInfo.identifierForVendor ?? 'Unknown iOS Device';
+        } else if (Platform.isAndroid) {
+          final androidInfo = await deviceInfo.androidInfo;
+          deviceId = androidInfo.id;
+        }
+
+        final auditEntry = RecordingAuditEntry(
+          timestamp: DateTime.now(),
+          duration: _lastDuration,
+          consentConfirmed: _lastConsentConfirmed,
+          doctorName: 'Unknown Doctor',
+          fileSizeBytes: size,
+          deviceId: deviceId,
+        );
+
+        await storageService.saveRecordingAuditEntry(auditEntry);
+        await LocalAuditService(storageService, SessionManager()).log(
+          action: 'recording_saved',
+          details: {
+            'durationSeconds': _lastDuration.inSeconds.toString(),
+            'consentConfirmed': _lastConsentConfirmed.toString(),
+            'fileSizeBytes': size.toString(),
+          },
+          sensitivity: 'warning',
+        );
+      } catch (e) {
+        debugPrint('Error creating audit entry: $e');
+      }
+
       // 1. Transcribe
       final encryptedFile = File(path);
-      final transcriptionResult = await _transcriptionService
-          .transcribeAudio(encryptedFile, encryptionKey: key);
+      final transcriptionResult =
+          await _transcriptionService.transcribeAudio(encryptedFile);
 
       // 2. Extract Items
       final conversationId = const Uuid().v4();
@@ -153,13 +277,15 @@ class _AIScreenState extends State<AIScreen> {
       final conversation = DoctorConversation(
         id: conversationId,
         title: 'Conversation ${DateTime.now().toString().split(' ')[0]}',
-        duration: 0, // TODO: Get actual duration in seconds
+        duration: _lastDuration.inSeconds,
         encryptedAudioPath: path,
         transcript: transcriptionResult.fullText,
         createdAt: DateTime.now(),
         followUpItems: confirmedItems.map((e) => e.id).toList(),
         doctorName: 'Unknown Doctor',
         segments: transcriptionResult.segments,
+        complianceVersion: '1.0',
+        complianceReviewDate: DateTime.now(),
       );
 
       await storageService.saveDoctorConversation(conversation);
@@ -186,6 +312,111 @@ class _AIScreenState extends State<AIScreen> {
     }
   }
 
+  Future<void> _handleEmergencyStop() async {
+    // Confirmation Dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.red.shade50,
+        title: const Text(
+          'DELETE RECORDING?',
+          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'This cannot be undone. All data will be permanently erased.',
+          style: TextStyle(color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete & Exit',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _recorderService.emergencyStop();
+
+      // Audit Log
+      try {
+        final auditEntry = RecordingAuditEntry(
+          timestamp: DateTime.now(),
+          duration: Duration.zero,
+          consentConfirmed: _lastConsentConfirmed,
+          doctorName: 'EMERGENCY DELETION',
+          fileSizeBytes: 0,
+          deviceId: 'Emergency Stop',
+        );
+        await storageService.saveRecordingAuditEntry(auditEntry);
+        await LocalAuditService(storageService, SessionManager()).log(
+          action: 'recording_emergency_delete',
+          details: {
+            'consentConfirmed': _lastConsentConfirmed.toString(),
+            'reason': 'emergency_stop',
+          },
+          sensitivity: 'critical',
+        );
+      } catch (e) {
+        debugPrint('Error saving emergency audit: $e');
+      }
+
+      setState(() {
+        _isRecording = false;
+        _isPaused = false;
+        _isProcessing = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recording emergency deleted'),
+            backgroundColor: Colors.red,
+          ),
+        );
+
+        // Offer to report issue
+        final reportIssue = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Report Issue?'),
+            content: const Text(
+                'Would you like to anonymously report this incident to help improve safety?'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('No')),
+              TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Report')),
+            ],
+          ),
+        );
+
+        if (reportIssue == true && mounted) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const IssueReportingReviewScreen(
+                description: 'Emergency Stop Triggered',
+                isEmergency: true,
+              ),
+            ),
+          );
+        }
+
+        widget.onEmergencyExit?.call();
+      }
+    }
+  }
+
   Future<void> _handleRecordingAction() async {
     if (_isRecording) {
       await _handleStopRecording();
@@ -197,8 +428,45 @@ class _AIScreenState extends State<AIScreen> {
       );
 
       if (confirmed == true) {
+        // Battery Check
+        if (storageService.getAppSettings().enableBatteryWarnings) {
+          final warning =
+              await BatteryMonitorService().checkPreRecordingBattery();
+          if (warning != null && mounted) {
+            final proceed = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Low Battery Warning'),
+                content: Text(warning),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Continue'),
+                  ),
+                ],
+              ),
+            );
+            if (proceed != true) {
+              _lastConsentConfirmed = false;
+              return;
+            }
+          }
+        }
+
         try {
+          _lastConsentConfirmed = true;
           await _recorderService.startRecording();
+          await LocalAuditService(storageService, SessionManager()).log(
+            action: 'recording_start',
+            details: {
+              'consentConfirmed': _lastConsentConfirmed.toString(),
+            },
+            sensitivity: 'warning',
+          );
           _startAutoStopListener();
           setState(() {
             _isRecording = true;
@@ -211,6 +479,8 @@ class _AIScreenState extends State<AIScreen> {
             );
           }
         }
+      } else {
+        _lastConsentConfirmed = false;
       }
     }
   }
@@ -219,109 +489,157 @@ class _AIScreenState extends State<AIScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return LiquidGlassBackground(
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
-          child: _isProcessing
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('Processing conversation...'),
-                    ],
-                  ),
-                )
-              : _isRecording
-                  ? Center(
-                      child: RecordingControlWidget(
-                        recorderService: _recorderService,
-                        onStop: _handleStopRecording,
-                        onPause: _handlePauseRecording,
-                        onResume: _handleResumeRecording,
-                        isPaused: _isPaused,
+    final contentEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding:
+                  const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
+              child: _isProcessing
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Processing conversation...'),
+                        ],
                       ),
                     )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: DesignConstants.titleTopPadding),
-                        Text(
-                          'AI Assistant',
-                          style: theme.textTheme.displayMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Powered by local LLM • Your data stays on device',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: DesignConstants.sectionSpacing),
-
-                        // AI Status Card
-                        const ModelStatusCard(),
-
-                        const SizedBox(height: DesignConstants.sectionSpacing),
-
-                        // Quick Actions
-                        Text(
-                          'Quick Actions',
-                          style: theme.textTheme.headlineLarge,
-                        ),
-                        const SizedBox(height: 16),
-
-                        Expanded(
-                          child: ListView(
-                            children: [
-                              _buildQuickAction(
-                                context,
-                                icon: _isRecording
-                                    ? Icons.stop_circle_outlined
-                                    : Icons.mic_outlined,
-                                title: _isRecording
-                                    ? 'Stop Recording'
-                                    : 'Record Conversation',
-                                description: _isRecording
-                                    ? 'Tap to stop and save'
-                                    : 'Securely record and analyze a conversation',
-                                onTap: _handleRecordingAction,
-                                isActive: _isRecording,
-                              ),
-                              _buildQuickAction(
-                                context,
-                                icon: Icons.summarize_outlined,
-                                title: 'Summarize Document',
-                                description:
-                                    'Get a quick summary of any health document',
-                              ),
-                              _buildQuickAction(
-                                context,
-                                icon: Icons.translate,
-                                title: 'Explain Medical Terms',
-                                description:
-                                    'Understand complex medical terminology',
-                              ),
-                              _buildQuickAction(
-                                context,
-                                icon: Icons.compare_arrows,
-                                title: 'Compare Results',
-                                description:
-                                    'Track changes in your lab results over time',
-                              ),
-                              _buildQuickAction(
-                                context,
-                                icon: Icons.search,
-                                title: 'Search Records',
-                                description:
-                                    'Find information across all your documents',
-                              ),
-                            ],
+                  : _isRecording
+                      ? Center(
+                          child: RecordingControlWidget(
+                            recorderService: _recorderService,
+                            onStop: _handleStopRecording,
+                            onPause: _handlePauseRecording,
+                            onResume: _handleResumeRecording,
+                            isPaused: _isPaused,
                           ),
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 60),
+                            const SizedBox(
+                                height: DesignConstants.titleTopPadding),
+                            Text(
+                              'AI Assistant',
+                              style: theme.textTheme.displayMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Powered by local LLM • Your data stays on device',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            const SizedBox(
+                                height: DesignConstants.sectionSpacing),
+                            const ModelInfoPanel(compact: true),
+                            const SizedBox(
+                                height: DesignConstants.sectionSpacing),
+                            Text(
+                              'Quick Actions',
+                              style: theme.textTheme.headlineLarge,
+                            ),
+                            const SizedBox(height: 16),
+                            Expanded(
+                              child: ListView(
+                                children: [
+                                  _buildQuickAction(
+                                    context,
+                                    icon: _isRecording
+                                        ? Icons.stop_circle_outlined
+                                        : Icons.mic_outlined,
+                                    title: _isRecording
+                                        ? 'Stop Recording'
+                                        : 'Record Conversation',
+                                    description: _isRecording
+                                        ? 'Tap to stop and save'
+                                        : 'Securely record and analyze a conversation',
+                                    onTap: _handleRecordingAction,
+                                    isActive: _isRecording,
+                                  ),
+                                  _buildQuickAction(
+                                    context,
+                                    icon: Icons.summarize_outlined,
+                                    title: 'Summarize Document',
+                                    description:
+                                        'Get a quick summary of any health document',
+                                  ),
+                                  _buildQuickAction(
+                                    context,
+                                    icon: Icons.translate,
+                                    title: 'Explain Medical Terms',
+                                    description:
+                                        'Understand complex medical terminology',
+                                  ),
+                                  _buildQuickAction(
+                                    context,
+                                    icon: Icons.compare_arrows,
+                                    title: 'Compare Results',
+                                    description:
+                                        'Track changes in your lab results over time',
+                                  ),
+                                  _buildQuickAction(
+                                    context,
+                                    icon: Icons.search,
+                                    title: 'Search Records',
+                                    description:
+                                        'Find information across all your documents',
+                                  ),
+                                  _buildQuickAction(
+                                    context,
+                                    icon: Icons.history,
+                                    title: 'View History',
+                                    description: 'Access past conversations',
+                                    onTap: () {
+                                      // Navigate to Documents tab
+                                      // This might need a callback to parent to switch tabs
+                                    },
+                                  ),
+                                  const SizedBox(height: 24),
+                                  const Padding(
+                                    padding: EdgeInsets.only(bottom: 24.0),
+                                    child: FdaDisclaimerWidget(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+            ),
+          ),
+          if (_isRecording) EmergencyStopButton(onTap: _handleEmergencyStop),
+        ],
+      ),
+    );
+
+    final bannerEntry = OverlayEntry(
+      builder: (context) => const Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: DesignConstants.pageHorizontalPadding,
+              vertical: 8.0,
+            ),
+            child: EmergencyUseBanner(),
+          ),
         ),
+      ),
+    );
+
+    final isBannerPriority = true;
+    final entries = isBannerPriority
+        ? [contentEntry, bannerEntry]
+        : [bannerEntry, contentEntry];
+
+    return LiquidGlassBackground(
+      child: Overlay(
+        initialEntries: entries,
       ),
     );
   }

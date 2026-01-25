@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_button.dart';
 import '../widgets/design/glass_text_field.dart';
@@ -9,21 +10,27 @@ import '../services/search_service.dart';
 import '../services/local_storage_service.dart';
 import '../models/health_record.dart';
 import '../widgets/cards/document_grid_card.dart';
+import '../widgets/cards/conversation_grid_card.dart';
 import '../widgets/dashboard/follow_up_dashboard.dart';
 import 'document_detail_screen.dart';
 import 'follow_up_list_screen.dart';
+import 'conversation_transcript_screen.dart';
 import '../models/follow_up_item.dart';
+import '../models/search_entry.dart';
 import '../widgets/follow_up_card.dart';
 import '../widgets/dialogs/follow_up_edit_dialog.dart';
 import '../services/follow_up_reminder_service.dart';
+import '../widgets/empty_states/empty_conversations_state.dart';
 
 /// Documents Screen - Health documents storage
 class DocumentsScreen extends StatefulWidget {
   final VoidCallback? onTasksTap;
+  final VoidCallback? onRecordTap;
 
   const DocumentsScreen({
     super.key,
     this.onTasksTap,
+    this.onRecordTap,
   });
 
   @override
@@ -38,6 +45,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   List<HealthRecord> _documents = [];
   List<HealthRecord> _filteredDocuments = [];
   List<FollowUpItem> _filteredFollowUps = [];
+  List<SearchEntry> _conversationResults = [];
   bool _isLoading = true;
 
   @override
@@ -214,12 +222,33 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Widget _buildSearchResults(BuildContext context) {
-    if (_filteredDocuments.isEmpty && _filteredFollowUps.isEmpty) {
+    if (_filteredDocuments.isEmpty &&
+        _filteredFollowUps.isEmpty &&
+        _conversationResults.isEmpty) {
       return _buildEmptyState(context);
     }
 
     return CustomScrollView(
       slivers: [
+        if (_conversationResults.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text('Conversations',
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final entry = _conversationResults[index];
+                return _buildConversationResultCard(entry);
+              },
+              childCount: _conversationResults.length,
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ],
         if (_filteredFollowUps.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
@@ -285,6 +314,110 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     );
   }
 
+  Widget _buildConversationResultCard(SearchEntry entry) {
+    final query = _searchController.text.trim();
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+            color:
+                Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
+      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          final conversation =
+              LocalStorageService().getDoctorConversation(entry.sourceId);
+          if (conversation != null) {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ConversationTranscriptScreen(conversation: conversation),
+                ));
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Conversation not found')));
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(entry.title,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+              if (entry.subtitle.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(entry.subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary)),
+              ],
+              const SizedBox(height: 8),
+              _buildExcerpt(entry.content, query),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExcerpt(String content, String query) {
+    if (query.isEmpty) return const SizedBox.shrink();
+
+    final lowerContent = content.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    final index = lowerContent.indexOf(lowerQuery);
+
+    if (index == -1) {
+      return Text(content,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodySmall);
+    }
+
+    final start = max(0, index - 30);
+    final end = min(content.length, index + query.length + 60);
+
+    final prefix = start > 0 ? '...' : '';
+    final suffix = end < content.length ? '...' : '';
+
+    final snippet = content.substring(start, end);
+    final matchIndexInSnippet = snippet.toLowerCase().indexOf(lowerQuery);
+
+    if (matchIndexInSnippet == -1)
+      return Text('$prefix$snippet$suffix',
+          style: Theme.of(context).textTheme.bodySmall);
+
+    return RichText(
+      text: TextSpan(
+        style: Theme.of(context).textTheme.bodySmall,
+        children: [
+          TextSpan(text: prefix + snippet.substring(0, matchIndexInSnippet)),
+          TextSpan(
+            text: snippet.substring(
+                matchIndexInSnippet, matchIndexInSnippet + query.length),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+              backgroundColor:
+                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            ),
+          ),
+          TextSpan(
+              text: snippet.substring(matchIndexInSnippet + query.length) +
+                  suffix),
+        ],
+      ),
+    );
+  }
+
   Future<void> _toggleCompletion(FollowUpItem item) async {
     setState(() {
       item.isCompleted = !item.isCompleted;
@@ -331,55 +464,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       );
     }
 
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.document_scanner_outlined,
-              size: 64,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'No Documents Yet',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Scan your medical records to keep them safe\nand accessible anytime.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ),
-          const SizedBox(height: 32),
-          GlassButton(
-            label: 'Scan Document',
-            icon: Icons.camera_alt_outlined,
-            isProminent: true,
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const DocumentScannerScreen(),
-                ),
-              );
-              _loadDocuments();
-            },
-          ),
-        ],
-      ),
+    return EmptyConversationsState(
+      onRecordTap: () async {
+        if (widget.onRecordTap != null) {
+          widget.onRecordTap!();
+        } else {
+          // Fallback if callback is not provided (though it should be)
+          // We can try to find the AIScreen via route or just print warning
+          debugPrint('onRecordTap callback not provided');
+        }
+      },
+      showOnboarding: true, // TODO: Check if first time user
     );
   }
 

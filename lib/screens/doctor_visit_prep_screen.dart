@@ -5,6 +5,7 @@ import '../services/local_storage_service.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_button.dart';
 import '../widgets/design/glass_card.dart';
+import '../services/risk_mitigation_service.dart';
 
 class DoctorVisitPrepScreen extends StatefulWidget {
   final LocalStorageService? storageService;
@@ -56,7 +57,7 @@ class _DoctorVisitPrepScreenState extends State<DoctorVisitPrepScreen> {
     });
   }
 
-  void _generateAgenda() {
+  Future<void> _generateAgenda() async {
     final selectedItems = _pendingItems
         .where((item) => _selectedItemIds.contains(item.id))
         .toList();
@@ -67,6 +68,13 @@ class _DoctorVisitPrepScreenState extends State<DoctorVisitPrepScreen> {
       );
       return;
     }
+
+    setState(() => _isLoading = true);
+
+    // Generate Risk Mitigation Questions
+    final combinedText = selectedItems.map((e) => e.description).join(' ');
+    final riskQuestions = await RiskMitigationService()
+        .generateRiskMitigationQuestions(combinedText);
 
     final buffer = StringBuffer();
     buffer.writeln('Doctor Visit Agenda');
@@ -82,36 +90,48 @@ class _DoctorVisitPrepScreenState extends State<DoctorVisitPrepScreen> {
       }
     }
 
+    if (riskQuestions.isNotEmpty) {
+      buffer.writeln();
+      buffer.writeln('--- Discussion Prompts (Risk Mitigation) ---');
+      for (final q in riskQuestions) {
+        buffer.writeln('• $q');
+      }
+    }
+
     // TODO: Add recent health summary or other sections here if needed
 
     final agendaText = buffer.toString();
 
-    // Show dialog with generated text
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Visit Agenda'),
-        content: SingleChildScrollView(
-          child: SelectableText(agendaText),
+    if (mounted) {
+      setState(() => _isLoading = false);
+
+      // Show dialog with generated text
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Visit Agenda'),
+          content: SingleChildScrollView(
+            child: SelectableText(agendaText),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: agendaText));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Agenda copied to clipboard')),
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Copy'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: agendaText));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Agenda copied to clipboard')),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('Copy'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
 
   @override

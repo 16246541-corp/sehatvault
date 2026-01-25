@@ -24,13 +24,14 @@ class DocumentExtractionAdapter extends TypeAdapter<DocumentExtraction> {
       confidenceScore: fields[4] as double,
       structuredData: (fields[5] as Map).cast<String, dynamic>(),
       contentHash: fields[6] as String?,
+      citations: (fields[7] as List?)?.cast<Citation>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, DocumentExtraction obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class DocumentExtractionAdapter extends TypeAdapter<DocumentExtraction> {
       ..writeByte(5)
       ..write(obj.structuredData)
       ..writeByte(6)
-      ..write(obj.contentHash);
+      ..write(obj.contentHash)
+      ..writeByte(7)
+      ..write(obj.citations);
   }
 
   @override

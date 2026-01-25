@@ -1,13 +1,11 @@
-import 'dart:io';
-import '../lib/services/ocr_service.dart';
-import '../lib/services/medical_field_extractor.dart';
+import 'package:sehatlocker/services/medical_field_extractor.dart';
 
 /// Example demonstrating integration of MedicalFieldExtractor with OCR pipeline
 void main() async {
   print('=== Medical Field Extractor Integration Example ===\n');
-  
+
   // Simulated OCR text output (in real usage, this comes from OCRService)
-  final ocrText = '''
+  const ocrText = '''
     MEDICAL LABORATORY REPORT
     Patient ID: 12345
     Report Date: 23/01/2024
@@ -56,19 +54,19 @@ void main() async {
   print('=' * 50);
   final allData = MedicalFieldExtractor.extractAll(ocrText);
   final summary = allData['summary'] as Map<String, dynamic>;
-  
+
   print('Summary Statistics:');
   print('  • Lab Values Found: ${summary['totalLabValues']}');
   print('  • Medications Found: ${summary['totalMedications']}');
   print('  • Dates Found: ${summary['totalDates']}');
   print('  • Contains Medical Data: ${summary['hasData']}');
-  
+
   // Example 2: Detailed lab value analysis
   print('\n2. LAB VALUES BY CATEGORY');
   print('=' * 50);
   final labData = allData['labValues'] as Map<String, dynamic>;
   final categories = labData['categories'] as Map<String, dynamic>;
-  
+
   for (var category in categories.keys) {
     final values = categories[category] as List;
     if (values.isNotEmpty) {
@@ -79,34 +77,35 @@ void main() async {
       }
     }
   }
-  
+
   // Example 3: Medication schedule
   print('\n3. MEDICATION SCHEDULE');
   print('=' * 50);
   final medData = allData['medications'] as Map<String, dynamic>;
   final medications = medData['medications'] as List;
-  
+
   for (var i = 0; i < medications.length; i++) {
     final med = medications[i] as Map<String, String>;
-    final frequency = med['frequency']!.isNotEmpty ? ' - ${med['frequency']}' : '';
+    final frequency =
+        med['frequency']!.isNotEmpty ? ' - ${med['frequency']}' : '';
     print('${i + 1}. ${med['name']} ${med['dosage']}$frequency');
   }
-  
+
   // Example 4: Date timeline
   print('\n4. DATE TIMELINE');
   print('=' * 50);
   final dateData = allData['dates'] as Map<String, dynamic>;
   final dates = dateData['dates'] as List;
-  
+
   for (var date in dates) {
     final d = date as Map<String, String>;
     print('  • ${d['value']} (${d['format']})');
   }
-  
+
   // Example 5: Clinical decision support use case
   print('\n5. CLINICAL INSIGHTS');
   print('=' * 50);
-  
+
   // Check cholesterol levels
   final lipidValues = categories['lipid'] as List?;
   if (lipidValues != null) {
@@ -121,19 +120,18 @@ void main() async {
       }
     }
   }
-  
+
   // Check if on diabetes medication
   final hasDiabetesMed = medications.any(
-    (m) => (m as Map)['name'].toString().toLowerCase().contains('metformin')
-  );
+      (m) => (m as Map)['name'].toString().toLowerCase().contains('metformin'));
   if (hasDiabetesMed) {
     print('✓  Patient on diabetes management (Metformin detected)');
   }
-  
+
   // Example 6: Export to structured format
   print('\n6. STRUCTURED DATA EXPORT');
   print('=' * 50);
-  
+
   final structuredExport = {
     'documentType': 'lab_report',
     'extractedAt': DateTime.now().toIso8601String(),
@@ -141,19 +139,20 @@ void main() async {
     'medications': medData['medications'],
     'dates': dateData['dates'],
     'metadata': {
-      'totalFields': summary['totalLabValues'] as int + 
-                     summary['totalMedications'] as int + 
-                     summary['totalDates'] as int,
+      'totalFields': (summary['totalLabValues'] as int) +
+          (summary['totalMedications'] as int) +
+          (summary['totalDates'] as int),
       'categories': categories.keys.toList(),
       'dosageUnits': medData['dosageUnits'],
       'dateFormats': dateData['formats'],
     }
   };
-  
+
   print('Export ready for storage:');
   print('  • Document Type: ${structuredExport['documentType']}');
   print('  • Total Fields: ${structuredExport['metadata']!['totalFields']}');
-  print('  • Categories: ${(structuredExport['metadata']!['categories'] as List).join(', ')}');
-  
+  print(
+      '  • Categories: ${(structuredExport['metadata']!['categories'] as List).join(', ')}');
+
   print('\n=== End of Integration Example ===');
 }

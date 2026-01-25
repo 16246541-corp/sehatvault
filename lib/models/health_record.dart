@@ -6,6 +6,7 @@ part 'health_record.g.dart';
 @HiveType(typeId: 0)
 class HealthRecord {
   static const String typeDocumentExtraction = 'DocumentExtraction';
+  static const String typeDoctorConversation = 'DoctorConversation';
 
   @HiveField(0)
   final String id;

@@ -11,10 +11,8 @@ class ModelLoadException implements Exception {
   final bool isStorageIssue;
   final bool isIntegrityIssue;
 
-  ModelLoadException(this.message, {
-    this.isStorageIssue = false, 
-    this.isIntegrityIssue = false
-  });
+  ModelLoadException(this.message,
+      {this.isStorageIssue = false, this.isIntegrityIssue = false});
 
   @override
   String toString() => 'ModelLoadException: $message';
@@ -27,7 +25,7 @@ class ModelManager {
   static Future<ModelOption> getRecommendedModel() async {
     // Detect Platform
     bool isDesktop = false;
-    
+
     try {
       if (!kIsWeb) {
         if (Platform.isMacOS || Platform.isWindows) {
@@ -58,7 +56,7 @@ class ModelManager {
 
     // Recommendation Logic based on ModelOption.availableModels
     // We prioritize the most capable model the device can comfortably run.
-    
+
     // Sort models by RAM requirement descending to find the best fit
     final sortedModels = List<ModelOption>.from(ModelOption.availableModels)
       ..sort((a, b) => b.ramRequired.compareTo(a.ramRequired));
@@ -66,7 +64,7 @@ class ModelManager {
     for (var model in sortedModels) {
       // If it's a desktop-only model, ensure we are on desktop
       if (model.isDesktopOnly && !isDesktop) continue;
-      
+
       // If device has enough RAM (with a 10% buffer for OS/other apps)
       if (totalRamGB >= model.ramRequired) {
         return model;
@@ -78,12 +76,13 @@ class ModelManager {
   }
 
   /// Checks if the model files are present on disk and version matches.
-  static Future<bool> isModelDownloaded(String modelId, {String? version}) async {
+  static Future<bool> isModelDownloaded(String modelId,
+      {String? version}) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final modelPath = '${directory.path}/models/$modelId';
       final modelDir = Directory(modelPath);
-      
+
       if (!await modelDir.exists()) return false;
 
       // If version is provided, we should check if the stored version matches
@@ -105,7 +104,7 @@ class ModelManager {
   /// Verifies the SHA-256 hash of the downloaded model file.
   static Future<void> _verifyModelHash(File file, String expectedHash) async {
     debugPrint('Verifying integrity for ${file.path}...');
-    
+
     // Split "sha256:HASH" format
     final parts = expectedHash.split(':');
     final actualExpected = parts.length > 1 ? parts[1] : parts[0];
@@ -125,7 +124,8 @@ class ModelManager {
 
   /// Checks local storage for model files and simulates download (stub).
   /// Re-downloads if version changes.
-  static Future<bool> downloadModelIfNotExists(ModelOption model, {String? installedVersion}) async {
+  static Future<bool> downloadModelIfNotExists(ModelOption model,
+      {String? installedVersion}) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final modelPath = '${directory.path}/models/${model.id}';
@@ -134,8 +134,10 @@ class ModelManager {
       bool needsDownload = false;
 
       if (await modelDir.exists()) {
-        if (installedVersion != null && installedVersion != model.metadata.version) {
-          debugPrint('Version mismatch for ${model.id}: $installedVersion vs ${model.metadata.version}. Re-downloading...');
+        if (installedVersion != null &&
+            installedVersion != model.metadata.version) {
+          debugPrint(
+              'Version mismatch for ${model.id}: $installedVersion vs ${model.metadata.version}. Re-downloading...');
           await modelDir.delete(recursive: true);
           needsDownload = true;
         } else {
@@ -157,20 +159,22 @@ class ModelManager {
         }
 
         // Simulating download (Stub)
-        debugPrint('Downloading model ${model.id} (Version: ${model.metadata.version}) to $modelPath...');
-        await Future.delayed(const Duration(seconds: 2)); 
-        
+        debugPrint(
+            'Downloading model ${model.id} (Version: ${model.metadata.version}) to $modelPath...');
+        await Future.delayed(const Duration(seconds: 2));
+
         await modelDir.create(recursive: true);
         final dummyFile = File('$modelPath/config.json');
-        final content = '{"modelId": "${model.id}", "version": "${model.metadata.version}"}';
+        final content =
+            '{"modelId": "${model.id}", "version": "${model.metadata.version}"}';
         await dummyFile.writeAsString(content);
-        
+
         // Initial verification
         await _verifyModelHash(dummyFile, model.metadata.checksum);
-        
+
         debugPrint('Model ${model.id} downloaded and verified.');
       }
-      
+
       return true;
     } catch (e) {
       if (e is ModelLoadException) rethrow;
@@ -197,7 +201,7 @@ class ModelManager {
   static Future<Map<String, dynamic>> getDeviceInfoReport() async {
     final model = await getRecommendedModel();
     final ramMB = SysInfo.getTotalPhysicalMemory() ~/ (1024 * 1024);
-    
+
     return {
       'recommendedModelId': model.id,
       'recommendedModelName': model.name,
@@ -247,4 +251,3 @@ Future<bool> _backgroundLoadTask(_ModelLoadParams params) async {
     return false;
   }
 }
-

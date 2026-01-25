@@ -54,7 +54,8 @@ void main() {
     test('extracts "daily" and sets dueDate to tomorrow', () {
       final anchor = DateTime(2023, 10, 1, 10, 0); // Oct 1st, 10 AM
       const transcript = "Take this pill daily.";
-      final items = extractor.extractFromTranscript(transcript, 'conv-1', referenceDate: anchor);
+      final items = extractor.extractFromTranscript(transcript, 'conv-1',
+          referenceDate: anchor);
 
       expect(items.length, 1);
       final item = items.first;
@@ -66,7 +67,8 @@ void main() {
     test('extracts "twice a day" and sets dueDate to tomorrow', () {
       final anchor = DateTime(2023, 10, 1, 10, 0);
       const transcript = "Take this twice a day.";
-      final items = extractor.extractFromTranscript(transcript, 'conv-1', referenceDate: anchor);
+      final items = extractor.extractFromTranscript(transcript, 'conv-1',
+          referenceDate: anchor);
 
       expect(items.length, 1);
       final item = items.first;
@@ -78,7 +80,8 @@ void main() {
     test('extracts "every morning" and sets dueDate to next 8 AM', () {
       final anchor = DateTime(2023, 10, 1, 15, 0); // Oct 1st, 3 PM
       const transcript = "Take medication every morning.";
-      final items = extractor.extractFromTranscript(transcript, 'conv-1', referenceDate: anchor);
+      final items = extractor.extractFromTranscript(transcript, 'conv-1',
+          referenceDate: anchor);
 
       expect(items.length, 1);
       final item = items.first;
@@ -90,7 +93,8 @@ void main() {
     test('extracts "once a week" and sets dueDate to +7 days', () {
       final anchor = DateTime(2023, 10, 1, 10, 0);
       const transcript = "Check blood pressure once a week.";
-      final items = extractor.extractFromTranscript(transcript, 'conv-1', referenceDate: anchor);
+      final items = extractor.extractFromTranscript(transcript, 'conv-1',
+          referenceDate: anchor);
 
       expect(items.length, 1);
       final item = items.first;
@@ -101,7 +105,8 @@ void main() {
     test('extracts "every 4 hours" and sets dueDate to +4 hours', () {
       final anchor = DateTime(2023, 10, 1, 10, 0);
       const transcript = "Take pills every 4 hours.";
-      final items = extractor.extractFromTranscript(transcript, 'conv-1', referenceDate: anchor);
+      final items = extractor.extractFromTranscript(transcript, 'conv-1',
+          referenceDate: anchor);
 
       expect(items.length, 1);
       final item = items.first;
@@ -113,12 +118,14 @@ void main() {
       // Case 1: Before 9 PM (e.g., 10 AM) -> Due today at 9 PM
       final anchor1 = DateTime(2023, 10, 1, 10, 0);
       const transcript = "Take pill at bedtime.";
-      final items1 = extractor.extractFromTranscript(transcript, 'conv-1', referenceDate: anchor1);
+      final items1 = extractor.extractFromTranscript(transcript, 'conv-1',
+          referenceDate: anchor1);
       expect(items1.first.dueDate, DateTime(2023, 10, 1, 21, 0));
 
       // Case 2: After 9 PM (e.g., 10 PM) -> Due tomorrow at 9 PM
       final anchor2 = DateTime(2023, 10, 1, 22, 0);
-      final items2 = extractor.extractFromTranscript(transcript, 'conv-1', referenceDate: anchor2);
+      final items2 = extractor.extractFromTranscript(transcript, 'conv-1',
+          referenceDate: anchor2);
       expect(items2.first.dueDate, DateTime(2023, 10, 2, 21, 0));
     });
 
@@ -127,7 +134,8 @@ void main() {
       // "next week" sets deadline to +7 days. "daily" sets freq.
       // We expect dueDate to be +7 days, NOT +1 day.
       const transcript = "Start to take this daily next week.";
-      final items = extractor.extractFromTranscript(transcript, 'conv-1', referenceDate: anchor);
+      final items = extractor.extractFromTranscript(transcript, 'conv-1',
+          referenceDate: anchor);
 
       expect(items.length, 1);
       final item = items.first;
@@ -135,11 +143,12 @@ void main() {
       expect(item.timeframeRaw, 'next week');
       expect(item.dueDate, anchor.add(const Duration(days: 7)));
     });
-    
+
     test('extracts "as needed" with null dueDate', () {
       final anchor = DateTime(2023, 10, 1, 10, 0);
       const transcript = "Take painkillers as needed.";
-      final items = extractor.extractFromTranscript(transcript, 'conv-1', referenceDate: anchor);
+      final items = extractor.extractFromTranscript(transcript, 'conv-1',
+          referenceDate: anchor);
 
       expect(items.length, 1);
       final item = items.first;

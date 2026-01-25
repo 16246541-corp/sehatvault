@@ -1,18 +1,21 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../utils/design_constants.dart';
+import '../../utils/theme.dart';
 
 /// Glass Bottom Navigation Bar with 4 tabs
 class GlassBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onItemTapped;
   final Map<int, int>? badgeCounts;
+  final Map<int, bool>? attentionIndicators;
 
   const GlassBottomNav({
     super.key,
     required this.currentIndex,
     required this.onItemTapped,
     this.badgeCounts,
+    this.attentionIndicators,
   });
 
   @override
@@ -110,6 +113,42 @@ class GlassBottomNav extends StatelessWidget {
     final inactiveColor = isDark
         ? Colors.white.withValues(alpha: 0.6)
         : Colors.black.withValues(alpha: 0.5);
+    final showAttention = attentionIndicators?[index] == true;
+
+    Widget iconWidget = Icon(
+      isActive ? activeIcon : icon,
+      color: isActive ? activeColor : inactiveColor,
+      size: 24,
+    );
+
+    if (badgeCounts != null &&
+        badgeCounts![index] != null &&
+        badgeCounts![index]! > 0) {
+      iconWidget = Badge(
+        label: Text('${badgeCounts![index]}'),
+        backgroundColor: Colors.red,
+        child: iconWidget,
+      );
+    } else if (showAttention) {
+      iconWidget = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          iconWidget,
+          Positioned(
+            right: -2,
+            top: -2,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: AppTheme.accentTeal,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return GestureDetector(
       onTap: () => onItemTapped(index),
@@ -126,24 +165,7 @@ class GlassBottomNav extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (badgeCounts != null &&
-                badgeCounts![index] != null &&
-                badgeCounts![index]! > 0)
-              Badge(
-                label: Text('${badgeCounts![index]}'),
-                backgroundColor: Colors.red,
-                child: Icon(
-                  isActive ? activeIcon : icon,
-                  color: isActive ? activeColor : inactiveColor,
-                  size: 24,
-                ),
-              )
-            else
-              Icon(
-                isActive ? activeIcon : icon,
-                color: isActive ? activeColor : inactiveColor,
-                size: 24,
-              ),
+            iconWidget,
             const SizedBox(height: 4),
             Text(
               label,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import '../models/follow_up_item.dart';
 import '../models/doctor_conversation.dart';
+import '../services/export_service.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/follow_up_card.dart';
 import '../widgets/dialogs/follow_up_edit_dialog.dart';
@@ -191,6 +192,12 @@ class _FollowUpListScreenState extends State<FollowUpListScreen> {
           elevation: 0,
           title: Text('Follow-Up Items', style: theme.textTheme.titleLarge),
           actions: [
+            // Export Button
+            IconButton(
+              icon: const Icon(Icons.share),
+              tooltip: 'Export Report',
+              onPressed: () => ExportService().exportFollowUpsReport(context),
+            ),
             // Visit Prep Button
             IconButton(
               icon: const Icon(Icons.medical_services_outlined),

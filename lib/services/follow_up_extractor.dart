@@ -38,8 +38,8 @@ class FollowUpExtractor {
         _vaultService = vaultService {
     _extractors = [
       MedicationExtractor(_dictionaryService, _temporalConfig),
+      TestExtractor(_dictionaryService, _temporalConfig), // Moved up
       AppointmentExtractor(_dictionaryService, _temporalConfig),
-      TestExtractor(_dictionaryService, _temporalConfig),
       LifestyleExtractor(_dictionaryService, _temporalConfig),
       MonitoringExtractor(_dictionaryService, _temporalConfig),
       WarningExtractor(_dictionaryService, _temporalConfig),

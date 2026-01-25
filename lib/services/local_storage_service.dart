@@ -10,6 +10,14 @@ import '../models/model_option.dart';
 import '../models/document_extraction.dart';
 import '../models/doctor_conversation.dart';
 import '../models/follow_up_item.dart';
+import '../models/recording_audit_entry.dart';
+import '../models/export_audit_entry.dart';
+import '../models/enhanced_privacy_settings.dart';
+import '../models/auth_audit_entry.dart';
+import '../models/citation.dart';
+import '../models/issue_report.dart';
+import '../models/consent_entry.dart';
+import '../models/local_audit_entry.dart';
 
 /// Local Storage Service for health records
 /// Uses Hive with encryption for privacy-first data storage
@@ -21,6 +29,13 @@ class LocalStorageService {
   static const String _searchIndexBox = 'search_index';
   static const String _doctorConversationsBox = 'doctor_conversations';
   static const String _followUpItemsBox = 'follow_up_items';
+  static const String _recordingAuditEntriesBox = 'recording_audit_entries';
+  static const String _exportAuditEntriesBox = 'export_audit_entries';
+  static const String _authAuditEntriesBox = 'auth_audit_entries';
+  static const String _issueReportsBox = 'issue_reports';
+  static const String _citationsBox = 'citations';
+  static const String _consentEntriesBox = 'consent_entries';
+  static const String _localAuditEntriesBox = 'local_audit_entries';
   static const String _appSettingsKey = 'app_settings_object';
   static const String _autoDeleteOriginalKey = 'auto_delete_original';
 
@@ -68,6 +83,24 @@ class LocalStorageService {
     if (!Hive.isAdapterRegistered(9)) {
       Hive.registerAdapter(FollowUpPriorityAdapter());
     }
+    if (!Hive.isAdapterRegistered(10)) {
+      Hive.registerAdapter(RecordingAuditEntryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(13)) {
+      Hive.registerAdapter(AuthAuditEntryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(14)) {
+      Hive.registerAdapter(CitationAdapter());
+    }
+    if (!Hive.isAdapterRegistered(15)) {
+      Hive.registerAdapter(IssueReportAdapter());
+    }
+    if (!Hive.isAdapterRegistered(16)) {
+      Hive.registerAdapter(ConsentEntryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(17)) {
+      Hive.registerAdapter(LocalAuditEntryAdapter());
+    }
 
     // Get or create encryption key
     final encryptionKey = await _getOrCreateEncryptionKey();
@@ -80,6 +113,16 @@ class LocalStorageService {
 
     await Hive.openBox(
       _settingsBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<Citation>(
+      _citationsBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<IssueReport>(
+      _issueReportsBox,
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
 
@@ -100,6 +143,31 @@ class LocalStorageService {
 
     await Hive.openBox<FollowUpItem>(
       _followUpItemsBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<RecordingAuditEntry>(
+      _recordingAuditEntriesBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<ExportAuditEntry>(
+      _exportAuditEntriesBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<AuthAuditEntry>(
+      _authAuditEntriesBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<ConsentEntry>(
+      _consentEntriesBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<LocalAuditEntry>(
+      _localAuditEntriesBox,
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
 
@@ -124,6 +192,28 @@ class LocalStorageService {
     }
 
     return base64Decode(encodedKey);
+  }
+
+  // MARK: - Local Audit Entries
+
+  /// Get local audit entries box
+  Box<LocalAuditEntry> get _localAuditEntries =>
+      Hive.box<LocalAuditEntry>(_localAuditEntriesBox);
+
+  /// Save a local audit entry
+  Future<void> saveLocalAuditEntry(LocalAuditEntry entry) async {
+    await _localAuditEntries.add(entry);
+  }
+
+  /// Get all local audit entries
+  List<LocalAuditEntry> getAllLocalAuditEntries() {
+    if (!Hive.isBoxOpen(_localAuditEntriesBox)) return [];
+    return _localAuditEntries.values.toList();
+  }
+
+  /// Delete local audit entries
+  Future<void> deleteLocalAuditEntries(List<dynamic> keys) async {
+    await _localAuditEntries.deleteAll(keys);
   }
 
   // MARK: - Health Records
@@ -184,6 +274,13 @@ class LocalStorageService {
   /// Save App Settings
   Future<void> saveAppSettings(AppSettings settings) async {
     await _settings.put(_appSettingsKey, settings);
+
+    // Update widget data whenever settings are saved
+    try {
+      // await WidgetDataService().updateWidgetData(settings);
+    } catch (e) {
+      debugPrint('Failed to update widget data: $e');
+    }
   }
 
   /// Get Auto Delete Original setting
@@ -319,6 +416,12 @@ class LocalStorageService {
     await _followUpBox.put(item.id, item);
   }
 
+  /// Get a follow-up item by ID
+  FollowUpItem? getFollowUpItem(String id) {
+    if (!Hive.isBoxOpen(_followUpItemsBox)) return null;
+    return _followUpBox.get(id);
+  }
+
   /// Get all follow-up items
   List<FollowUpItem> getAllFollowUpItems() {
     if (!Hive.isBoxOpen(_followUpItemsBox)) return [];
@@ -343,6 +446,104 @@ class LocalStorageService {
   /// Delete a follow-up item
   Future<void> deleteFollowUpItem(String id) async {
     await _followUpBox.delete(id);
+  }
+
+  // MARK: - Recording Audit Logs
+
+  /// Get recording audit entries box
+  Box<RecordingAuditEntry> get _auditEntriesBox =>
+      Hive.box<RecordingAuditEntry>(_recordingAuditEntriesBox);
+
+  /// Get citations box
+  Box<Citation> get citationsBox => Hive.box<Citation>(_citationsBox);
+
+  /// Save a recording audit entry
+  Future<void> saveRecordingAuditEntry(RecordingAuditEntry entry) async {
+    await _auditEntriesBox.add(entry);
+  }
+
+  /// Get all recording audit entries
+  List<RecordingAuditEntry> getAllRecordingAuditEntries() {
+    if (!Hive.isBoxOpen(_recordingAuditEntriesBox)) return [];
+    return _auditEntriesBox.values.toList();
+  }
+
+  // MARK: - Export Audit Logs
+
+  /// Get export audit entries box
+  Box<ExportAuditEntry> get _exportAuditEntries =>
+      Hive.box<ExportAuditEntry>(_exportAuditEntriesBox);
+
+  /// Save an export audit entry
+  Future<void> saveExportAuditEntry(ExportAuditEntry entry) async {
+    await _exportAuditEntries.add(entry);
+  }
+
+  /// Get all export audit entries
+  List<ExportAuditEntry> getAllExportAuditEntries() {
+    if (!Hive.isBoxOpen(_exportAuditEntriesBox)) return [];
+    return _exportAuditEntries.values.toList();
+  }
+
+  // MARK: - Auth Audit Logs
+
+  /// Get auth audit entries box
+  Box<AuthAuditEntry> get _authAuditEntries =>
+      Hive.box<AuthAuditEntry>(_authAuditEntriesBox);
+
+  /// Save an auth audit entry
+  Future<void> saveAuthAuditEntry(AuthAuditEntry entry) async {
+    await _authAuditEntries.add(entry);
+  }
+
+  /// Get all auth audit entries
+  List<AuthAuditEntry> getAllAuthAuditEntries() {
+    if (!Hive.isBoxOpen(_authAuditEntriesBox)) return [];
+    return _authAuditEntries.values.toList();
+  }
+
+  // MARK: - Issue Reports
+
+  /// Get issue reports box
+  Box<IssueReport> get _issueReports => Hive.box<IssueReport>(_issueReportsBox);
+
+  /// Save an issue report
+  Future<void> saveIssueReport(IssueReport report) async {
+    await _issueReports.put(report.id, report);
+  }
+
+  /// Get all issue reports
+  List<IssueReport> getAllIssueReports() {
+    if (!Hive.isBoxOpen(_issueReportsBox)) return [];
+    return _issueReports.values.toList();
+  }
+
+  /// Delete an issue report
+  Future<void> deleteIssueReport(String id) async {
+    await _issueReports.delete(id);
+  }
+
+  // MARK: - Consent Entries
+
+  /// Get consent entries box
+  Box<ConsentEntry> get _consentEntries =>
+      Hive.box<ConsentEntry>(_consentEntriesBox);
+
+  /// Save a consent entry
+  Future<void> saveConsentEntry(ConsentEntry entry) async {
+    await _consentEntries.put(entry.id, entry);
+  }
+
+  /// Get all consent entries
+  List<ConsentEntry> getAllConsentEntries() {
+    if (!Hive.isBoxOpen(_consentEntriesBox)) return [];
+    return _consentEntries.values.toList();
+  }
+
+  /// Get a consent entry by ID
+  ConsentEntry? getConsentEntry(String id) {
+    if (!Hive.isBoxOpen(_consentEntriesBox)) return null;
+    return _consentEntries.get(id);
   }
 
   // MARK: - Cleanup

@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
+import 'citation.dart';
 
 part 'document_extraction.g.dart';
 
@@ -27,6 +28,9 @@ class DocumentExtraction extends HiveObject {
   @HiveField(6)
   final String? contentHash;
 
+  @HiveField(7)
+  final List<Citation>? citations;
+
   DocumentExtraction({
     String? id,
     required this.originalImagePath,
@@ -35,6 +39,7 @@ class DocumentExtraction extends HiveObject {
     required this.confidenceScore,
     this.structuredData = const {},
     this.contentHash,
+    this.citations,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now();
 
@@ -44,9 +49,9 @@ class DocumentExtraction extends HiveObject {
     String? extractedText,
     DateTime? createdAt,
     double? confidenceScore,
-
     Map<String, dynamic>? structuredData,
     String? contentHash,
+    List<Citation>? citations,
   }) {
     return DocumentExtraction(
       id: id ?? this.id,
@@ -54,9 +59,9 @@ class DocumentExtraction extends HiveObject {
       extractedText: extractedText ?? this.extractedText,
       createdAt: createdAt ?? this.createdAt,
       confidenceScore: confidenceScore ?? this.confidenceScore,
-
       structuredData: structuredData ?? this.structuredData,
       contentHash: contentHash ?? this.contentHash,
+      citations: citations ?? this.citations,
     );
   }
 }

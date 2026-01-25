@@ -1,7 +1,7 @@
-import '../lib/services/reference_range_service.dart';
+import 'package:sehatlocker/services/reference_range_service.dart';
 
 /// Example demonstrating the ReferenceRangeService functionality.
-/// 
+///
 /// This example shows:
 /// 1. Looking up reference ranges for specific tests
 /// 2. Evaluating single lab values
@@ -31,19 +31,20 @@ void main() {
 
 void example1_SimpleLookup() {
   print('--- Example 1: Simple Reference Range Lookup ---');
-  
+
   final ranges = ReferenceRangeService.lookupReferenceRange('Cholesterol');
-  
+
   print('Found ${ranges.length} reference range(s) for "Cholesterol":');
   for (var range in ranges) {
-    print('  - ${range['description']}: ${range['normalRange']['min']}-${range['normalRange']['max']} ${range['unit']}');
+    print(
+        '  - ${range['description']}: ${range['normalRange']['min']}-${range['normalRange']['max']} ${range['unit']}');
   }
   print('');
 }
 
 void example2_SingleValueEvaluation() {
   print('--- Example 2: Single Lab Value Evaluation ---');
-  
+
   // Normal cholesterol
   var result = ReferenceRangeService.evaluateLabValue(
     testName: 'Cholesterol',
@@ -77,7 +78,7 @@ void example2_SingleValueEvaluation() {
 
 void example3_MultipleValuesEvaluation() {
   print('--- Example 3: Multiple Lab Values Evaluation ---');
-  
+
   final labValues = [
     {'field': 'Cholesterol', 'value': '210', 'unit': 'mg/dL'},
     {'field': 'Glucose', 'value': '95', 'unit': 'mg/dL'},
@@ -100,9 +101,13 @@ void example3_MultipleValuesEvaluation() {
   print('Detailed Results:');
   for (var result in evaluation['results']) {
     final status = result['status'];
-    final icon = status == 'normal' ? '✓' : 
-                 status == 'high' ? '↑' : 
-                 status == 'low' ? '↓' : '?';
+    final icon = status == 'normal'
+        ? '✓'
+        : status == 'high'
+            ? '↑'
+            : status == 'low'
+                ? '↓'
+                : '?';
     print('  $icon ${result['message']}');
   }
   print('');
@@ -110,8 +115,8 @@ void example3_MultipleValuesEvaluation() {
 
 void example4_GenderSpecificRanges() {
   print('--- Example 4: Gender-Specific Reference Ranges ---');
-  
-  final hemoglobinValue = 13.0;
+
+  const hemoglobinValue = 13.0;
 
   // Evaluate for male
   var result = ReferenceRangeService.evaluateLabValue(
@@ -121,7 +126,8 @@ void example4_GenderSpecificRanges() {
   );
   print('Hemoglobin $hemoglobinValue g/dL for MALE:');
   print('  Status: ${result['status']}');
-  print('  Range: ${result['normalRange']['min']}-${result['normalRange']['max']} ${result['unit']}\n');
+  print(
+      '  Range: ${result['normalRange']['min']}-${result['normalRange']['max']} ${result['unit']}\n');
 
   // Evaluate for female
   result = ReferenceRangeService.evaluateLabValue(
@@ -131,19 +137,22 @@ void example4_GenderSpecificRanges() {
   );
   print('Hemoglobin $hemoglobinValue g/dL for FEMALE:');
   print('  Status: ${result['status']}');
-  print('  Range: ${result['normalRange']['min']}-${result['normalRange']['max']} ${result['unit']}\n');
+  print(
+      '  Range: ${result['normalRange']['min']}-${result['normalRange']['max']} ${result['unit']}\n');
 }
 
 void example5_CategoryLookup() {
   print('--- Example 5: Category-Based Lookup ---');
-  
+
   final categories = ReferenceRangeService.getAllCategories();
   print('Available categories: ${categories.join(', ')}\n');
 
-  final lipidTests = ReferenceRangeService.getReferenceRangesByCategory('lipid');
+  final lipidTests =
+      ReferenceRangeService.getReferenceRangesByCategory('lipid');
   print('Lipid Panel Tests (${lipidTests.length} tests):');
   for (var test in lipidTests) {
-    print('  - ${test['description']}: ${test['normalRange']['min']}-${test['normalRange']['max']} ${test['unit']}');
+    print(
+        '  - ${test['description']}: ${test['normalRange']['min']}-${test['normalRange']['max']} ${test['unit']}');
   }
   print('');
 }
@@ -153,7 +162,7 @@ void example6_RealWorldScenario() {
   print('Simulating lab report extraction and evaluation...\n');
 
   // Simulated OCR extracted text
-  final ocrText = '''
+  const ocrText = '''
     COMPREHENSIVE METABOLIC PANEL
     
     Patient: John Doe
@@ -233,14 +242,20 @@ void example6_RealWorldScenario() {
     for (var result in abnormalResults) {
       final testName = result['testName'];
       final status = result['status'];
-      
+
       if (testName.toLowerCase().contains('cholesterol') && status == 'high') {
-        print('  • Consider dietary changes and consult with your doctor about cholesterol management');
-      } else if (testName.toLowerCase().contains('glucose') && status == 'high') {
-        print('  • Monitor blood sugar levels and consider lifestyle modifications');
-      } else if (testName.toLowerCase().contains('vitamin d') && status == 'low') {
-        print('  • Consider vitamin D supplementation and increased sun exposure');
-      } else if (testName.toLowerCase().contains('triglycerides') && status == 'high') {
+        print(
+            '  • Consider dietary changes and consult with your doctor about cholesterol management');
+      } else if (testName.toLowerCase().contains('glucose') &&
+          status == 'high') {
+        print(
+            '  • Monitor blood sugar levels and consider lifestyle modifications');
+      } else if (testName.toLowerCase().contains('vitamin d') &&
+          status == 'low') {
+        print(
+            '  • Consider vitamin D supplementation and increased sun exposure');
+      } else if (testName.toLowerCase().contains('triglycerides') &&
+          status == 'high') {
         print('  • Reduce sugar and refined carbohydrate intake');
       }
     }

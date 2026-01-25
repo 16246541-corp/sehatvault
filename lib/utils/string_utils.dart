@@ -2,8 +2,8 @@ import 'dart:math';
 
 class StringUtils {
   /// Calculates the Levenshtein distance between two strings.
-  /// 
-  /// The Levenshtein distance is the minimum number of single-character edits 
+  ///
+  /// The Levenshtein distance is the minimum number of single-character edits
   /// (insertions, deletions or substitutions) required to change one word into the other.
   static int levenshteinDistance(String s1, String s2) {
     if (s1 == s2) {
@@ -40,7 +40,7 @@ class StringUtils {
   }
 
   /// Calculates the similarity between two strings based on Levenshtein distance.
-  /// 
+  ///
   /// Returns a value between 0.0 (completely different) and 1.0 (identical).
   static double calculateSimilarity(String s1, String s2) {
     if (s1.isEmpty && s2.isEmpty) {

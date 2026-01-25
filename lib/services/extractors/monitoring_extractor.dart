@@ -6,9 +6,18 @@ class MonitoringExtractor extends BaseExtractor {
 
   @override
   List<String> get verbs => [
-    "monitor", "track", "log", "record", "watch", "observe", 
-    "note", "report", "notify", "alert", "check"
-  ];
+        "monitor",
+        "track",
+        "log",
+        "record",
+        "watch",
+        "observe",
+        "note",
+        "report",
+        "notify",
+        "alert",
+        "check"
+      ];
 
   @override
   FollowUpCategory get category => FollowUpCategory.monitoring;
@@ -26,11 +35,23 @@ class MonitoringExtractor extends BaseExtractor {
 
     // 2. Common monitoring keywords
     final keywords = [
-      'blood pressure', 'bp', 'blood sugar', 'glucose', 'weight', 
-      'temperature', 'fever', 'pulse', 'heart rate', 'symptoms',
-      'pain', 'swelling', 'redness', 'intake', 'output'
+      'blood pressure',
+      'bp',
+      'blood sugar',
+      'glucose',
+      'weight',
+      'temperature',
+      'fever',
+      'pulse',
+      'heart rate',
+      'symptoms',
+      'pain',
+      'swelling',
+      'redness',
+      'intake',
+      'output'
     ];
-    
+
     for (final kw in keywords) {
       if (lowerContext.contains(kw)) return kw;
     }

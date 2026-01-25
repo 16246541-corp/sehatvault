@@ -1,0 +1,22 @@
+{
+  "id": "ai_features",
+  "title": "AI Assistant",
+  "version": 1,
+  "pages": [
+    {
+      "title": "Medical Conversations",
+      "description": "Record your doctor visits to automatically extract medications, follow-ups, and key insights.",
+      "iconName": "mic"
+    },
+    {
+      "title": "Privacy First",
+      "description": "All recordings are processed locally on your device or using secure, compliant models. Your data never trains public AI.",
+      "iconName": "lock"
+    },
+    {
+      "title": "Actionable Insights",
+      "description": "Get reminders for medications and follow-up appointments automatically added to your schedule.",
+      "iconName": "ai"
+    }
+  ]
+}

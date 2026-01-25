@@ -20,6 +20,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "app_settings",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/app_settings-5.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
       "name": "archive",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/archive-4.0.7",
       "packageUri": "lib/",
@@ -48,6 +54,18 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/barcode-2.2.9",
       "packageUri": "lib/",
       "languageVersion": "2.12"
+    },
+    {
+      "name": "battery_plus",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/battery_plus-7.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "battery_plus_platform_interface",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/battery_plus_platform_interface-2.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
     },
     {
       "name": "bidi",
@@ -182,6 +200,18 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "connectivity_plus",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/connectivity_plus-7.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "connectivity_plus_platform_interface",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/connectivity_plus_platform_interface-2.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
       "name": "convert",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/convert-3.1.2",
       "packageUri": "lib/",
@@ -198,6 +228,12 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/crypto-3.0.7",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "cryptography",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/cryptography-2.9.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
     },
     {
       "name": "cupertino_icons",
@@ -258,6 +294,12 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/fixnum-1.1.1",
       "packageUri": "lib/",
       "languageVersion": "3.1"
+    },
+    {
+      "name": "flat_buffers",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/flat_buffers-23.5.26",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "flutter",
@@ -330,6 +372,12 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/flutter_local_notifications_windows-1.0.3",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "flutter_localizations",
+      "rootUri": "file:///opt/homebrew/share/flutter/packages/flutter_localizations",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
     },
     {
       "name": "flutter_plugin_android_lifecycle",
@@ -422,6 +470,12 @@
       "languageVersion": "3.8"
     },
     {
+      "name": "flutter_windowmanager",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/flutter_windowmanager-0.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "freezed_annotation",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/freezed_annotation-3.1.0",
       "packageUri": "lib/",
@@ -476,6 +530,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "home_widget",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/home_widget-0.7.0+1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "hooks",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/hooks-1.0.0",
       "packageUri": "lib/",
@@ -507,9 +567,9 @@
     },
     {
       "name": "intl",
-      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/intl-0.19.0",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/intl-0.20.2",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "3.3"
     },
     {
       "name": "io",
@@ -554,6 +614,36 @@
       "languageVersion": "3.1"
     },
     {
+      "name": "local_auth",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/local_auth-3.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "local_auth_android",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/local_auth_android-2.0.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "local_auth_darwin",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/local_auth_darwin-2.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "local_auth_platform_interface",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/local_auth_platform_interface-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "local_auth_windows",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/local_auth_windows-2.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
       "name": "logger",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/logger-2.6.2",
       "packageUri": "lib/",
@@ -594,6 +684,30 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/native_toolchain_c-0.17.4",
       "packageUri": "lib/",
       "languageVersion": "3.9"
+    },
+    {
+      "name": "nm",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/nm-0.5.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "objectbox",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/objectbox-2.5.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "objectbox_flutter_libs",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/objectbox_flutter_libs-2.5.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
+      "name": "objectbox_generator",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/objectbox_generator-2.5.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
     },
     {
       "name": "objective_c",
@@ -660,6 +774,12 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/pdf-3.11.3",
       "packageUri": "lib/",
       "languageVersion": "2.19"
+    },
+    {
+      "name": "pdf_widget_wrapper",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/pdf_widget_wrapper-1.0.4",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
     },
     {
       "name": "permission_handler",
@@ -740,6 +860,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "printing",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/printing-5.14.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
       "name": "pub_semver",
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/pub_semver-2.2.0",
       "packageUri": "lib/",
@@ -756,6 +882,18 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/qr-3.0.2",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "share_plus",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/share_plus-12.0.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "share_plus_platform_interface",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/share_plus_platform_interface-6.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
     },
     {
       "name": "shelf",
@@ -864,6 +1002,60 @@
       "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/typed_data-1.4.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
+    },
+    {
+      "name": "upower",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/upower-0.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.14"
+    },
+    {
+      "name": "url_launcher",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/url_launcher-6.3.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
+    },
+    {
+      "name": "url_launcher_android",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/url_launcher_android-6.3.28",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "url_launcher_ios",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/url_launcher_ios-6.3.6",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "url_launcher_linux",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/url_launcher_linux-3.2.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
+      "name": "url_launcher_macos",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/url_launcher_macos-3.2.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "url_launcher_platform_interface",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/url_launcher_platform_interface-2.3.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
+      "name": "url_launcher_web",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/url_launcher_web-2.4.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "url_launcher_windows",
+      "rootUri": "file:///Users/fam/.pub-cache/hosted/pub.dev/url_launcher_windows-3.1.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
     },
     {
       "name": "uuid",

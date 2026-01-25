@@ -14,7 +14,8 @@ abstract class BaseExtractor {
   List<String> get verbs;
 
   /// Tries to extract a FollowUpItem from the sentence.
-  FollowUpItem? extract(String sentence, String conversationId, DateTime anchorDate) {
+  FollowUpItem? extract(
+      String sentence, String conversationId, DateTime anchorDate) {
     final lowerSentence = sentence.toLowerCase().trim();
     if (lowerSentence.isEmpty) return null;
 
@@ -26,9 +27,10 @@ abstract class BaseExtractor {
       ..sort((a, b) => b.length.compareTo(a.length));
 
     for (final verb in sortedVerbs) {
-      final pattern = RegExp(r'\b' + RegExp.escape(verb) + r'\b', caseSensitive: false);
+      final pattern =
+          RegExp(r'\b' + RegExp.escape(verb) + r'\b', caseSensitive: false);
       final match = pattern.firstMatch(lowerSentence);
-      
+
       if (match != null) {
         foundVerb = verb;
         verbIndex = match.start;
@@ -42,27 +44,46 @@ abstract class BaseExtractor {
   }
 
   /// Process the sentence once a verb is found.
-  /// Subclasses can override this if they need custom processing flow, 
+  /// Subclasses can override this if they need custom processing flow,
   /// but usually they should override `extractObject` and `extractCategory`.
-  FollowUpItem? process(String sentence, String verb, int verbIndex, String conversationId, DateTime anchorDate) {
+  FollowUpItem? process(String sentence, String verb, int verbIndex,
+      String conversationId, DateTime anchorDate) {
     // 1. Extract Temporal Information
     final temporalInfo = extractTemporalInfo(sentence, anchorDate);
-    
+
     // 2. Extract Object
     // Remove timeframe and frequency from the sentence to help object extraction
     String cleanSentence = sentence;
     if (temporalInfo.timeframeRaw != null) {
-      cleanSentence = cleanSentence.replaceAll(RegExp(RegExp.escape(temporalInfo.timeframeRaw!), caseSensitive: false), ' ');
+      cleanSentence = cleanSentence.replaceAll(
+          RegExp(RegExp.escape(temporalInfo.timeframeRaw!),
+              caseSensitive: false),
+          ' ');
     }
     if (temporalInfo.frequency != null) {
-      cleanSentence = cleanSentence.replaceAll(RegExp(RegExp.escape(temporalInfo.frequency!), caseSensitive: false), ' ');
+      cleanSentence = cleanSentence.replaceAll(
+          RegExp(RegExp.escape(temporalInfo.frequency!), caseSensitive: false),
+          ' ');
     }
 
-    final object = extractObject(cleanSentence, verb, verbIndex) ?? extractObjectFallback(cleanSentence, verb, verbIndex);
-    
+    // Re-calculate verb index in clean sentence
+    int cleanVerbIndex =
+        cleanSentence.toLowerCase().indexOf(verb.toLowerCase());
+
+    if (cleanVerbIndex == -1) {
+      // Verb was removed or lost in cleaning
+      return null;
+    }
+
+    final object = extractObject(cleanSentence, verb, cleanVerbIndex) ??
+        extractObjectFallback(cleanSentence, verb, cleanVerbIndex);
+    if (object == null) {
+      return null;
+    }
+
     // If subclass fails to extract specific object, maybe return null or generic?
-    // User requirements imply specific extractions. 
-    
+    // User requirements imply specific extractions.
+
     return FollowUpItem(
       id: _uuid.v4(),
       category: category,
@@ -140,29 +161,46 @@ abstract class BaseExtractor {
 
   // Copied from FollowUpExtractor and adapted
   static final Map<String, int> _numberWords = {
-    'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-    'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-    'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14,
-    'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18,
-    'nineteen': 19, 'twenty': 20,
-    'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60,
+    'one': 1,
+    'two': 2,
+    'three': 3,
+    'four': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'nine': 9,
+    'ten': 10,
+    'eleven': 11,
+    'twelve': 12,
+    'thirteen': 13,
+    'fourteen': 14,
+    'fifteen': 15,
+    'sixteen': 16,
+    'seventeen': 17,
+    'eighteen': 18,
+    'nineteen': 19,
+    'twenty': 20,
+    'thirty': 30,
+    'forty': 40,
+    'fifty': 50,
+    'sixty': 60,
   };
 
   DateTime? parseRelativeDate(String phrase, DateTime anchorDate) {
     final lowerPhrase = phrase.toLowerCase().trim();
-    
+
     // "in X [days/weeks/months]" or "within X [days/weeks/months]"
-    final durationPattern = RegExp(r'(?:in|within)\s+(\w+|\d+)\s+(hour|day|week|month|year)s?');
+    final durationPattern =
+        RegExp(r'(?:in|within)\s+(\w+|\d+)\s+(hour|day|week|month|year)s?');
     final durationMatch = durationPattern.firstMatch(lowerPhrase);
     if (durationMatch != null) {
       final numberStr = durationMatch.group(1)!;
       final unit = durationMatch.group(2)!;
-      
+
       int? amount = int.tryParse(numberStr);
-      if (amount == null) {
-        amount = _numberWords[numberStr];
-      }
-      
+      amount ??= _numberWords[numberStr];
+
       if (amount != null) {
         switch (unit) {
           case 'hour':
@@ -172,10 +210,12 @@ abstract class BaseExtractor {
           case 'week':
             return anchorDate.add(Duration(days: amount * 7));
           case 'month':
-             // Simple month addition (approximate)
-            return DateTime(anchorDate.year, anchorDate.month + amount, anchorDate.day, anchorDate.hour, anchorDate.minute);
+            // Simple month addition (approximate)
+            return DateTime(anchorDate.year, anchorDate.month + amount,
+                anchorDate.day, anchorDate.hour, anchorDate.minute);
           case 'year':
-            return DateTime(anchorDate.year + amount, anchorDate.month, anchorDate.day, anchorDate.hour, anchorDate.minute);
+            return DateTime(anchorDate.year + amount, anchorDate.month,
+                anchorDate.day, anchorDate.hour, anchorDate.minute);
         }
       }
     }
@@ -185,29 +225,47 @@ abstract class BaseExtractor {
       return anchorDate.add(const Duration(days: 7));
     }
     if (lowerPhrase.contains('next month')) {
-      return DateTime(anchorDate.year, anchorDate.month + 1, anchorDate.day, anchorDate.hour, anchorDate.minute);
+      return DateTime(anchorDate.year, anchorDate.month + 1, anchorDate.day,
+          anchorDate.hour, anchorDate.minute);
     }
     if (lowerPhrase.contains('next year')) {
-      return DateTime(anchorDate.year + 1, anchorDate.month, anchorDate.day, anchorDate.hour, anchorDate.minute);
+      return DateTime(anchorDate.year + 1, anchorDate.month, anchorDate.day,
+          anchorDate.hour, anchorDate.minute);
     }
-    
+
     // "by [weekday]" e.g., "by Friday"
-    final weekdayPattern = RegExp(r'by\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)');
+    final weekdayPattern = RegExp(
+        r'by\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)');
     final weekdayMatch = weekdayPattern.firstMatch(lowerPhrase);
     if (weekdayMatch != null) {
       final weekdayStr = weekdayMatch.group(1)!;
       int targetWeekday;
       switch (weekdayStr) {
-        case 'monday': targetWeekday = DateTime.monday; break;
-        case 'tuesday': targetWeekday = DateTime.tuesday; break;
-        case 'wednesday': targetWeekday = DateTime.wednesday; break;
-        case 'thursday': targetWeekday = DateTime.thursday; break;
-        case 'friday': targetWeekday = DateTime.friday; break;
-        case 'saturday': targetWeekday = DateTime.saturday; break;
-        case 'sunday': targetWeekday = DateTime.sunday; break;
-        default: targetWeekday = DateTime.monday;
+        case 'monday':
+          targetWeekday = DateTime.monday;
+          break;
+        case 'tuesday':
+          targetWeekday = DateTime.tuesday;
+          break;
+        case 'wednesday':
+          targetWeekday = DateTime.wednesday;
+          break;
+        case 'thursday':
+          targetWeekday = DateTime.thursday;
+          break;
+        case 'friday':
+          targetWeekday = DateTime.friday;
+          break;
+        case 'saturday':
+          targetWeekday = DateTime.saturday;
+          break;
+        case 'sunday':
+          targetWeekday = DateTime.sunday;
+          break;
+        default:
+          targetWeekday = DateTime.monday;
       }
-      
+
       // Calculate days until next occurrence of this weekday
       int daysUntil = targetWeekday - anchorDate.weekday;
       if (daysUntil <= 0) {
@@ -219,7 +277,8 @@ abstract class BaseExtractor {
     return null;
   }
 
-  DateTime? calculateNextOccurrenceFromFrequency(String frequency, DateTime anchorDate) {
+  DateTime? calculateNextOccurrenceFromFrequency(
+      String frequency, DateTime anchorDate) {
     final lowerFreq = frequency.toLowerCase();
 
     // "every morning" -> Next 8:00 AM
@@ -230,7 +289,8 @@ abstract class BaseExtractor {
 
     // "at bedtime" -> Next 9:00 PM
     if (lowerFreq.contains('at bedtime')) {
-      final todayBedtime = DateTime(anchorDate.year, anchorDate.month, anchorDate.day, 21, 0);
+      final todayBedtime =
+          DateTime(anchorDate.year, anchorDate.month, anchorDate.day, 21, 0);
       if (anchorDate.isBefore(todayBedtime)) {
         return todayBedtime;
       } else {
@@ -244,13 +304,13 @@ abstract class BaseExtractor {
     }
 
     // "daily", "times a day", "times daily" -> +1 day
-    if (lowerFreq.contains('daily') || 
-        lowerFreq.contains('times a day') || 
+    if (lowerFreq.contains('daily') ||
+        lowerFreq.contains('times a day') ||
         lowerFreq.contains('times daily') ||
         lowerFreq.contains('twice a day')) {
       return anchorDate.add(const Duration(days: 1));
     }
-    
+
     // "every X hours"
     final hoursPattern = RegExp(r'every\s+(\d+)\s+hours?');
     final match = hoursPattern.firstMatch(lowerFreq);

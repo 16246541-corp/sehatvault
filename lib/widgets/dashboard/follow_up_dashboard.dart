@@ -21,15 +21,15 @@ class FollowUpDashboard extends StatelessWidget {
         final endOfWeek = now.add(const Duration(days: 7));
 
         final pendingCount = items.where((i) => !i.isCompleted).length;
-        
+
         final overdueCount = items.where((i) {
           if (i.isCompleted || i.dueDate == null) return false;
           return i.dueDate!.isBefore(now);
         }).length;
 
         final dueThisWeekCount = items.where((i) {
-           if (i.isCompleted || i.dueDate == null) return false;
-           return i.dueDate!.isAfter(now) && i.dueDate!.isBefore(endOfWeek);
+          if (i.isCompleted || i.dueDate == null) return false;
+          return i.dueDate!.isAfter(now) && i.dueDate!.isBefore(endOfWeek);
         }).length;
 
         return GestureDetector(
@@ -45,24 +45,29 @@ class FollowUpDashboard extends StatelessWidget {
                     children: [
                       Text(
                         'Tasks Overview',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
-                      Icon(
-                        Icons.arrow_forward_ios, 
-                        size: 16, 
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)
-                      ),
+                      Icon(Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.5)),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildSummaryItem(context, pendingCount, 'Pending', Colors.blue),
-                      _buildSummaryItem(context, overdueCount, 'Overdue', Colors.red),
-                      _buildSummaryItem(context, dueThisWeekCount, 'Due Week', Colors.orange),
+                      _buildSummaryItem(
+                          context, pendingCount, 'Pending', Colors.blue),
+                      _buildSummaryItem(
+                          context, overdueCount, 'Overdue', Colors.red),
+                      _buildSummaryItem(
+                          context, dueThisWeekCount, 'Due Week', Colors.orange),
                     ],
                   ),
                 ],
@@ -74,22 +79,26 @@ class FollowUpDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryItem(BuildContext context, int count, String label, Color color) {
+  Widget _buildSummaryItem(
+      BuildContext context, int count, String label, Color color) {
     return Column(
       children: [
         Text(
           count.toString(),
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: color,
-            fontWeight: FontWeight.bold,
-          ),
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-          ),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.7),
+              ),
         ),
       ],
     );

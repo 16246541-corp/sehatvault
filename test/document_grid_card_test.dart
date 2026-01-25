@@ -4,7 +4,8 @@ import 'package:sehatlocker/models/health_record.dart';
 import 'package:sehatlocker/widgets/cards/document_grid_card.dart';
 
 void main() {
-  testWidgets('DocumentGridCard displays title and category', (WidgetTester tester) async {
+  testWidgets('DocumentGridCard displays title and category',
+      (WidgetTester tester) async {
     final record = HealthRecord(
       id: '1',
       title: 'Test Document',
@@ -26,6 +27,7 @@ void main() {
     );
 
     expect(find.text('Test Document'), findsOneWidget);
-    expect(find.text('LAB RESULTS'), findsOneWidget); // CategoryBadge uppercases it
+    expect(find.text('LAB RESULTS'),
+        findsOneWidget); // CategoryBadge uppercases it
   });
 }

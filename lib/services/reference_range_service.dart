@@ -1,6 +1,6 @@
 /// Service for looking up reference ranges for lab tests and determining
 /// if values are within normal limits.
-/// 
+///
 /// This service contains embedded reference ranges for common lab tests
 /// and provides methods to match lab values against these ranges.
 class ReferenceRangeService {
@@ -33,7 +33,12 @@ class ReferenceRangeService {
       'description': 'Hemoglobin (Female)',
     },
     {
-      'testNames': ['wbc', 'white blood cell', 'white blood cells', 'leukocyte'],
+      'testNames': [
+        'wbc',
+        'white blood cell',
+        'white blood cells',
+        'leukocyte'
+      ],
       'unit': 'x10^3/µL',
       'normalRange': {'min': 4.5, 'max': 11.0},
       'gender': 'both',
@@ -113,10 +118,15 @@ class ReferenceRangeService {
       'category': 'blood',
       'description': 'Mean Corpuscular Hemoglobin Concentration',
     },
-    
+
     // Metabolic Panel
     {
-      'testNames': ['glucose', 'blood glucose', 'blood sugar', 'fasting glucose'],
+      'testNames': [
+        'glucose',
+        'blood glucose',
+        'blood sugar',
+        'fasting glucose'
+      ],
       'unit': 'mg/dL',
       'normalRange': {'min': 70.0, 'max': 100.0},
       'gender': 'both',
@@ -205,7 +215,7 @@ class ReferenceRangeService {
       'category': 'metabolic',
       'description': 'Calcium',
     },
-    
+
     // Lipid Panel
     {
       'testNames': ['cholesterol', 'total cholesterol', 'serum cholesterol'],
@@ -261,7 +271,7 @@ class ReferenceRangeService {
       'category': 'lipid',
       'description': 'VLDL Cholesterol',
     },
-    
+
     // Liver Function Tests
     {
       'testNames': ['bilirubin', 'total bilirubin'],
@@ -335,7 +345,7 @@ class ReferenceRangeService {
       'category': 'liver',
       'description': 'GGT',
     },
-    
+
     // Thyroid Function Tests
     {
       'testNames': ['tsh', 'thyroid stimulating hormone'],
@@ -382,10 +392,15 @@ class ReferenceRangeService {
       'category': 'thyroid',
       'description': 'Free T4',
     },
-    
+
     // Vitamins and Minerals
     {
-      'testNames': ['vitamin d', 'vit d', '25-oh vitamin d', '25-hydroxyvitamin d'],
+      'testNames': [
+        'vitamin d',
+        'vit d',
+        '25-oh vitamin d',
+        '25-hydroxyvitamin d'
+      ],
       'unit': 'ng/mL',
       'normalRange': {'min': 30.0, 'max': 100.0},
       'gender': 'both',
@@ -450,7 +465,7 @@ class ReferenceRangeService {
   ];
 
   /// Looks up the reference range for a given lab test name.
-  /// 
+  ///
   /// Returns a list of matching reference ranges (may be multiple if gender-specific).
   /// Each result contains:
   /// - testNames: List of recognized names for this test
@@ -468,41 +483,40 @@ class ReferenceRangeService {
 
     for (var range in _referenceRanges) {
       final testNames = range['testNames'] as List<dynamic>;
-      
+
       // Check for exact match first (highest priority)
-      final hasExactMatch = testNames.any((name) => 
-        name.toString().toLowerCase() == normalizedTestName
-      );
-      
+      final hasExactMatch = testNames
+          .any((name) => name.toString().toLowerCase() == normalizedTestName);
+
       if (hasExactMatch) {
         exactMatches.add(range);
         continue;
       }
-      
+
       // Check if the search term matches a complete test name (not a substring)
       // For example, "hemoglobin" should match "hemoglobin" but not "mean corpuscular hemoglobin"
       final matchingName = testNames.firstWhere(
         (name) {
           final nameLower = name.toString().toLowerCase();
           // Check if search term is the entire name or vice versa
-          return nameLower == normalizedTestName || 
-                 normalizedTestName == nameLower;
+          return nameLower == normalizedTestName ||
+              normalizedTestName == nameLower;
         },
         orElse: () => '',
       );
-      
+
       if (matchingName.toString().isNotEmpty) {
         wordMatches.add(range);
         continue;
       }
-      
+
       // Check for partial matches (lowest priority)
       final hasPartialMatch = testNames.any((name) {
         final nameLower = name.toString().toLowerCase();
-        return nameLower.contains(normalizedTestName) || 
-               normalizedTestName.contains(nameLower);
+        return nameLower.contains(normalizedTestName) ||
+            normalizedTestName.contains(nameLower);
       });
-      
+
       if (hasPartialMatch) {
         partialMatches.add(range);
       }
@@ -513,32 +527,36 @@ class ReferenceRangeService {
     if (exactMatches.isNotEmpty) {
       return exactMatches;
     }
-    
+
     // Otherwise return word matches if we have them
     if (wordMatches.isNotEmpty) {
       return wordMatches;
     }
-    
+
     // Finally, sort partial matches by length of test name (shorter = more specific)
     partialMatches.sort((a, b) {
       final aNames = a['testNames'] as List<dynamic>;
       final bNames = b['testNames'] as List<dynamic>;
-      final aMinLength = aNames.map((n) => n.toString().length).reduce((a, b) => a < b ? a : b);
-      final bMinLength = bNames.map((n) => n.toString().length).reduce((a, b) => a < b ? a : b);
+      final aMinLength = aNames
+          .map((n) => n.toString().length)
+          .reduce((a, b) => a < b ? a : b);
+      final bMinLength = bNames
+          .map((n) => n.toString().length)
+          .reduce((a, b) => a < b ? a : b);
       return aMinLength.compareTo(bMinLength);
     });
-    
+
     return partialMatches;
   }
 
   /// Evaluates a lab value against its reference range.
-  /// 
+  ///
   /// Parameters:
   /// - testName: Name of the lab test
   /// - value: Numeric value to evaluate
   /// - unit: Optional unit (used for validation)
   /// - gender: Optional gender ('male' or 'female') for gender-specific ranges
-  /// 
+  ///
   /// Returns a map with:
   /// - matched: Whether a reference range was found
   /// - status: 'normal', 'low', 'high', or 'unknown'
@@ -592,13 +610,16 @@ class ReferenceRangeService {
 
     if (value < min) {
       status = 'low';
-      message = '$testName is LOW ($value ${unit ?? rangeUnit}). Normal range: $min-$max $rangeUnit';
+      message =
+          '$testName is LOW ($value ${unit ?? rangeUnit}). Normal range: $min-$max $rangeUnit';
     } else if (value > max) {
       status = 'high';
-      message = '$testName is HIGH ($value ${unit ?? rangeUnit}). Normal range: $min-$max $rangeUnit';
+      message =
+          '$testName is HIGH ($value ${unit ?? rangeUnit}). Normal range: $min-$max $rangeUnit';
     } else {
       status = 'normal';
-      message = '$testName is NORMAL ($value ${unit ?? rangeUnit}). Normal range: $min-$max $rangeUnit';
+      message =
+          '$testName is NORMAL ($value ${unit ?? rangeUnit}). Normal range: $min-$max $rangeUnit';
     }
 
     return {
@@ -614,14 +635,14 @@ class ReferenceRangeService {
   }
 
   /// Evaluates multiple lab values at once.
-  /// 
+  ///
   /// Takes a list of lab values (each with 'field', 'value', and optionally 'unit')
   /// and returns evaluation results for each.
-  /// 
+  ///
   /// Parameters:
   /// - labValues: List of maps with 'field' (test name), 'value' (numeric), and optional 'unit'
   /// - gender: Optional gender for gender-specific ranges
-  /// 
+  ///
   /// Returns a map with:
   /// - results: List of evaluation results for each lab value
   /// - summary: Overall summary with counts of normal/low/high/unknown values
@@ -692,9 +713,10 @@ class ReferenceRangeService {
   }
 
   /// Gets all available reference ranges for a specific category.
-  /// 
+  ///
   /// Categories: 'blood', 'metabolic', 'lipid', 'liver', 'thyroid', 'vitamin'
-  static List<Map<String, dynamic>> getReferenceRangesByCategory(String category) {
+  static List<Map<String, dynamic>> getReferenceRangesByCategory(
+      String category) {
     return _referenceRanges
         .where((range) => range['category'] == category.toLowerCase())
         .toList();
@@ -717,5 +739,51 @@ class ReferenceRangeService {
       categories.add(range['category'] as String);
     }
     return categories.toList()..sort();
+  }
+
+  /// Citation sources for each category
+  static final Map<String, Map<String, String>> _guidelineSources = {
+    'blood': {
+      'title': 'American Society of Hematology Guidelines',
+      'url': 'https://www.hematology.org',
+      'date': '2023-01-01',
+    },
+    'metabolic': {
+      'title': 'American Diabetes Association Standards of Care',
+      'url': 'https://diabetesjournals.org/care',
+      'date': '2024-01-01',
+    },
+    'lipid': {
+      'title': 'ACC/AHA Guideline on the Management of Blood Cholesterol',
+      'url': 'https://www.ahajournals.org/doi/10.1161/CIR.0000000000000625',
+      'date': '2019-01-01',
+    },
+    'liver': {
+      'title':
+          'ACG Clinical Guideline: Evaluation of Abnormal Liver Chemistries',
+      'url':
+          'https://journals.lww.com/ajg/Fulltext/2017/01000/ACG_Clinical_Guideline__Evaluation_of_Abnormal.14.aspx',
+      'date': '2017-01-01',
+    },
+    'thyroid': {
+      'title': 'American Thyroid Association Guidelines',
+      'url':
+          'https://www.thyroid.org/professionals/ata-professional-guidelines/',
+      'date': '2016-01-01',
+    },
+    'vitamin': {
+      'title': 'Dietary Reference Intakes for Calcium and Vitamin D',
+      'url': 'https://ods.od.nih.gov/factsheets/VitaminD-HealthProfessional/',
+      'date': '2023-08-01',
+    },
+  };
+
+  /// Gets the citation source for a given test name.
+  static Map<String, String>? getCitationSource(String testName) {
+    final ranges = lookupReferenceRange(testName);
+    if (ranges.isEmpty) return null;
+
+    final category = ranges.first['category'] as String;
+    return _guidelineSources[category];
   }
 }

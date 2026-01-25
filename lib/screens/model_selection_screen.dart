@@ -7,6 +7,10 @@ import '../widgets/design/liquid_glass_background.dart';
 import '../utils/design_constants.dart';
 import '../utils/theme.dart';
 import '../widgets/dialogs/model_error_dialog.dart';
+import '../services/biometric_service.dart';
+import '../services/consent_service.dart';
+import '../services/local_audit_service.dart';
+import '../services/session_manager.dart';
 import '../main.dart' show storageService;
 
 class ModelSelectionScreen extends StatefulWidget {
@@ -51,7 +55,29 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
 
   void _onAutoSelectChanged(bool value) async {
     if (_settings == null) return;
-    
+
+    // Biometric Check
+    if (_settings!.enhancedPrivacySettings.requireBiometricsForModelChange) {
+      final biometricService = BiometricService();
+      try {
+        final authenticated = await biometricService.authenticate(
+          reason: 'Authenticate to change AI model settings',
+          sessionId: biometricService.sessionId,
+        );
+        if (!authenticated) return;
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Authentication failed: $e')),
+          );
+        }
+        return;
+      }
+    }
+
+    final hasConsent = await _ensureModelUsageConsent();
+    if (!hasConsent) return;
+
     setState(() {
       _settings!.autoSelectModel = value;
       if (value && _recommendedModel != null) {
@@ -59,10 +85,41 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       }
     });
     await storageService.saveAppSettings(_settings!);
+    await LocalAuditService(storageService, SessionManager()).log(
+      action: 'model_auto_select',
+      details: {
+        'enabled': value.toString(),
+        'selectedModelId': _settings!.selectedModelId,
+      },
+      sensitivity: 'warning',
+    );
   }
 
   void _onModelSelected(ModelOption model) async {
-    if (_settings == null || _settings!.autoSelectModel || _isDownloading) return;
+    if (_settings == null || _settings!.autoSelectModel || _isDownloading)
+      return;
+
+    // Biometric Check
+    if (_settings!.enhancedPrivacySettings.requireBiometricsForModelChange) {
+      final biometricService = BiometricService();
+      try {
+        final authenticated = await biometricService.authenticate(
+          reason: 'Authenticate to change AI model',
+          sessionId: biometricService.sessionId,
+        );
+        if (!authenticated) return;
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Authentication failed: $e')),
+          );
+        }
+        return;
+      }
+    }
+
+    final hasConsent = await _ensureModelUsageConsent();
+    if (!hasConsent) return;
 
     setState(() {
       _isDownloading = true;
@@ -71,9 +128,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
 
     try {
       final installedVersion = _settings!.modelMetadataMap[model.id]?.version;
-      
+
       final success = await ModelManager.downloadModelIfNotExists(
-        model, 
+        model,
         installedVersion: installedVersion,
       );
 
@@ -82,6 +139,14 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
         _settings!.modelMetadataMap[model.id] = model.metadata;
         _settings!.selectedModelId = model.id;
         await storageService.saveAppSettings(_settings!);
+        await LocalAuditService(storageService, SessionManager()).log(
+          action: 'model_change',
+          details: {
+            'selectedModelId': model.id,
+            'autoSelect': _settings!.autoSelectModel.toString(),
+          },
+          sensitivity: 'warning',
+        );
 
         // Update local download status
         setState(() {
@@ -105,10 +170,10 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final lighterModel = e is ModelLoadException && e.isStorageIssue 
-            ? _findLighterModel(model) 
+        final lighterModel = e is ModelLoadException && e.isStorageIssue
+            ? _findLighterModel(model)
             : null;
-        
+
         String title = 'Error';
         if (e is ModelLoadException) {
           if (e.isStorageIssue) title = 'Storage Full';
@@ -119,11 +184,13 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
           context: context,
           builder: (context) => ModelErrorDialog(
             title: title,
-            message: e is ModelLoadException ? e.message : 'An unexpected error occurred while loading the model.',
+            message: e is ModelLoadException
+                ? e.message
+                : 'An unexpected error occurred while loading the model.',
             lighterModel: lighterModel,
-            onSwitch: lighterModel != null 
-              ? () => _onModelSelected(lighterModel) 
-              : null,
+            onSwitch: lighterModel != null
+                ? () => _onModelSelected(lighterModel)
+                : null,
           ),
         );
       }
@@ -142,11 +209,60 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     final candidates = ModelOption.availableModels
         .where((m) => m.storageRequired < current.storageRequired)
         .toList();
-    
+
     if (candidates.isEmpty) return null;
-    
+
     candidates.sort((a, b) => b.storageRequired.compareTo(a.storageRequired));
     return candidates.first;
+  }
+
+  Future<bool> _ensureModelUsageConsent() async {
+    final consentService = ConsentService();
+    if (consentService.hasValidConsent('model_usage')) {
+      return true;
+    }
+
+    final content = await consentService.loadTemplate('model_usage', 'v1');
+    if (!mounted) return false;
+
+    final granted = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('AI Model Usage Consent'),
+            content: SingleChildScrollView(child: Text(content)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Deny'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Allow'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!granted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Consent required to change models')),
+        );
+      }
+      return false;
+    }
+
+    await consentService.recordConsent(
+      templateId: 'model_usage',
+      version: 'v1',
+      userId: 'local_user',
+      scope: 'model_usage',
+      granted: true,
+      content: content,
+    );
+    return true;
   }
 
   @override
@@ -171,7 +287,8 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
             children: [
               // Auto-select Toggle
               Padding(
-                padding: const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
+                padding:
+                    const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
                 child: GlassCard(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -193,7 +310,8 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                       Switch(
                         value: _settings!.autoSelectModel,
                         onChanged: _onAutoSelectChanged,
-                        activeTrackColor: AppTheme.accentTeal.withValues(alpha: 0.5),
+                        activeTrackColor:
+                            AppTheme.accentTeal.withValues(alpha: 0.5),
                         activeThumbColor: AppTheme.accentTeal,
                       ),
                     ],
@@ -218,7 +336,9 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: GlassCard(
-                        onTap: _settings!.autoSelectModel || _isDownloading ? null : () => _onModelSelected(model),
+                        onTap: _settings!.autoSelectModel || _isDownloading
+                            ? null
+                            : () => _onModelSelected(model),
                         backgroundColor: isSelected
                             ? AppTheme.primaryColor.withValues(alpha: 0.1)
                             : null,
@@ -229,24 +349,29 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                             // Radio Button / Status Icon
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
-                              child: _isDownloading && _downloadingModelId == model.id
+                              child: _isDownloading &&
+                                      _downloadingModelId == model.id
                                   ? const SizedBox(
                                       width: 24,
                                       height: 24,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation(AppTheme.primaryColor),
+                                        valueColor: AlwaysStoppedAnimation(
+                                            AppTheme.primaryColor),
                                       ),
                                     )
                                   : _settings!.autoSelectModel
                                       ? isSelected
-                                          ? const Icon(Icons.check_circle, color: AppTheme.healthGreen)
+                                          ? const Icon(Icons.check_circle,
+                                              color: AppTheme.healthGreen)
                                           : Icon(
                                               Icons.circle_outlined,
-                                              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                                              color: theme.colorScheme.onSurface
+                                                  .withValues(alpha: 0.3),
                                             )
                                       : GestureDetector(
-                                          onTap: _settings!.autoSelectModel || _isDownloading
+                                          onTap: _settings!.autoSelectModel ||
+                                                  _isDownloading
                                               ? null
                                               : () => _onModelSelected(model),
                                           child: Icon(
@@ -255,7 +380,8 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                                                 : Icons.radio_button_unchecked,
                                             color: isSelected
                                                 ? AppTheme.primaryColor
-                                                : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                                : theme.colorScheme.onSurface
+                                                    .withValues(alpha: 0.5),
                                             size: 24,
                                           ),
                                         ),
@@ -270,8 +396,11 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                                     children: [
                                       Text(
                                         model.name,
-                                        style: theme.textTheme.headlineMedium?.copyWith(
-                                          color: isSelected ? AppTheme.primaryColor : null,
+                                        style: theme.textTheme.headlineMedium
+                                            ?.copyWith(
+                                          color: isSelected
+                                              ? AppTheme.primaryColor
+                                              : null,
                                         ),
                                       ),
                                       if (isRecommended) ...[
@@ -282,12 +411,15 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                                             vertical: 2,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppTheme.healthGreen.withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(12),
+                                            color: AppTheme.healthGreen
+                                                .withValues(alpha: 0.2),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: Text(
                                             'Recommended',
-                                            style: theme.textTheme.labelSmall?.copyWith(
+                                            style: theme.textTheme.labelSmall
+                                                ?.copyWith(
                                               color: AppTheme.healthGreen,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -315,7 +447,8 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
                                         Icons.storage,
                                         'Disk: ${model.storageRequired}GB',
                                       ),
-                                      if (_downloadedModels[model.id] == true) ...[
+                                      if (_downloadedModels[model.id] ==
+                                          true) ...[
                                         const SizedBox(width: 12),
                                         _buildSpecChip(
                                           context,
@@ -352,7 +485,8 @@ class _ModelSelectionScreenState extends State<ModelSelectionScreen> {
     );
   }
 
-  Widget _buildSpecChip(BuildContext context, IconData icon, String label, {Color? color}) {
+  Widget _buildSpecChip(BuildContext context, IconData icon, String label,
+      {Color? color}) {
     final theme = Theme.of(context);
     final chipColor = color ?? theme.colorScheme.primary;
 
