@@ -153,7 +153,14 @@ By using Sehat Locker, you agree to use the app for personal health record manag
       _privacyPolicyAccepted && _termsOfServiceAccepted && !_isSubmitting;
 
   Future<void> _handleAcceptAndContinue() async {
-    if (!_canProceed) return;
+    if (!_canProceed) {
+      if (!_privacyPolicyAccepted) {
+        _showPrivacyPolicyPopup();
+      } else if (!_termsOfServiceAccepted) {
+        _showTermsOfServicePopup();
+      }
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -224,6 +231,58 @@ By using Sehat Locker, you agree to use the app for personal health record manag
       builder: (context) => _FullDocumentSheet(
         title: title,
         content: content,
+      ),
+    );
+  }
+
+  void _showPrivacyPolicyPopup() {
+    showDialog(
+      context: context,
+      builder: (context) => _ConsentPopup(
+        popupTitle: 'We need you to review and accept the privacy policy',
+        title: 'Privacy Policy',
+        version: _privacyPolicyVersion,
+        summaryPoints: const [
+          'All data encrypted with AES-256',
+          'No data collection or sharing',
+          'You control your health records',
+          'Delete your data anytime',
+        ],
+        onViewFull: () {
+          Navigator.pop(context);
+          _showFullDocument('Privacy Policy', _privacyPolicyContent);
+        },
+        onAccept: () {
+          setState(() => _privacyPolicyAccepted = true);
+          Navigator.pop(context);
+          _handleAcceptAndContinue();
+        },
+      ),
+    );
+  }
+
+  void _showTermsOfServicePopup() {
+    showDialog(
+      context: context,
+      builder: (context) => _ConsentPopup(
+        popupTitle: 'We need you to review and accept the terms of service',
+        title: 'Terms of Service',
+        version: _termsOfServiceVersion,
+        summaryPoints: const [
+          'For personal health management only',
+          'Not a substitute for medical advice',
+          'You own all your data',
+          'Maintain your own backups',
+        ],
+        onViewFull: () {
+          Navigator.pop(context);
+          _showFullDocument('Terms of Service', _termsOfServiceContent);
+        },
+        onAccept: () {
+          setState(() => _termsOfServiceAccepted = true);
+          Navigator.pop(context);
+          _handleAcceptAndContinue();
+        },
       ),
     );
   }
@@ -598,30 +657,6 @@ By using Sehat Locker, you agree to use the app for personal health record manag
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Requirement indicator
-          if (!_canProceed && !_isSubmitting)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: Colors.white.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Accept both policies to continue',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
           // Continue button
           SizedBox(
             width: double.infinity,
@@ -631,12 +666,9 @@ By using Sehat Locker, you agree to use the app for personal health record manag
               icon: _isSubmitting
                   ? Icons.hourglass_top_rounded
                   : Icons.arrow_forward_rounded,
-              onPressed: _canProceed ? _handleAcceptAndContinue : null,
+              onPressed: _handleAcceptAndContinue,
               isProminent: true,
-              tintColor: _canProceed
-                  ? AppTheme.accentTeal
-                  : Colors.grey.withValues(alpha: 0.5),
-              isInteractive: _canProceed,
+              tintColor: AppTheme.healthGreen,
             ),
           ),
         ],
@@ -759,6 +791,200 @@ class _FullDocumentSheet extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ConsentPopup extends StatefulWidget {
+  final String popupTitle;
+  final String title;
+  final String version;
+  final List<String> summaryPoints;
+  final VoidCallback onViewFull;
+  final VoidCallback onAccept;
+
+  const _ConsentPopup({
+    required this.popupTitle,
+    required this.title,
+    required this.version,
+    required this.summaryPoints,
+    required this.onViewFull,
+    required this.onAccept,
+  });
+
+  @override
+  State<_ConsentPopup> createState() => _ConsentPopupState();
+}
+
+class _ConsentPopupState extends State<_ConsentPopup> {
+  bool _isAccepted = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(24),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.popupTitle,
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Card Content
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            'Version ${widget.version}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                      TextButton(
+                        onPressed: widget.onViewFull,
+                        child: const Text(
+                          'Read Full',
+                          style: TextStyle(
+                            color: AppTheme.healthGreen,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...widget.summaryPoints.map((point) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline_rounded,
+                              size: 16,
+                              color:
+                                  AppTheme.healthGreen.withValues(alpha: 0.8),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                point,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Checkbox
+            GestureDetector(
+              onTap: () => setState(() => _isAccepted = !_isAccepted),
+              child: Row(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: _isAccepted
+                          ? AppTheme.accentTeal
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: _isAccepted
+                            ? AppTheme.accentTeal
+                            : Colors.white.withValues(alpha: 0.4),
+                        width: 2,
+                      ),
+                    ),
+                    child: _isAccepted
+                        ? const Icon(
+                            Icons.check_rounded,
+                            size: 18,
+                            color: Colors.white,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'I have read and accept the ${widget.title}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            SizedBox(
+              width: double.infinity,
+              child: GlassButton(
+                label: 'Continue',
+                icon: Icons.arrow_forward_rounded,
+                onPressed: _isAccepted ? widget.onAccept : null,
+                isProminent: true,
+                tintColor: _isAccepted
+                    ? AppTheme.healthGreen
+                    : Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,12 @@
 ## [1.8.8] - 2026-01-26
 
 ### Improved
+- **Consent Experience**: Overhauled the Privacy Policy and Terms of Service acceptance flow.
+  - Centered screen titles and subtitles for better visual balance.
+  - Relocated the version indicator to be adjacent to the main title.
+  - Enhanced the "Accept & Continue" button with a primary green theme and persistent interactivity.
+  - Implemented sequential, context-rich validation popups that guide users through reviewing policies if they haven't been accepted yet.
+  - Standardized versioning across the onboarding flow to v1.8.8.
 - **Desktop Layout Optimization**: Restricted content width and centered UI elements to improve usability on Mac and Windows versions.
   - Created a reusable `ResponsiveCenter` widget to maintain consistent layout constraints (max width 800px) across desktop platforms.
   - Optimized the **Settings Screen** to prevent content from spreading too wide on large screens.
