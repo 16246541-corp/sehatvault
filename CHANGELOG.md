@@ -15,6 +15,9 @@
 - **Output Pipeline**: Awaited analytics metric logging to avoid fire-and-forget test flakiness.
 - **Desktop Shell**: Restored the bottom navigation bar alongside the left sidebar (session status moved into sidebar footer).
 - **Navigation Bar**: Fixed GlassBottomNav layout so it cannot collapse page content (prevents blank screens on macOS).
+- **Desktop Navigation**: Made the bottom navigation truly floating on desktop and prevented it from blocking sidebar interaction.
+- **Home Screen**: Removed debug-only border and "(HOME DETECTED)" label.
+- **Desktop Shell**: Removed an unused import causing analyzer warnings.
 - **Storage**: Opened typed Hive boxes consistently to avoid runtime “box already open with different type” errors.
 - **Navigation**: Avoided eager tab mounting on startup to reduce cross-tab crash impact.
 

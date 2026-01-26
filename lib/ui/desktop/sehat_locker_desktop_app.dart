@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../managers/shortcut_manager.dart';
-import '../../models/follow_up_item.dart';
 import '../../models/health_record.dart';
 import '../../screens/ai_screen.dart';
 import '../../screens/document_detail_screen.dart';
@@ -20,6 +19,7 @@ import '../../services/local_storage_service.dart';
 import '../../services/model_manager.dart';
 import '../../services/model_warmup_service.dart';
 import '../../services/session_manager.dart';
+import '../../utils/design_constants.dart';
 import '../../utils/theme.dart';
 import '../../widgets/auth_gate.dart';
 import '../../widgets/dialogs/biometric_enrollment_dialog.dart';
@@ -290,32 +290,59 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
           builder: (context, snapshot) {
             final attentionIndicators = snapshot.data;
 
+            final navTotalHeight = DesignConstants.bottomNavHeight +
+                DesignConstants.bottomNavPadding.vertical;
+            const sidebarWidth = 280.0;
+            const dividerWidth = 1.0;
+            const horizontalMargin = 16.0;
+
             return Scaffold(
               extendBody: true,
-              body: SafeArea(
-                child: Row(
-                  children: [
-                    _DesktopSidebar(
-                      currentIndex: _currentIndex,
-                      attentionIndicators: attentionIndicators,
-                      overdueCount: overdueCount,
-                      isSessionLocked: isLocked,
-                      onSelect: (index) => _onItemTapped(index),
-                    ),
-                    const VerticalDivider(width: 1),
-                    Expanded(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        switchInCurve: Curves.easeOut,
-                        switchOutCurve: Curves.easeIn,
-                        child: KeyedSubtree(
-                          key: ValueKey<int>(_currentIndex),
-                          child: _screens[_currentIndex],
+              body: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  SafeArea(
+                    bottom: false,
+                    child: Row(
+                      children: [
+                        _DesktopSidebar(
+                          currentIndex: _currentIndex,
+                          attentionIndicators: attentionIndicators,
+                          overdueCount: overdueCount,
+                          isSessionLocked: isLocked,
+                          onSelect: (index) => _onItemTapped(index),
                         ),
-                      ),
+                        const VerticalDivider(width: 1),
+                        Expanded(
+                          child: Padding(
+                            padding:
+                                EdgeInsets.only(bottom: navTotalHeight + 16),
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 180),
+                              switchInCurve: Curves.easeOut,
+                              switchOutCurve: Curves.easeIn,
+                              child: KeyedSubtree(
+                                key: ValueKey<int>(_currentIndex),
+                                child: _screens[_currentIndex],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Positioned(
+                    left: sidebarWidth + dividerWidth + horizontalMargin,
+                    right: horizontalMargin,
+                    bottom: 8,
+                    child: GlassBottomNav(
+                      currentIndex: _currentIndex,
+                      onItemTapped: (index) => _onItemTapped(index),
+                      badgeCounts: overdueCount > 0 ? {0: overdueCount} : null,
+                      attentionIndicators: attentionIndicators,
+                    ),
+                  ),
+                ],
               ),
               floatingActionButton: _currentIndex == 1
                   ? FloatingActionButton(
@@ -334,15 +361,6 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
                       child: const Icon(Icons.document_scanner),
                     )
                   : null,
-              bottomNavigationBar: Padding(
-                padding: const EdgeInsets.only(left: 281),
-                child: GlassBottomNav(
-                  currentIndex: _currentIndex,
-                  onItemTapped: (index) => _onItemTapped(index),
-                  badgeCounts: overdueCount > 0 ? {0: overdueCount} : null,
-                  attentionIndicators: attentionIndicators,
-                ),
-              ),
             );
           },
         ),

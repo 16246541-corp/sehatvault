@@ -25,50 +25,37 @@ class HomeScreen extends StatelessWidget {
           maxContentWidth: 1000,
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.green.withValues(alpha: 0.5), width: 2), // DEBUG BORDER
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: DesignConstants.titleTopPadding),
-                    Row(
-                      children: [
-                        Text(
-                          'Home',
-                          style: theme.textTheme.displayMedium,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text('(HOME DETECTED)', style: TextStyle(color: Colors.green, fontSize: 10)), // DEBUG TEXT
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Your health at a glance',
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: DesignConstants.sectionSpacing),
-                    
-                    // Tasks Overview
-                    FollowUpDashboard(
-                      onTap: () {
-                        if (onTasksTap != null) {
-                          onTasksTap!();
-                        } else {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const FollowUpListScreen(),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    
-                    const SizedBox(height: DesignConstants.sectionSpacing),
-                  ],
-                ),
+              padding:
+                  const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: DesignConstants.titleTopPadding),
+                  Text(
+                    'Home',
+                    style: theme.textTheme.displayMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your health at a glance',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: DesignConstants.sectionSpacing),
+                  FollowUpDashboard(
+                    onTap: () {
+                      if (onTasksTap != null) {
+                        onTasksTap!();
+                      } else {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const FollowUpListScreen(),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: DesignConstants.sectionSpacing),
+                ],
               ),
             ),
           ),
