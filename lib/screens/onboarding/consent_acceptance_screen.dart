@@ -333,33 +333,52 @@ By using Sehat Locker, you agree to use the app for personal health record manag
                         children: [
                           const SizedBox(height: 16),
 
-                          // Title
-                          Text(
-                            'Privacy & Terms',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              height: 1.2,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          Text(
-                            'Please review and accept our policies to continue',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white.withValues(alpha: 0.7),
+                          // Centered Header Title & Subtitle
+                          Center(
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Privacy & Terms',
+                                      style: GoogleFonts.playfairDisplay(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _buildVersionBadge(),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Please review and accept our policies to continue',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
 
                           const SizedBox(height: 32),
 
                           // Privacy checklist
-                          _buildSectionTitle('Your Privacy Guarantees'),
+                          Center(
+                              child: _buildSectionTitle(
+                                  'Your Privacy Guarantees')),
                           const SizedBox(height: 16),
-                          const ConsentChecklistWidget(),
+                          Center(
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 500),
+                              child: const ConsentChecklistWidget(),
+                            ),
+                          ),
 
                           const SizedBox(height: 32),
                         ],
@@ -374,6 +393,35 @@ By using Sehat Locker, you agree to use the app for personal health record manag
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildVersionBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.verified_rounded,
+            size: 14,
+            color: AppTheme.accentTeal,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'v$_privacyPolicyVersion',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -393,35 +441,6 @@ By using Sehat Locker, you agree to use the app for personal health record manag
             )
           else
             const SizedBox(width: 48),
-          const Spacer(),
-          // Version indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.verified_rounded,
-                  size: 14,
-                  color: AppTheme.accentTeal,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'v$_privacyPolicyVersion',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
         ],
       ),
     );
