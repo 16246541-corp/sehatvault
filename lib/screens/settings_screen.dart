@@ -565,11 +565,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: DesignConstants.sectionSpacing),
-
                   if (_selectedCategory == null) ...[
                     _buildMenu(context),
                   ],
-
                   // Privacy Section (Category Only)
                   if (_selectedCategory == SettingCategory.privacy) ...[
                     _buildSectionHeader(context, 'Privacy & Security'),
@@ -604,6 +602,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   AppTheme.accentTeal.withValues(alpha: 0.5),
                               activeThumbColor: AppTheme.accentTeal,
                             ),
+                            showChevron: false,
                           ),
                           _buildDivider(context),
                           _buildSettingsItem(
@@ -1287,7 +1286,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 100), // Bottom padding for nav bar
+                  const SizedBox(height: 100),
                 ],
               ),
             ),

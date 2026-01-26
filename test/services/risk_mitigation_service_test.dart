@@ -1,14 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sehatlocker/services/risk_mitigation_service.dart';
 import 'package:sehatlocker/services/risk_template_configuration.dart';
 import 'package:sehatlocker/services/safety_filter_service.dart';
 import 'package:sehatlocker/services/medical_dictionary_service.dart';
+import 'dart:io';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late RiskMitigationService service;
   late RiskTemplateConfiguration templateConfig;
   late SafetyFilterService safetyFilter;
   late MedicalDictionaryService medicalDictionary;
+
+  setUpAll(() async {
+    final tempDir = await Directory.systemTemp.createTemp();
+    Hive.init(tempDir.path);
+    if (!Hive.isBoxOpen('settings')) await Hive.openBox('settings');
+  });
 
   setUp(() {
     templateConfig = RiskTemplateConfiguration.forTesting([

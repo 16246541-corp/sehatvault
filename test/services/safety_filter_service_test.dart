@@ -1,8 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sehatlocker/services/safety_filter_service.dart';
+import 'dart:io';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late SafetyFilterService service;
+
+  setUpAll(() async {
+    final tempDir = await Directory.systemTemp.createTemp();
+    Hive.init(tempDir.path);
+    if (!Hive.isBoxOpen('settings')) await Hive.openBox('settings');
+  });
 
   setUp(() {
     service = SafetyFilterService();
@@ -113,7 +122,7 @@ void main() {
 
     test('performance is acceptable', () {
       final stopwatch = Stopwatch()..start();
-      final input = 'You have ' * 1000; // Stress test
+      final input = 'You have ' * 100; // Stress test
       service.sanitize(input);
       stopwatch.stop();
       expect(

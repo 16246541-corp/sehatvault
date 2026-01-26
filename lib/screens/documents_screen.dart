@@ -31,12 +31,10 @@ import '../widgets/empty_states/empty_conversations_state.dart';
 
 /// Documents Screen - Health documents storage
 class DocumentsScreen extends StatefulWidget {
-  final VoidCallback? onTasksTap;
   final VoidCallback? onRecordTap;
 
   const DocumentsScreen({
     super.key,
-    this.onTasksTap,
     this.onRecordTap,
   });
 
@@ -338,22 +336,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         );
                       },
                     ),
-
-                    // Dashboard
-                    FollowUpDashboard(
-                      onTap: () async {
-                        if (widget.onTasksTap != null) {
-                          widget.onTasksTap!();
-                        } else {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const FollowUpListScreen(),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: DesignConstants.sectionSpacing),
 
                     // Search Bar
                     GlassTextField(

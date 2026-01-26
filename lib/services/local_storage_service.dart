@@ -26,7 +26,6 @@ import 'platform_detector.dart';
 import 'model_quantization_service.dart';
 import '../models/generation_parameters.dart';
 
-
 /// Local Storage Service for health records
 /// Uses Hive with encryption for privacy-first data storage
 class LocalStorageService {
@@ -51,7 +50,6 @@ class LocalStorageService {
   static const String _userProfileKey = 'user_profile_object';
   static const String _autoDeleteOriginalKey = 'auto_delete_original';
   static const String _userProfileBox = 'user_profile';
-
 
   // Singleton instance
   static final LocalStorageService _instance = LocalStorageService._internal();
@@ -146,7 +144,6 @@ class LocalStorageService {
       Hive.registerAdapter(QuantizationFormatAdapter());
     }
 
-
     // Get or create encryption key
     final encryptionKey = await _getOrCreateEncryptionKey();
 
@@ -181,7 +178,7 @@ class LocalStorageService {
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
 
-    await Hive.openBox(
+    await Hive.openBox<DoctorConversation>(
       _doctorConversationsBox,
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
@@ -235,7 +232,6 @@ class LocalStorageService {
       _userProfileBox,
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
-
 
     _isInitialized = true;
 
@@ -411,14 +407,14 @@ class LocalStorageService {
 
   /// Get User Profile
   UserProfile getUserProfile() {
-    return Hive.box<UserProfile>(_userProfileBox).get(_userProfileKey) ?? UserProfile();
+    return Hive.box<UserProfile>(_userProfileBox).get(_userProfileKey) ??
+        UserProfile();
   }
 
   /// Save User Profile
   Future<void> saveUserProfile(UserProfile profile) async {
     await Hive.box<UserProfile>(_userProfileBox).put(_userProfileKey, profile);
   }
-
 
   /// Get Auto Delete Original setting
   bool get autoDeleteOriginal {
@@ -492,11 +488,10 @@ class LocalStorageService {
 
   /// Get a document extraction by ID
   DocumentExtraction? getDocumentExtraction(String id) {
-    final box = Hive.box<DocumentExtraction>('health_records');
-    return box.values.firstWhere(
-      (extraction) => extraction.id == id,
-      orElse: () => throw Exception('DocumentExtraction not found: $id'),
-    );
+    final box = Hive.box(_healthRecordsBox);
+    return box.values.whereType<DocumentExtraction>().firstWhere(
+        (extraction) => extraction.id == id,
+        orElse: () => throw Exception('DocumentExtraction not found: $id'));
   }
 
   /// Get all document extractions
@@ -529,7 +524,8 @@ class LocalStorageService {
   // MARK: - Doctor Conversations
 
   /// Get doctor conversations box
-  Box get _conversationsBox => Hive.box(_doctorConversationsBox);
+  Box<DoctorConversation> get _conversationsBox =>
+      Hive.box<DoctorConversation>(_doctorConversationsBox);
 
   /// Save a doctor conversation
   Future<void> saveDoctorConversation(DoctorConversation conversation) async {
@@ -703,7 +699,7 @@ class LocalStorageService {
     await Hive.box(_settingsBox).clear();
     await Hive.box(_savedPapersBox).clear();
     await Hive.box(_searchIndexBox).clear();
-    await Hive.box(_doctorConversationsBox).clear();
+    await Hive.box<DoctorConversation>(_doctorConversationsBox).clear();
     await Hive.box<FollowUpItem>(_followUpItemsBox).clear();
     await Hive.box<RecordingAuditEntry>(_recordingAuditEntriesBox).clear();
     await Hive.box<ExportAuditEntry>(_exportAuditEntriesBox).clear();
@@ -719,7 +715,7 @@ class LocalStorageService {
 
     // Re-initialize app settings metadata
     await _initializeAppSettingsMetadata();
-    
+
     debugPrint('All data cleared');
   }
 

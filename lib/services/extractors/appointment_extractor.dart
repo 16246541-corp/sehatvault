@@ -47,6 +47,6 @@ class AppointmentExtractor extends BaseExtractor {
     if (context.toLowerCase().contains('hospital')) return 'hospital';
     if (context.toLowerCase().contains('lab')) return 'lab';
 
-    return null;
+    return 'follow-up';
   }
 }

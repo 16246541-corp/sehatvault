@@ -33,6 +33,7 @@ class LiquidGlassBackground extends StatelessWidget {
         ),
       ),
       child: Stack(
+        fit: StackFit.expand,
         children: [
           if (showTexture)
             Positioned.fill(

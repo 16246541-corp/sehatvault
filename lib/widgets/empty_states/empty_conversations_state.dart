@@ -35,12 +35,14 @@ class _EmptyConversationsStateState extends State<EmptyConversationsState>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
+    /* 
     if (widget.showOnboarding) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final dynamic tooltip = _buttonKey.currentState;
         tooltip?.ensureTooltipVisible();
       });
     }
+    */
   }
 
   @override

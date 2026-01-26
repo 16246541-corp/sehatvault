@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../utils/design_constants.dart';
 import '../../utils/theme.dart';
 
-/// Glass Bottom Navigation Bar with 4 tabs
+/// Glass Bottom Navigation Bar with 5 tabs
 class GlassBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onItemTapped;
@@ -23,74 +23,89 @@ class GlassBottomNav extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      padding: DesignConstants.bottomNavPadding,
-      child: ClipRRect(
-        borderRadius:
-            BorderRadius.circular(DesignConstants.bottomNavCornerRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            height: DesignConstants.bottomNavHeight,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.5)
-                  : Colors.white.withValues(alpha: 0.7),
-              borderRadius:
-                  BorderRadius.circular(DesignConstants.bottomNavCornerRadius),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.black.withValues(alpha: 0.08),
-                width: 1,
+    final navTotalHeight = DesignConstants.bottomNavHeight +
+        DesignConstants.bottomNavPadding.vertical;
+
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: navTotalHeight,
+        child: Padding(
+          padding: DesignConstants.bottomNavPadding,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(
+                    DesignConstants.bottomNavCornerRadius),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    height: DesignConstants.bottomNavHeight,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.black.withValues(alpha: 0.5)
+                          : Colors.white.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(
+                          DesignConstants.bottomNavCornerRadius),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.black.withValues(alpha: 0.08),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildNavItem(
+                          context,
+                          index: 0,
+                          icon: Icons.home_outlined,
+                          activeIcon: Icons.home,
+                          label: 'Home',
+                        ),
+                        _buildNavItem(
+                          context,
+                          index: 1,
+                          icon: Icons.folder_outlined,
+                          activeIcon: Icons.folder,
+                          label: 'Documents',
+                        ),
+                        _buildNavItem(
+                          context,
+                          index: 2,
+                          icon: Icons.psychology_outlined,
+                          activeIcon: Icons.psychology,
+                          label: 'AI',
+                        ),
+                        _buildNavItem(
+                          context,
+                          index: 3,
+                          icon: Icons.article_outlined,
+                          activeIcon: Icons.article,
+                          label: 'News',
+                        ),
+                        _buildNavItem(
+                          context,
+                          index: 4,
+                          icon: Icons.settings_outlined,
+                          activeIcon: Icons.settings,
+                          label: 'Settings',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  context,
-                  index: 0,
-                  icon: Icons.folder_outlined,
-                  activeIcon: Icons.folder,
-                  label: 'Documents',
-                ),
-                _buildNavItem(
-                  context,
-                  index: 1,
-                  icon: Icons.task_alt_outlined,
-                  activeIcon: Icons.task_alt,
-                  label: 'Tasks',
-                ),
-                _buildNavItem(
-                  context,
-                  index: 2,
-                  icon: Icons.psychology_outlined,
-                  activeIcon: Icons.psychology,
-                  label: 'AI',
-                ),
-                _buildNavItem(
-                  context,
-                  index: 3,
-                  icon: Icons.article_outlined,
-                  activeIcon: Icons.article,
-                  label: 'News',
-                ),
-                _buildNavItem(
-                  context,
-                  index: 4,
-                  icon: Icons.settings_outlined,
-                  activeIcon: Icons.settings,
-                  label: 'Settings',
-                ),
-              ],
             ),
           ),
         ),

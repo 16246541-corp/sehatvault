@@ -1,5 +1,50 @@
 # Changelog - Sehat Locker
 
+## [1.9.5] - 2026-01-26
+
+### Added
+- **UI Targets**: Added a UI target resolver to map platforms into **Mobile** vs **Desktop** (iPad treated as Desktop).
+- **Desktop Shell**: Introduced an initial desktop-only app shell with a persistent left sidebar under `lib/ui/desktop/`.
+
+### Changed
+- **App Bootstrap**: Updated startup to select the UI shell by target and apply target-appropriate orientation locking.
+
+### Fixed
+- **Settings Screen**: Repaired build-time syntax issues in Settings UI.
+- **Follow-Up Extraction**: Improved extraction for follow-up appointments without explicit objects and added support for "submit" decision phrases.
+- **Output Pipeline**: Awaited analytics metric logging to avoid fire-and-forget test flakiness.
+- **Desktop Shell**: Restored the bottom navigation bar alongside the left sidebar (session status moved into sidebar footer).
+- **Navigation Bar**: Fixed GlassBottomNav layout so it cannot collapse page content (prevents blank screens on macOS).
+- **Storage**: Opened typed Hive boxes consistently to avoid runtime “box already open with different type” errors.
+- **Navigation**: Avoided eager tab mounting on startup to reduce cross-tab crash impact.
+
+### Testing
+- **Test Harness**: Initialized Flutter bindings and Hive boxes in service tests that depend on storage/assets.
+- **Integration Tests**: Skipped vault workflow tests that require platform plugins and OCR assets.
+
+## [1.9.4] - 2026-01-26
+
+### Added
+- **Navigation**: Introduced a new **Home Screen** as the default app view, providing a high-level overview of health tasks and records.
+
+### Changed
+- **Dashboard**: Migrated the **Tasks Overview** widget from the Documents screen to the new Home screen for better accessibility.
+- **Navigation**: Overhauled the bottom navigation bar to streamline the user experience:
+  - Replaced the "Tasks" tab with the new "Home" tab.
+  - Reordered tabs to: Home, Documents, AI, News, Settings.
+  - Implemented width constraints (max 600px) and centering for the bottom navigation bar on desktop platforms (macOS/Windows) to align with Apple Liquid Glass design specifications.
+- **UI**: Fixed a major layout bug where nested Scaffolds caused the bottom navigation bar to float in the center of the screen and obscured screen content.
+- **UI**: Refined AIScreen layout by removing nested Scaffold and optimizing the Stack-based positioning for compliance banners.
+
+## [1.9.3] - 2026-01-26
+
+### Added
+- **Compliance**: Added FDA Disclaimer widget to the AI Assistant screen, positioned below the emergency use warning.
+
+### Fixed
+- **UI**: Fixed a bottom overflow issue on the AI Assistant screen by making the main content scrollable when the model information panel is expanded.
+- **UI**: Increased top spacing on the AI Assistant screen to prevent the header text from being obscured by the fixed compliance banners.
+
 ## [1.9.2] - 2026-01-26
 
 ### Fixed

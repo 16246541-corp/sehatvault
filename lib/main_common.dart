@@ -22,6 +22,8 @@ import 'widgets/session_guard.dart';
 import 'screens/onboarding/onboarding_navigator.dart';
 import 'services/onboarding_service.dart';
 import 'services/platform_detector.dart';
+import 'services/ui_target_resolver.dart';
+import 'ui/desktop/sehat_locker_desktop_app.dart';
 import 'widgets/ai/incompatible_device_screen.dart';
 
 
@@ -34,12 +36,6 @@ Future<void> mainCommon(AppConfig config) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   AppConfig.setConfig(config);
-
-  // Set preferred orientations (portrait only for mobile)
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
 
   // Initialize local storage
   await storageService.initialize();
@@ -116,6 +112,7 @@ class _MyAppState extends State<MyApp> {
   bool _initialized = false;
   bool _isIncompatible = false;
   double _detectedRam = 0;
+  UiTarget? _uiTarget;
 
   @override
   void initState() {
@@ -126,21 +123,47 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _initializeApp() async {
-    // 1. Check for hardware compatibility (8GB RAM Min for Mobile)
+    final uiTarget = await UiTargetResolver.resolve();
+    await _applyPreferredOrientations(uiTarget);
+
     final caps = await PlatformDetector().getCapabilities();
-    
-    if (caps.isMobile && caps.ramGB < 7.5) { // 7.5 to account for variants, targeting 8GB devices
+
+    if (uiTarget == UiTarget.mobile && caps.ramGB < 7.5) {
       if (mounted) {
         setState(() {
           _isIncompatible = true;
           _detectedRam = caps.ramGB;
+          _uiTarget = uiTarget;
           _initialized = true;
         });
       }
       return;
     }
 
+    if (mounted) {
+      setState(() {
+        _uiTarget = uiTarget;
+      });
+    }
+
     await _checkOnboardingStatus();
+  }
+
+  Future<void> _applyPreferredOrientations(UiTarget uiTarget) async {
+    if (uiTarget == UiTarget.mobile) {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      return;
+    }
+
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
   }
 
   Future<void> _checkOnboardingStatus() async {
@@ -162,6 +185,9 @@ class _MyAppState extends State<MyApp> {
         });
       });
     }
+    if (_uiTarget == UiTarget.desktop) {
+      return const SehatLockerDesktopApp();
+    }
     return const SehatLockerApp();
   }
 
@@ -176,7 +202,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_initialized) {
+    if (!_initialized || _uiTarget == null) {
       // Show a minimal loading state while checking onboarding status
       return MaterialApp(
         debugShowCheckedModeBanner: false,

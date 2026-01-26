@@ -9,6 +9,7 @@ import 'package:sehatlocker/services/safety_filter_service.dart';
 import 'package:sehatlocker/services/citation_service.dart';
 import 'package:sehatlocker/services/local_storage_service.dart';
 import 'package:sehatlocker/services/validation/rules/treatment_recommendation_rule.dart';
+import 'package:sehatlocker/models/ai_usage_metric.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:io';
 
@@ -21,8 +22,14 @@ void main() {
   setUpAll(() async {
     final tempDir = await Directory.systemTemp.createTemp();
     Hive.init(tempDir.path);
+    if (!Hive.isAdapterRegistered(32)) {
+      Hive.registerAdapter(AIUsageMetricAdapter());
+    }
     if (!Hive.isBoxOpen('settings')) await Hive.openBox('settings');
     if (!Hive.isBoxOpen('citations')) await Hive.openBox('citations');
+    if (!Hive.isBoxOpen('ai_usage_metrics')) {
+      await Hive.openBox<AIUsageMetric>('ai_usage_metrics');
+    }
   });
 
   setUp(() {

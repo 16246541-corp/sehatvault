@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'models/follow_up_item.dart';
 import 'services/local_storage_service.dart';
+import 'screens/home_screen.dart';
 import 'screens/documents_screen.dart';
 import 'screens/follow_up_list_screen.dart';
 import 'screens/ai_screen.dart';
@@ -39,25 +40,21 @@ class _SehatLockerAppState extends State<SehatLockerApp>
     with WidgetsBindingObserver {
   int _currentIndex = 0;
 
-
-
-
-
-  late final List<Widget> _screens;
+  late final List<Widget Function()> _screenBuilders;
+  final Map<int, Widget> _screenCache = {};
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _screens = [
-      DocumentsScreen(
-        onTasksTap: () => _onItemTapped(1),
-        onRecordTap: () => _onItemTapped(2),
-      ),
-      const FollowUpListScreen(),
-      _buildAIScreen(),
-      const NewsScreen(),
-      const SettingsScreen(),
+    _screenBuilders = [
+      () => const HomeScreen(),
+      () => DocumentsScreen(
+            onRecordTap: () => _onItemTapped(2),
+          ),
+      _buildAIScreen,
+      () => const NewsScreen(),
+      () => const SettingsScreen(),
     ];
 
     SessionManager().addListener(_onSessionChanged);
@@ -65,8 +62,6 @@ class _SehatLockerAppState extends State<SehatLockerApp>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkOverdueItems();
     });
-
-
   }
 
   @override
@@ -89,17 +84,16 @@ class _SehatLockerAppState extends State<SehatLockerApp>
     }
   }
 
-
   Future<void> _checkBiometricEnrollment({bool isResume = false}) async {
     final settings = LocalStorageService().getAppSettings();
-    
+
     // Skip if user has already seen the prompt
     if (settings.hasSeenBiometricEnrollmentPrompt) return;
-    
+
     // Check if biometrics are available but not enrolled
     final biometricService = BiometricService();
     final status = await biometricService.getBiometricStatus();
-    
+
     if (status == BiometricStatus.availableButNotEnrolled && mounted) {
       // Show the enrollment dialog
       showDialog(
@@ -143,7 +137,7 @@ class _SehatLockerAppState extends State<SehatLockerApp>
               onPressed: () {
                 ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
                 setState(() {
-                  _currentIndex = 1;
+                  _currentIndex = 0; // Go to Home for tasks
                 });
               },
               child: const Text('VIEW'),
@@ -201,12 +195,10 @@ class _SehatLockerAppState extends State<SehatLockerApp>
         await educationService.isEducationCompleted('secure_storage');
 
     return {
-      0: !(documentComplete && storageComplete),
+      1: !(documentComplete && storageComplete),
       2: !aiComplete,
     };
   }
-
-
 
   Widget _buildAIScreen() {
     return ValueListenableBuilder<Box>(
@@ -226,19 +218,76 @@ class _SehatLockerAppState extends State<SehatLockerApp>
     );
   }
 
+  Widget _getScreen(int index) {
+    return _screenCache.putIfAbsent(index, () => _screenBuilders[index]());
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLocked = SessionManager().isLocked;
 
-
-    return ValueListenableBuilder(
-      valueListenable: LocalStorageService().recordsListenable,
-      builder: (context, box, _) {
-        final hasRecords = box.isNotEmpty;
-        return DesktopMenuBar(
-          canExport: hasRecords,
-          isSessionLocked: isLocked,
-          onNewScan: () {
+    return DesktopMenuBar(
+      canExport: true,
+      isSessionLocked: isLocked,
+      onNewScan: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EducationGate(
+              contentId: 'document_scanner',
+              child: DocumentScannerScreen(),
+            ),
+          ),
+        );
+      },
+      onExportPdf: () {
+        ExportService().exportAuditLogReport(context);
+      },
+      onExportJson: () {
+        // Placeholder for JSON export
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('JSON Export coming soon')),
+        );
+      },
+      onOpenRecent: (HealthRecord record) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                DocumentDetailScreen(healthRecordId: record.id),
+          ),
+        );
+      },
+      onSettings: () {
+        _onItemTapped(4); // Index 4 is settings
+      },
+      onLock: () {
+        SessionManager().lockImmediately();
+      },
+      onAbout: () {
+        showAboutDialog(
+          context: context,
+          applicationName: 'Sehat Locker',
+          applicationVersion: '1.0.0',
+          applicationIcon: const Icon(Icons.lock, size: 48),
+          applicationLegalese: '© 2026 Sehat Locker Team',
+        );
+      },
+      onToggleShortcuts: () {
+        KeyboardShortcutService().executeAction('toggle_cheat_sheet');
+      },
+      child: AppShortcutManager(
+        onRecordToggle: () {
+          if (_currentIndex != 2) {
+            _onItemTapped(2);
+          }
+        },
+        onScanOpen: () {
+          if (_currentIndex == 0) {
+            // Trigger scan action if on documents screen
+            KeyboardShortcutService().executeAction('capture_document');
+          } else {
+            // Open scanner if not on documents screen
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -248,121 +297,60 @@ class _SehatLockerAppState extends State<SehatLockerApp>
                 ),
               ),
             );
-          },
-          onExportPdf: () {
-            ExportService().exportAuditLogReport(context);
-          },
-          onExportJson: () {
-            // Placeholder for JSON export
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('JSON Export coming soon')),
-            );
-          },
-          onOpenRecent: (HealthRecord record) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    DocumentDetailScreen(healthRecordId: record.id),
-              ),
-            );
-          },
-          onSettings: () {
-            _onItemTapped(4); // Index 4 is settings
-          },
-          onLock: () {
-            SessionManager().lockImmediately();
-          },
-          onAbout: () {
-            showAboutDialog(
-              context: context,
-              applicationName: 'Sehat Locker',
-              applicationVersion: '1.0.0',
-              applicationIcon: const Icon(Icons.lock, size: 48),
-              applicationLegalese: '© 2026 Sehat Locker Team',
-            );
-          },
-          onToggleShortcuts: () {
-            KeyboardShortcutService().executeAction('toggle_cheat_sheet');
-          },
-          child: AppShortcutManager(
-            onRecordToggle: () {
-              if (_currentIndex != 2) {
-                _onItemTapped(2);
-              }
-            },
-            onScanOpen: () {
-              if (_currentIndex == 0) {
-                // Trigger scan action if on documents screen
-                KeyboardShortcutService().executeAction('capture_document');
-              } else {
-                // Open scanner if not on documents screen
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const EducationGate(
-                      contentId: 'document_scanner',
-                      child: DocumentScannerScreen(),
-                    ),
-                  ),
-                );
-              }
-            },
-            onSettingsOpen: () {
-              _onItemTapped(4); // Index 4 is settings
-            },
-            child: Scaffold(
-              extendBody: true,
-              body: IndexedStack(
-                index: _currentIndex,
-                children: _screens,
-              ),
-              floatingActionButton: _currentIndex == 0
-                  ? FloatingActionButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EducationGate(
-                              contentId: 'document_scanner',
-                              child: DocumentScannerScreen(),
-                            ),
-                          ),
-                        );
-                      },
-                      backgroundColor: AppTheme.accentTeal,
-                      child: const Icon(Icons.document_scanner),
-                    )
-                  : null,
-              bottomNavigationBar: ValueListenableBuilder<Box<FollowUpItem>>(
-                valueListenable: LocalStorageService().followUpItemsListenable,
-                builder: (context, box, _) {
-                  final now = DateTime.now();
-                  final overdueCount = box.values
-                      .where((item) =>
-                          !item.isCompleted &&
-                          item.dueDate != null &&
-                          item.dueDate!.isBefore(now))
-                      .length;
+          }
+        },
+        onSettingsOpen: () {
+          _onItemTapped(4); // Index 4 is settings
+        },
+        child: Scaffold(
+          extendBody: true,
+          body: KeyedSubtree(
+            key: ValueKey<int>(_currentIndex),
+            child: _getScreen(_currentIndex),
+          ),
+          floatingActionButton: _currentIndex == 1
+              ? FloatingActionButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EducationGate(
+                          contentId: 'document_scanner',
+                          child: DocumentScannerScreen(),
+                        ),
+                      ),
+                    );
+                  },
+                  backgroundColor: AppTheme.accentTeal,
+                  child: const Icon(Icons.document_scanner),
+                )
+              : null,
+          bottomNavigationBar: ValueListenableBuilder<Box<FollowUpItem>>(
+            valueListenable: LocalStorageService().followUpItemsListenable,
+            builder: (context, box, _) {
+              final now = DateTime.now();
+              final overdueCount = box.values
+                  .where((item) =>
+                      !item.isCompleted &&
+                      item.dueDate != null &&
+                      item.dueDate!.isBefore(now))
+                  .length;
 
-                  return FutureBuilder<Map<int, bool>>(
-                    future: _getEducationIndicators(),
-                    builder: (context, snapshot) {
-                      return GlassBottomNav(
-                        currentIndex: _currentIndex,
-                        onItemTapped: _onItemTapped,
-                        badgeCounts:
-                            overdueCount > 0 ? {1: overdueCount} : null,
-                        attentionIndicators: snapshot.data,
-                      );
-                    },
+              return FutureBuilder<Map<int, bool>>(
+                future: _getEducationIndicators(),
+                builder: (context, snapshot) {
+                  return GlassBottomNav(
+                    currentIndex: _currentIndex,
+                    onItemTapped: _onItemTapped,
+                    badgeCounts: overdueCount > 0 ? {0: overdueCount} : null,
+                    attentionIndicators: snapshot.data,
                   );
                 },
-              ),
-            ),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

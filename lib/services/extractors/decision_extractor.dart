@@ -5,8 +5,15 @@ class DecisionExtractor extends BaseExtractor {
   DecisionExtractor(super.dictionaryService, super.temporalConfig);
 
   @override
-  List<String> get verbs =>
-      ["consider", "discuss", "decide", "think about", "weigh", "evaluate"];
+  List<String> get verbs => [
+        "consider",
+        "discuss",
+        "decide",
+        "think about",
+        "weigh",
+        "evaluate",
+        "submit",
+      ];
 
   @override
   FollowUpCategory get category => FollowUpCategory.decision;

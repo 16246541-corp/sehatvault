@@ -43,13 +43,13 @@ class OutputPipeline {
     }
 
     // Log pipeline performance to analytics
-    _logPipelineMetrics(context);
+    await _logPipelineMetrics(context);
 
     return context;
   }
 
   /// Logs pipeline performance metrics to AIAnalyticsService.
-  void _logPipelineMetrics(PipelineContext context) {
+  Future<void> _logPipelineMetrics(PipelineContext context) async {
     final totalTime = context.performanceMetrics.values.isEmpty
         ? 0.0
         : context.performanceMetrics.values.reduce((a, b) => a + b);
@@ -58,7 +58,7 @@ class OutputPipeline {
       (key, value) => MapEntry(key, '${value.toStringAsFixed(1)}ms'),
     );
 
-    _analytics.logMetric(
+    await _analytics.logMetric(
       ModelMetrics(loadTimeMs: totalTime),
       LLMEngine().currentModel?.id ?? 'unknown',
       operationType: 'pipeline_processing',
