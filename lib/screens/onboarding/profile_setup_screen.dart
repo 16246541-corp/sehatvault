@@ -27,7 +27,32 @@ class ProfileSetupScreen extends StatefulWidget {
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final TextEditingController _nameController = TextEditingController();
   String _selectedSex = 'unspecified';
-  DateTime? _selectedDob;
+  int? _selectedYear;
+
+  final List<String> _adjectives = [
+    'Swift',
+    'Mighty',
+    'Brave',
+    'Silver',
+    'Golden',
+    'Neon',
+    'Arctic',
+    'Silent',
+    'Wild',
+    'Shadow'
+  ];
+  final List<String> _nouns = [
+    'Falcon',
+    'Wolf',
+    'Panda',
+    'Tiger',
+    'Eagle',
+    'Knight',
+    'Ranger',
+    'Striker',
+    'Ghost',
+    'Pilot'
+  ];
 
   final LocalStorageService _storageService = LocalStorageService();
   final AnalyticsService _analyticsService = AnalyticsService();
@@ -39,29 +64,114 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+  void _generateRandomName() {
+    final random = DateTime.now().millisecondsSinceEpoch;
+    final adj = _adjectives[random % _adjectives.length];
+    final noun = _nouns[(random ~/ 7) % _nouns.length];
+    final num = (random % 900) + 100;
+    setState(() {
+      _nameController.text = '$adj$noun$num';
+    });
+  }
+
+  void _showDataUsageInfo() {
+    showDialog(
       context: context,
-      initialDate: _selectedDob ?? DateTime(1990),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppTheme.accentTeal,
-              onPrimary: Colors.white,
-              surface: const Color(0xFF1E293B),
-              onSurface: Colors.white,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.calculate_outlined, color: AppTheme.accentTeal),
+            const SizedBox(width: 12),
+            const Text('Local Calculations',
+                style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your data is used locally on this device to:',
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            _buildBulletPoint('Calibrate lab result ranges for your age/sex'),
+            _buildBulletPoint('Calculate BMI and health trends'),
+            _buildBulletPoint('Generate personalized wellness insights'),
+            const SizedBox(height: 20),
+            const Text(
+              'How this benefits you:',
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            _buildBulletPoint(
+                'Accuracy: Get medical references specific to you'),
+            _buildBulletPoint(
+                'Privacy: No personal data ever leaves your device'),
+            _buildBulletPoint('Speed: Instant processing without internet'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it',
+                style: TextStyle(color: AppTheme.accentTeal)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBulletPoint(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('• ',
+              style: TextStyle(color: AppTheme.accentTeal, fontSize: 16)),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
           ),
-          child: child!,
+        ],
+      ),
+    );
+  }
+
+  Future<void> _selectYear(BuildContext context) async {
+    final int currentYear = DateTime.now().year;
+    final int? picked = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          title: const Text('Select Year of Birth',
+              style: TextStyle(color: Colors.white)),
+          content: SizedBox(
+            width: 300,
+            height: 300,
+            child: YearPicker(
+              firstDate: DateTime(1900),
+              lastDate: DateTime.now(),
+              selectedDate: DateTime(_selectedYear ?? 1990),
+              onChanged: (DateTime dateTime) {
+                Navigator.pop(context, dateTime.year);
+              },
+            ),
+          ),
         );
       },
     );
-    if (picked != null && picked != _selectedDob) {
+    if (picked != null && picked != _selectedYear) {
       setState(() {
-        _selectedDob = picked;
+        _selectedYear = picked;
       });
     }
   }
@@ -74,7 +184,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 ? null
                 : _nameController.text.trim(),
             sex: _selectedSex,
-            dateOfBirth: _selectedDob,
+            dateOfBirth:
+                _selectedYear != null ? DateTime(_selectedYear!, 1, 1) : null,
           );
 
     await _storageService.saveUserProfile(profile);
@@ -84,7 +195,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     } else {
       if (profile.displayName != null)
         await _analyticsService.logEvent('profile_name_set');
-      if (_selectedSex != 'unspecified' || _selectedDob != null) {
+      if (_selectedSex != 'unspecified' || _selectedYear != null) {
         await _analyticsService.logEvent('profile_demographics_set');
       }
     }
@@ -121,9 +232,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       children: [
                         const SizedBox(height: 24),
                         Text(
-                          'Personalize Your\nExperience',
+                          'Personalize Your Experience',
                           style: GoogleFonts.playfairDisplay(
-                            fontSize: 32,
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             height: 1.2,
@@ -131,26 +242,61 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Providing basic info helps us calibrate lab result ranges for your age and sex. All data stays local on your device.',
+                          'Providing basic info helps us calibrate lab result ranges for your age and sex.\n\nAll data stays local on your device.',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
                         const SizedBox(height: 32),
-                        _buildLabel('Display Name (Optional)'),
-                        TextField(
-                          controller: _nameController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: _inputDecoration('e.g. John Doe'),
+                        _buildLabel('Display Name', 'Optional'),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: TextField(
+                                controller: _nameController,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: _inputDecoration('e.g. John Doe'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: TextButton.icon(
+                                onPressed: _generateRandomName,
+                                icon: const Icon(Icons.casino_outlined,
+                                    size: 18, color: AppTheme.accentTeal),
+                                label: const Text(
+                                  'Randomize',
+                                  style: TextStyle(
+                                      color: AppTheme.accentTeal,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                                style: TextButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 18),
+                                  backgroundColor:
+                                      Colors.white.withValues(alpha: 0.05),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.1)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 24),
-                        _buildLabel('Sex (For medical reference ranges)'),
+                        _buildLabel('Sex', 'For medical reference ranges'),
                         _buildSexSelection(),
                         const SizedBox(height: 24),
-                        _buildLabel('Date of Birth'),
+                        _buildLabel('Year of Birth', 'Just the year is enough'),
                         InkWell(
-                          onTap: () => _selectDate(context),
+                          onTap: () => _selectYear(context),
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -169,12 +315,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                     size: 20),
                                 const SizedBox(width: 12),
                                 Text(
-                                  _selectedDob == null
-                                      ? 'Select Date'
-                                      : DateFormat('MMMM dd, yyyy')
-                                          .format(_selectedDob!),
+                                  _selectedYear == null
+                                      ? 'Select Year'
+                                      : _selectedYear.toString(),
                                   style: TextStyle(
-                                    color: _selectedDob == null
+                                    color: _selectedYear == null
                                         ? Colors.white54
                                         : Colors.white,
                                     fontSize: 16,
@@ -227,15 +372,30 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 
-  Widget _buildLabel(String label) {
+  Widget _buildLabel(String mainText, String bracketText) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, left: 4),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.9),
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: mainText,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            TextSpan(
+              text: ' ($bracketText)',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -325,6 +485,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               'This info never leaves your device. It is used only for local calculations.',
               style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
+          ),
+          IconButton(
+            onPressed: _showDataUsageInfo,
+            icon: const Icon(Icons.info_outline,
+                size: 18, color: AppTheme.healthGreen),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            tooltip: 'Where is it used?',
           ),
         ],
       ),

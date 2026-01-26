@@ -1,5 +1,22 @@
 # Changelog - Sehat Locker
 
+## [1.9.1] - 2026-01-26
+
+### Improved
+- **Profile Setup Privacy**: Moved the "All data stays local on your device" notice to a new line for better readability and emphasis.
+- **Data Collection Minimization**: Simplified age collection to only require **Year of Birth** instead of a full date, enhancing user privacy while maintaining accuracy for medical reference ranges.
+- **UI Refinement**: Styled instructional text in input labels (e.g., "(Optional)") with italics to distinguish them from primary field labels.
+
+## [1.9.0] - 2026-01-26
+
+### Added
+- **Profile Customization**: Added a "Randomize" button to the Profile Setup screen to generate Xbox Live-style display names.
+- **Privacy Transparency**: Implemented a "Local Calculations" information popup that explains how profile data (age, sex) is used for medical reference ranges and BMI calculations without leaving the device.
+
+### Improved
+- **Profile UI**: Simplified the "Personalize Your Experience" header to a single line and adjusted typography for better visual balance.
+- **Display Name Refinement**: Moved the "Randomize" button to the same line as the name input field for a more compact and intuitive layout.
+
 ## [1.8.9] - 2026-01-26
 
 ### Improved
