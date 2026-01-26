@@ -1,5 +1,13 @@
 # Changelog - Sehat Locker
 
+## [1.8.6] - 2026-01-26
+
+### Improved
+- **Settings Screen Navigation**: Refactored the settings screen from a single long list into a clean, menu-driven interface to reduce information overload.
+  - Organized settings into 8 logical categories: Privacy & Security, Storage, Recording, Desktop Notifications, AI Model, Accessibility & Shortcuts, Desktop Experience, and About.
+  - Implemented a dynamic header with back navigation for seamless category switching.
+  - Enhanced information hierarchy while maintaining the Liquid Glass design aesthetic.
+
 ## [1.8.5] - 2026-01-26
 
 ### Improved

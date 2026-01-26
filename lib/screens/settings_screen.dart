@@ -28,6 +28,17 @@ import 'ai_diagnostics_screen.dart';
 import 'model_license_screen.dart';
 import '../services/keyboard_shortcut_service.dart';
 
+enum SettingCategory {
+  privacy,
+  storage,
+  recording,
+  notifications,
+  aiModel,
+  accessibility,
+  desktop,
+  about,
+}
+
 /// Settings Screen - App preferences
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -43,6 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _pointerCount = 0;
   double? _gestureStartY;
   bool _gestureTriggered = false;
+  SettingCategory? _selectedCategory;
 
   @override
   void initState() {
@@ -520,469 +532,272 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: DesignConstants.titleTopPadding),
-                Text(
-                  'Settings',
-                  style: theme.textTheme.displayMedium,
+                Row(
+                  children: [
+                    if (_selectedCategory != null) ...[
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                        onPressed: () => setState(() => _selectedCategory = null),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Text(
+                      _selectedCategory == null
+                          ? 'Settings'
+                          : _getCategoryTitle(_selectedCategory!),
+                      style: theme.textTheme.displayMedium,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Privacy-first health locker',
+                  _selectedCategory == null
+                      ? 'Privacy-first health locker'
+                      : _getCategorySubtitle(_selectedCategory!),
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: DesignConstants.sectionSpacing),
 
-                // Privacy Section
-                _buildSectionHeader(context, 'Privacy & Security'),
-                GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.dashboard_outlined,
-                        title: 'Security Dashboard',
-                        subtitle: 'Overview of your security status',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const SecurityDashboardScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.lock_outline,
-                        title: 'App Lock',
-                        subtitle: 'Require authentication to open',
-                        trailing: Switch(
-                          value: true,
-                          onChanged: (value) {},
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
-                        ),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.pin_outlined,
-                        title: 'PIN & Recovery',
-                        subtitle: 'Change PIN or security question',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => PinUnlockScreen(
-                                title: 'Verify PIN',
-                                subtitle: 'Unlock to update PIN settings',
-                                onAuthenticated: () {
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(
-                                      builder: (context) => PinSetupScreen(
-                                        mode: PinSetupMode.change,
-                                        onComplete: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                },
-                                onCancel: () {
-                                  Navigator.of(context).pop();
-                                },
+                if (_selectedCategory == null) ...[
+                  _buildMenu(context),
+                ],
+
+                // Privacy Section (Category Only)
+                if (_selectedCategory == SettingCategory.privacy) ...[
+                  _buildSectionHeader(context, 'Privacy & Security'),
+                  GlassCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.dashboard_outlined,
+                          title: 'Security Dashboard',
+                          subtitle: 'Overview of your security status',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SecurityDashboardScreen(),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.fingerprint,
-                        title: 'Biometric Security',
-                        subtitle: 'Manage access controls',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const BiometricSettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.timer_outlined,
-                        title: 'Session Timeout',
-                        subtitle:
-                            '${storageService.getAppSettings().sessionTimeoutMinutes} minutes',
-                        onTap: () => _showTimeoutDialog(context),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.enhanced_encryption_outlined,
-                        title: 'Data Encryption',
-                        subtitle: 'AES-256 encryption enabled',
-                        trailing: const Icon(
-                          Icons.check_circle,
-                          color: AppTheme.healthGreen,
-                        ),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.history,
-                        title: 'Recording History',
-                        subtitle: 'View audit logs of all recordings',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const RecordingHistoryScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.bug_report_outlined,
-                        title: 'Report an Issue',
-                        subtitle: 'Anonymized issue reporting',
-                        onTap: () => _showIssueReportingDialog(context),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: DesignConstants.sectionSpacing),
-
-                // Storage Section
-                _buildSectionHeader(context, 'Storage'),
-                _buildStorageUsageIndicator(context),
-                const SizedBox(height: 16),
-                GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.delete_sweep_outlined,
-                        title: 'Clear expired recordings',
-                        subtitle:
-                            'Remove audio older than ${storageService.getAppSettings().autoDeleteRecordingsDays} days',
-                        onTap: _handleClearExpiredRecordings,
-                        showChevron: false,
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.compress,
-                        title: 'Compress old recordings',
-                        subtitle: 'Reduce audio quality after 90 days',
-                        onTap: _handleCompressOldRecordings,
-                        showChevron: false,
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.auto_delete_outlined,
-                        title: 'Auto-delete Original',
-                        subtitle: 'Delete images after extraction',
-                        trailing: Switch(
-                          value: storageService.autoDeleteOriginal,
-                          onChanged: (value) async {
-                            await storageService.setAutoDeleteOriginal(value);
-                            setState(() {});
+                            );
                           },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
                         ),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.backup_outlined,
-                        title: 'Export Data',
-                        subtitle: 'Create encrypted backup',
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.delete_outline,
-                        title: 'Clear All Data',
-                        subtitle: 'Permanently delete all records',
-                        isDestructive: true,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: DesignConstants.sectionSpacing),
-
-                // Recording Section
-                _buildSectionHeader(context, 'Recording'),
-                GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.timer_outlined,
-                        title: 'Auto-stop Timer',
-                        subtitle:
-                            'Stop after ${storageService.getAppSettings().autoStopRecordingMinutes} minutes',
-                        onTap: () async {
-                          await _showAutoStopDurationDialog(context);
-                          setState(() {});
-                        },
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.auto_delete_outlined,
-                        title: 'Auto-delete Recordings',
-                        subtitle:
-                            'Delete after ${storageService.getAppSettings().autoDeleteRecordingsDays} days',
-                        onTap: () => _showAutoDeleteDialog(context),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.battery_alert_outlined,
-                        title: 'Battery Warnings',
-                        subtitle: 'Alert when battery is low',
-                        trailing: Switch(
-                          value: storageService
-                              .getAppSettings()
-                              .enableBatteryWarnings,
-                          onChanged: (value) async {
-                            final settings = storageService.getAppSettings();
-                            settings.enableBatteryWarnings = value;
-                            await storageService.saveAppSettings(settings);
-                            setState(() {});
-                          },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: DesignConstants.sectionSpacing),
-
-                // Desktop Notifications Section
-                _buildSectionHeader(context, 'Desktop Notifications'),
-                GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.notifications_active_outlined,
-                        title: 'Enable Notifications',
-                        subtitle: 'Receive desktop alerts',
-                        trailing: Switch(
-                          value: storageService
-                              .getAppSettings()
-                              .notificationsEnabled,
-                          onChanged: (value) async {
-                            final settings = storageService.getAppSettings();
-                            settings.notificationsEnabled = value;
-                            await storageService.saveAppSettings(settings);
-                            setState(() {});
-                          },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
-                        ),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.privacy_tip_outlined,
-                        title: 'Mask Sensitive Notifications',
-                        subtitle: 'Hide content in notification body',
-                        trailing: Switch(
-                          value: storageService
-                              .getAppSettings()
-                              .enhancedPrivacySettings
-                              .maskNotifications,
-                          onChanged: (value) async {
-                            final settings = storageService.getAppSettings();
-                            settings.enhancedPrivacySettings.maskNotifications =
-                                value;
-                            await storageService.saveAppSettings(settings);
-                            setState(() {});
-                          },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
-                        ),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.accessibility_new_outlined,
-                        title: 'Screen Reader Announcements',
-                        subtitle: 'Announce notifications for accessibility',
-                        trailing: Switch(
-                          value: storageService
-                              .getAppSettings()
-                              .accessibilityEnabled,
-                          onChanged: (value) async {
-                            final settings = storageService.getAppSettings();
-                            settings.accessibilityEnabled = value;
-                            await storageService.saveAppSettings(settings);
-                            setState(() {});
-                          },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: DesignConstants.sectionSpacing),
-
-                // AI Section
-                _buildSectionHeader(context, 'AI Model'),
-                GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.psychology_outlined,
-                        title: 'Local LLM',
-                        subtitle: _getSelectedModelName(),
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ModelSelectionScreen(),
-                            ),
-                          );
-                          if (mounted) {
-                            setState(() {});
-                          }
-                        },
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.memory_outlined,
-                        title: 'Memory Management',
-                        subtitle:
-                            storageService.getAppSettings().unloadOnLowMemory
-                                ? 'Auto-unload enabled'
-                                : 'Always keep in memory',
-                        trailing: Switch(
-                          value:
-                              storageService.getAppSettings().unloadOnLowMemory,
-                          onChanged: (value) async {
-                            final settings = storageService.getAppSettings();
-                            settings.unloadOnLowMemory = value;
-                            await storageService.saveAppSettings(settings);
-                            setState(() {});
-                          },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
-                        ),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.timer_outlined,
-                        title: 'Retention Policy',
-                        subtitle: storageService
-                                    .getAppSettings()
-                                    .modelRetentionMinutes ==
-                                0
-                            ? 'Never unload'
-                            : 'Unload after ${storageService.getAppSettings().modelRetentionMinutes}m idle',
-                        onTap: () => _showRetentionPolicyDialog(context),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.history_outlined,
-                        title: 'Conversation Memory Depth',
-                        subtitle:
-                            '${storageService.getAppSettings().aiMaxMessages ?? 20} messages retained',
-                        onTap: () => _showMemoryDepthDialog(context),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.compress_outlined,
-                        title: 'Context Token Window',
-                        subtitle:
-                            '${storageService.getAppSettings().aiMaxTokens ?? 2048} tokens per prompt',
-                        onTap: () => _showMemoryWindowDialog(context),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.download_outlined,
-                        title: 'Download Model',
-                        subtitle: 'Get AI model for offline use',
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.update_outlined,
-                        title: 'Check for Model Updates',
-                        subtitle: 'Verify integrity and version compatibility',
-                        onTap: () => _handleModelUpdateCheck(context),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.healing_outlined,
-                        title: 'Wellness Language',
-                        subtitle: 'Use person-first language',
-                        trailing: Switch(
-                          value: storageService
-                              .getAppSettings()
-                              .enableWellnessLanguageChecks,
-                          onChanged: (value) async {
-                            final settings = storageService.getAppSettings();
-                            settings.enableWellnessLanguageChecks = value;
-                            await storageService.saveAppSettings(settings);
-                            setState(() {});
-                          },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
-                        ),
-                      ),
-                      if (storageService
-                          .getAppSettings()
-                          .enableWellnessLanguageChecks) ...[
                         _buildDivider(context),
                         _buildSettingsItem(
                           context,
-                          icon: Icons.developer_mode,
-                          title: 'Debug Visualization',
-                          subtitle: 'Show replacement metrics',
+                          icon: Icons.lock_outline,
+                          title: 'App Lock',
+                          subtitle: 'Require authentication to open',
+                          trailing: Switch(
+                            value: true,
+                            onChanged: (value) {},
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.pin_outlined,
+                          title: 'PIN & Recovery',
+                          subtitle: 'Change PIN or security question',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => PinUnlockScreen(
+                                  title: 'Verify PIN',
+                                  subtitle: 'Unlock to update PIN settings',
+                                  onAuthenticated: () {
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (context) => PinSetupScreen(
+                                          mode: PinSetupMode.change,
+                                          onComplete: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  onCancel: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.fingerprint,
+                          title: 'Biometric Security',
+                          subtitle: 'Manage access controls',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const BiometricSettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.timer_outlined,
+                          title: 'Session Timeout',
+                          subtitle:
+                              '${storageService.getAppSettings().sessionTimeoutMinutes} minutes',
+                          onTap: () => _showTimeoutDialog(context),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.enhanced_encryption_outlined,
+                          title: 'Data Encryption',
+                          subtitle: 'AES-256 encryption enabled',
+                          trailing: const Icon(
+                            Icons.check_circle,
+                            color: AppTheme.healthGreen,
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.history,
+                          title: 'Recording History',
+                          subtitle: 'View audit logs of all recordings',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const RecordingHistoryScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.bug_report_outlined,
+                          title: 'Report an Issue',
+                          subtitle: 'Anonymized issue reporting',
+                          onTap: () => _showIssueReportingDialog(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Storage Section (Category Only)
+                if (_selectedCategory == SettingCategory.storage) ...[
+                  _buildSectionHeader(context, 'Storage'),
+                  _buildStorageUsageIndicator(context),
+                  const SizedBox(height: 16),
+                  GlassCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.delete_sweep_outlined,
+                          title: 'Clear expired recordings',
+                          subtitle:
+                              'Remove audio older than ${storageService.getAppSettings().autoDeleteRecordingsDays} days',
+                          onTap: _handleClearExpiredRecordings,
+                          showChevron: false,
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.compress,
+                          title: 'Compress old recordings',
+                          subtitle: 'Reduce audio quality after 90 days',
+                          onTap: _handleCompressOldRecordings,
+                          showChevron: false,
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.auto_delete_outlined,
+                          title: 'Auto-delete Original',
+                          subtitle: 'Delete images after extraction',
+                          trailing: Switch(
+                            value: storageService.autoDeleteOriginal,
+                            onChanged: (value) async {
+                              await storageService.setAutoDeleteOriginal(value);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.backup_outlined,
+                          title: 'Export Data',
+                          subtitle: 'Create encrypted backup',
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.delete_outline,
+                          title: 'Clear All Data',
+                          subtitle: 'Permanently delete all records',
+                          isDestructive: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Recording Section (Category Only)
+                if (_selectedCategory == SettingCategory.recording) ...[
+                  _buildSectionHeader(context, 'Recording'),
+                  GlassCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.timer_outlined,
+                          title: 'Auto-stop Timer',
+                          subtitle:
+                              'Stop after ${storageService.getAppSettings().autoStopRecordingMinutes} minutes',
+                          onTap: () async {
+                            await _showAutoStopDurationDialog(context);
+                            setState(() {});
+                          },
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.auto_delete_outlined,
+                          title: 'Auto-delete Recordings',
+                          subtitle:
+                              'Delete after ${storageService.getAppSettings().autoDeleteRecordingsDays} days',
+                          onTap: () => _showAutoDeleteDialog(context),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.battery_alert_outlined,
+                          title: 'Battery Warnings',
+                          subtitle: 'Alert when battery is low',
                           trailing: Switch(
                             value: storageService
                                 .getAppSettings()
-                                .showWellnessDebugInfo,
+                                .enableBatteryWarnings,
                             onChanged: (value) async {
                               final settings = storageService.getAppSettings();
-                              settings.showWellnessDebugInfo = value;
+                              settings.enableBatteryWarnings = value;
                               await storageService.saveAppSettings(settings);
                               setState(() {});
                             },
@@ -992,130 +807,352 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                       ],
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.tune_outlined,
-                        title: 'Advanced Generation Controls',
-                        subtitle: 'Fine-tune AI output parameters',
-                        trailing: Switch(
-                          value: storageService
-                              .getAppSettings()
-                              .advancedAiSettingsEnabled,
-                          onChanged: (value) async {
-                            final settings = storageService.getAppSettings();
-                            settings.advancedAiSettingsEnabled = value;
-                            await storageService.saveAppSettings(settings);
-                            // Also update the service
-                            GenerationParametersService()
-                                .toggleAdvancedSettings(value);
-                            setState(() {});
-                          },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
-                        ),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.analytics_outlined,
-                        title: 'AI Usage Analytics',
-                        subtitle: 'Local performance & usage metrics',
-                        trailing: Switch(
-                          value:
-                              storageService.getAppSettings().enableAiAnalytics,
-                          onChanged: (value) async {
-                            final settings = storageService.getAppSettings();
-                            settings.enableAiAnalytics = value;
-                            await storageService.saveAppSettings(settings);
-                            setState(() {});
-                          },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
-                        ),
-                      ),
-                      if (storageService
-                          .getAppSettings()
-                          .enableAiAnalytics) ...[
-                        _buildDivider(context),
-                        _buildSettingsItem(
-                          context,
-                          icon: Icons.dashboard_customize_outlined,
-                          title: 'AI Diagnostics Dashboard',
-                          subtitle: 'View performance charts & logs',
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const AIDiagnosticsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                const ModelInfoPanel(compact: true),
-
-                if (storageService
-                    .getAppSettings()
-                    .advancedAiSettingsEnabled) ...[
-                  const SizedBox(height: 16),
-                  const GenerationControls(),
                 ],
 
                 const SizedBox(height: DesignConstants.sectionSpacing),
 
-                // Accessibility & Shortcuts Section
-                _buildSectionHeader(context, 'Accessibility & Shortcuts'),
-                GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.keyboard_outlined,
-                        title: 'Keyboard Shortcuts',
-                        subtitle: 'Enable desktop shortcuts (Cmd/Ctrl + /)',
-                        trailing: Switch(
-                          value: storageService
-                              .getAppSettings()
-                              .enableKeyboardShortcuts,
-                          onChanged: (value) async {
-                            final settings = storageService.getAppSettings();
-                            settings.enableKeyboardShortcuts = value;
-                            await storageService.saveAppSettings(settings);
-                            setState(() {});
-                          },
-                          activeTrackColor:
-                              AppTheme.accentTeal.withValues(alpha: 0.5),
-                          activeThumbColor: AppTheme.accentTeal,
+                // Notifications Section (Category Only)
+                if (_selectedCategory == SettingCategory.notifications) ...[
+                  _buildSectionHeader(context, 'Desktop Notifications'),
+                  GlassCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.notifications_active_outlined,
+                          title: 'Enable Notifications',
+                          subtitle: 'Receive desktop alerts',
+                          trailing: Switch(
+                            value: storageService
+                                .getAppSettings()
+                                .notificationsEnabled,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.notificationsEnabled = value;
+                              await storageService.saveAppSettings(settings);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
                         ),
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.info_outline,
-                        title: 'Shortcut Cheat Sheet',
-                        subtitle: 'View all available shortcuts',
-                        onTap: () {
-                          // Trigger the cheat sheet from the service
-                          KeyboardShortcutService()
-                              .executeAction('toggle_cheat_sheet');
-                        },
-                      ),
-                    ],
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.privacy_tip_outlined,
+                          title: 'Mask Sensitive Notifications',
+                          subtitle: 'Hide content in notification body',
+                          trailing: Switch(
+                            value: storageService
+                                .getAppSettings()
+                                .enhancedPrivacySettings
+                                .maskNotifications,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.enhancedPrivacySettings
+                                  .maskNotifications = value;
+                              await storageService.saveAppSettings(settings);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.accessibility_new_outlined,
+                          title: 'Screen Reader Announcements',
+                          subtitle: 'Announce notifications for accessibility',
+                          trailing: Switch(
+                            value: storageService
+                                .getAppSettings()
+                                .accessibilityEnabled,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.accessibilityEnabled = value;
+                              await storageService.saveAppSettings(settings);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
 
-                const SizedBox(height: DesignConstants.sectionSpacing),
+                // AI Model Section (Category Only)
+                if (_selectedCategory == SettingCategory.aiModel) ...[
+                  _buildSectionHeader(context, 'AI Model'),
+                  GlassCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.psychology_outlined,
+                          title: 'Local LLM',
+                          subtitle: _getSelectedModelName(),
+                          onTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ModelSelectionScreen(),
+                              ),
+                            );
+                            if (mounted) {
+                              setState(() {});
+                            }
+                          },
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.memory_outlined,
+                          title: 'Memory Management',
+                          subtitle:
+                              storageService.getAppSettings().unloadOnLowMemory
+                                  ? 'Auto-unload enabled'
+                                  : 'Always keep in memory',
+                          trailing: Switch(
+                            value: storageService
+                                .getAppSettings()
+                                .unloadOnLowMemory,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.unloadOnLowMemory = value;
+                              await storageService.saveAppSettings(settings);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.timer_outlined,
+                          title: 'Retention Policy',
+                          subtitle: storageService
+                                      .getAppSettings()
+                                      .modelRetentionMinutes ==
+                                  0
+                              ? 'Never unload'
+                              : 'Unload after ${storageService.getAppSettings().modelRetentionMinutes}m idle',
+                          onTap: () => _showRetentionPolicyDialog(context),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.history_outlined,
+                          title: 'Conversation Memory Depth',
+                          subtitle:
+                              '${storageService.getAppSettings().aiMaxMessages ?? 20} messages retained',
+                          onTap: () => _showMemoryDepthDialog(context),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.compress_outlined,
+                          title: 'Context Token Window',
+                          subtitle:
+                              '${storageService.getAppSettings().aiMaxTokens ?? 2048} tokens per prompt',
+                          onTap: () => _showMemoryWindowDialog(context),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.download_outlined,
+                          title: 'Download Model',
+                          subtitle: 'Get AI model for offline use',
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.update_outlined,
+                          title: 'Check for Model Updates',
+                          subtitle:
+                              'Verify integrity and version compatibility',
+                          onTap: () => _handleModelUpdateCheck(context),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.healing_outlined,
+                          title: 'Wellness Language',
+                          subtitle: 'Use person-first language',
+                          trailing: Switch(
+                            value: storageService
+                                .getAppSettings()
+                                .enableWellnessLanguageChecks,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.enableWellnessLanguageChecks = value;
+                              await storageService.saveAppSettings(settings);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                        if (storageService
+                            .getAppSettings()
+                            .enableWellnessLanguageChecks) ...[
+                          _buildDivider(context),
+                          _buildSettingsItem(
+                            context,
+                            icon: Icons.developer_mode,
+                            title: 'Debug Visualization',
+                            subtitle: 'Show replacement metrics',
+                            trailing: Switch(
+                              value: storageService
+                                  .getAppSettings()
+                                  .showWellnessDebugInfo,
+                              onChanged: (value) async {
+                                final settings =
+                                    storageService.getAppSettings();
+                                settings.showWellnessDebugInfo = value;
+                                await storageService.saveAppSettings(settings);
+                                setState(() {});
+                              },
+                              activeTrackColor:
+                                  AppTheme.accentTeal.withValues(alpha: 0.5),
+                              activeThumbColor: AppTheme.accentTeal,
+                            ),
+                          ),
+                        ],
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.tune_outlined,
+                          title: 'Advanced Generation Controls',
+                          subtitle: 'Fine-tune AI output parameters',
+                          trailing: Switch(
+                            value: storageService
+                                .getAppSettings()
+                                .advancedAiSettingsEnabled,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.advancedAiSettingsEnabled = value;
+                              await storageService.saveAppSettings(settings);
+                              GenerationParametersService()
+                                  .toggleAdvancedSettings(value);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.analytics_outlined,
+                          title: 'AI Usage Analytics',
+                          subtitle: 'Local performance & usage metrics',
+                          trailing: Switch(
+                            value: storageService
+                                .getAppSettings()
+                                .enableAiAnalytics,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.enableAiAnalytics = value;
+                              await storageService.saveAppSettings(settings);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                        if (storageService
+                            .getAppSettings()
+                            .enableAiAnalytics) ...[
+                          _buildDivider(context),
+                          _buildSettingsItem(
+                            context,
+                            icon: Icons.dashboard_customize_outlined,
+                            title: 'AI Diagnostics Dashboard',
+                            subtitle: 'View performance charts & logs',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AIDiagnosticsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const ModelInfoPanel(compact: true),
+                  if (storageService
+                      .getAppSettings()
+                      .advancedAiSettingsEnabled) ...[
+                    const SizedBox(height: 16),
+                    const GenerationControls(),
+                  ],
+                ],
 
-                // Desktop Experience Section
-                if (!kIsWeb &&
+                // Accessibility Section (Category Only)
+                if (_selectedCategory == SettingCategory.accessibility) ...[
+                  _buildSectionHeader(context, 'Accessibility & Shortcuts'),
+                  GlassCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.keyboard_outlined,
+                          title: 'Keyboard Shortcuts',
+                          subtitle: 'Enable desktop shortcuts (Cmd/Ctrl + /)',
+                          trailing: Switch(
+                            value: storageService
+                                .getAppSettings()
+                                .enableKeyboardShortcuts,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.enableKeyboardShortcuts = value;
+                              await storageService.saveAppSettings(settings);
+                              setState(() {});
+                            },
+                            activeTrackColor:
+                                AppTheme.accentTeal.withValues(alpha: 0.5),
+                            activeThumbColor: AppTheme.accentTeal,
+                          ),
+                        ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.info_outline,
+                          title: 'Shortcut Cheat Sheet',
+                          subtitle: 'View all available shortcuts',
+                          onTap: () {
+                            KeyboardShortcutService()
+                                .executeAction('toggle_cheat_sheet');
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Desktop Experience Section (Category Only)
+                if (_selectedCategory == SettingCategory.desktop &&
+                    !kIsWeb &&
                     (Platform.isMacOS ||
                         Platform.isWindows ||
                         Platform.isLinux)) ...[
@@ -1161,71 +1198,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: DesignConstants.sectionSpacing),
                 ],
 
-                // About Section
-                _buildSectionHeader(context, 'About'),
-                GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.info_outline,
-                        title: 'Version',
-                        subtitle: '1.0.0',
-                        showChevron: false,
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.description_outlined,
-                        title: 'Privacy Policy',
-                        subtitle: 'Your data never leaves your device',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const PrivacyManifestScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      _buildDivider(context),
-                      _buildSettingsItem(
-                        context,
-                        icon: Icons.gavel_outlined,
-                        title: 'Model Licenses',
-                        subtitle: 'Open-source and usage terms',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const ModelLicenseScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      if (kDebugMode) ...[
+                // About Section (Category Only)
+                if (_selectedCategory == SettingCategory.about) ...[
+                  _buildSectionHeader(context, 'About'),
+                  GlassCard(
+                    padding: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.info_outline,
+                          title: 'Version',
+                          subtitle: '1.0.0',
+                          showChevron: false,
+                        ),
                         _buildDivider(context),
                         _buildSettingsItem(
                           context,
-                          icon: Icons.fact_check_outlined,
-                          title: 'Compliance Checklist',
-                          subtitle: 'Review regulatory compliance',
+                          icon: Icons.description_outlined,
+                          title: 'Privacy Policy',
+                          subtitle: 'Your data never leaves your device',
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    const ComplianceChecklistScreen(),
+                                    const PrivacyManifestScreen(),
                               ),
                             );
                           },
                         ),
+                        _buildDivider(context),
+                        _buildSettingsItem(
+                          context,
+                          icon: Icons.gavel_outlined,
+                          title: 'Model Licenses',
+                          subtitle: 'Open-source and usage terms',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ModelLicenseScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        if (kDebugMode) ...[
+                          _buildDivider(context),
+                          _buildSettingsItem(
+                            context,
+                            icon: Icons.fact_check_outlined,
+                            title: 'Compliance Checklist',
+                            subtitle: 'Review regulatory compliance',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ComplianceChecklistScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
+                ],
 
                 const SizedBox(height: 100), // Bottom padding for nav bar
               ],
@@ -1234,6 +1273,122 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildMenu(BuildContext context) {
+    final theme = Theme.of(context);
+    final categories = [
+      (
+        category: SettingCategory.privacy,
+        title: 'Privacy & Security',
+        icon: Icons.security,
+        subtitle: 'App lock, biometric, encryption'
+      ),
+      (
+        category: SettingCategory.storage,
+        title: 'Storage',
+        icon: Icons.storage,
+        subtitle: 'Usage, cleanup, backup'
+      ),
+      (
+        category: SettingCategory.recording,
+        title: 'Recording',
+        icon: Icons.mic,
+        subtitle: 'Auto-stop, retention, alerts'
+      ),
+      (
+        category: SettingCategory.notifications,
+        title: 'Desktop Notifications',
+        icon: Icons.notifications,
+        subtitle: 'Alerts, masking, accessibility'
+      ),
+      (
+        category: SettingCategory.aiModel,
+        title: 'AI Model',
+        icon: Icons.psychology,
+        subtitle: 'Local LLM, memory, generation'
+      ),
+      (
+        category: SettingCategory.accessibility,
+        title: 'Accessibility & Shortcuts',
+        icon: Icons.accessibility_new,
+        subtitle: 'Hotkeys, screen reader'
+      ),
+      if (!kIsWeb &&
+          (Platform.isMacOS || Platform.isWindows || Platform.isLinux))
+        (
+          category: SettingCategory.desktop,
+          title: 'Desktop Experience',
+          icon: Icons.desktop_windows,
+          subtitle: 'Optimization, window settings'
+        ),
+      (
+        category: SettingCategory.about,
+        title: 'About',
+        icon: Icons.info_outline,
+        subtitle: 'Version, licenses, privacy manifest'
+      ),
+    ];
+
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (int i = 0; i < categories.length; i++) ...[
+            _buildSettingsItem(
+              context,
+              icon: categories[i].icon,
+              title: categories[i].title,
+              subtitle: categories[i].subtitle,
+              onTap: () => setState(() => _selectedCategory = categories[i].category),
+            ),
+            if (i < categories.length - 1) _buildDivider(context),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _getCategoryTitle(SettingCategory category) {
+    switch (category) {
+      case SettingCategory.privacy:
+        return 'Privacy & Security';
+      case SettingCategory.storage:
+        return 'Storage';
+      case SettingCategory.recording:
+        return 'Recording';
+      case SettingCategory.notifications:
+        return 'Desktop Notifications';
+      case SettingCategory.aiModel:
+        return 'AI Model';
+      case SettingCategory.accessibility:
+        return 'Accessibility & Shortcuts';
+      case SettingCategory.desktop:
+        return 'Desktop Experience';
+      case SettingCategory.about:
+        return 'About';
+    }
+  }
+
+  String _getCategorySubtitle(SettingCategory category) {
+    switch (category) {
+      case SettingCategory.privacy:
+        return 'Manage your security preferences';
+      case SettingCategory.storage:
+        return 'Monitor and optimize storage usage';
+      case SettingCategory.recording:
+        return 'Configure audio recording behavior';
+      case SettingCategory.notifications:
+        return 'Customize desktop alerts and privacy';
+      case SettingCategory.aiModel:
+        return 'Fine-tune your local AI experience';
+      case SettingCategory.accessibility:
+        return 'Shortcuts and assistive features';
+      case SettingCategory.desktop:
+        return 'Optimize for your operating system';
+      case SettingCategory.about:
+        return 'Version and legal information';
+    }
   }
 
   Widget _buildStorageUsageIndicator(BuildContext context) {
