@@ -125,3 +125,6 @@ GoogleService-Info.plist
 *.symbols
 *.app.dSYM
 *.pdm
+
+# IDE specific rules
+.cursorrules

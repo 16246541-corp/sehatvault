@@ -7,10 +7,10 @@ import '../../services/local_storage_service.dart';
 import '../../services/permission_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/design/glass_button.dart';
+import '../../widgets/design/responsive_center.dart';
 import '../../widgets/onboarding/permission_card.dart';
 
 import '../../services/onboarding_service.dart';
-
 
 /// Data class for permission configuration
 class PermissionData {
@@ -121,7 +121,8 @@ class _PermissionsRequestScreenState extends State<PermissionsRequestScreen>
     // On desktop platforms, permissions work differently and permission_handler
     // may hang. Skip permission checking and auto-complete this step.
     if (_isDesktopPlatform) {
-      debugPrint('PermissionsRequestScreen: Desktop platform detected, skipping permission checks');
+      debugPrint(
+          'PermissionsRequestScreen: Desktop platform detected, skipping permission checks');
       await _completePermissionsSetup();
       return;
     }
@@ -199,8 +200,9 @@ class _PermissionsRequestScreenState extends State<PermissionsRequestScreen>
       switch (permission.id) {
         case 'camera':
           granted = await PermissionService.requestCameraPermission();
-          await _logAnalytics(
-              granted ? 'permission_camera_granted' : 'permission_camera_denied');
+          await _logAnalytics(granted
+              ? 'permission_camera_granted'
+              : 'permission_camera_denied');
           break;
         case 'microphone':
           // Note: We pass context for the existing mic permission flow
@@ -298,7 +300,6 @@ class _PermissionsRequestScreenState extends State<PermissionsRequestScreen>
     }
   }
 
-
   bool get _canContinue {
     // Check if all required permissions are granted
     for (final permission in _permissions) {
@@ -318,7 +319,9 @@ class _PermissionsRequestScreenState extends State<PermissionsRequestScreen>
   }
 
   int get _grantedCount {
-    return _permissions.where((p) => p.status == PermissionStatus.granted).length;
+    return _permissions
+        .where((p) => p.status == PermissionStatus.granted)
+        .length;
   }
 
   @override
@@ -352,60 +355,62 @@ class _PermissionsRequestScreenState extends State<PermissionsRequestScreen>
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: SafeArea(
-            child: Column(
-              children: [
-                // Header
-                _buildHeader(),
+            child: ResponsiveCenter(
+              child: Column(
+                children: [
+                  // Header
+                  _buildHeader(),
 
-                // Scrollable content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
+                  // Scrollable content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
 
-                        // Title
-                        Text(
-                          'App Permissions',
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1.2,
+                          // Title
+                          Text(
+                            'App Permissions',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              height: 1.2,
+                            ),
                           ),
-                        ),
 
-                        const SizedBox(height: 8),
+                          const SizedBox(height: 8),
 
-                        Text(
-                          'Grant permissions to unlock all features',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withValues(alpha: 0.7),
+                          Text(
+                            'Grant permissions to unlock all features',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
                           ),
-                        ),
 
-                        const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                        // Progress indicator
-                        _buildProgressIndicator(),
+                          // Progress indicator
+                          _buildProgressIndicator(),
 
-                        const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                        // Permission cards
-                        ..._buildPermissionCards(),
+                          // Permission cards
+                          ..._buildPermissionCards(),
 
-                        const SizedBox(height: 32),
-                      ],
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                // Bottom action
-                _buildBottomAction(),
-              ],
+                  // Bottom action
+                  _buildBottomAction(),
+                ],
+              ),
             ),
           ),
         ),
@@ -566,7 +571,8 @@ class _PermissionsRequestScreenState extends State<PermissionsRequestScreen>
           status: permission.status,
           isOptional: permission.isOptional,
           isActive: isActive,
-          onGrant: isActive && !_isRequesting ? _requestCurrentPermission : null,
+          onGrant:
+              isActive && !_isRequesting ? _requestCurrentPermission : null,
           onOpenSettings: isActive ? _openSettings : null,
         ),
       );

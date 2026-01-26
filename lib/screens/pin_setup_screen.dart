@@ -4,6 +4,7 @@ import '../services/pin_auth_service.dart';
 import '../widgets/design/glass_card.dart';
 import '../widgets/design/glass_button.dart';
 import '../widgets/design/liquid_glass_background.dart';
+import '../widgets/design/responsive_center.dart';
 import '../utils/design_constants.dart';
 
 enum PinSetupMode { setup, change, reset }
@@ -234,67 +235,69 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
           child: SingleChildScrollView(
             padding:
                 const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (isEmbedded) ...[
-                  const SizedBox(height: DesignConstants.titleTopPadding),
-                  Text(_title, style: theme.textTheme.displayMedium),
-                  const SizedBox(height: 8),
-                  Text(_subtitle, style: theme.textTheme.bodyMedium),
-                  const SizedBox(height: DesignConstants.sectionSpacing),
-                ],
-                GlassCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Step ${_stepIndex + 1} of 3',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildStepContent(context),
-                      if (_error != null) ...[
-                        const SizedBox(height: 12),
+            child: ResponsiveCenter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isEmbedded) ...[
+                    const SizedBox(height: DesignConstants.titleTopPadding),
+                    Text(_title, style: theme.textTheme.displayMedium),
+                    const SizedBox(height: 8),
+                    Text(_subtitle, style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: DesignConstants.sectionSpacing),
+                  ],
+                  GlassCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          _error!,
+                          'Step ${_stepIndex + 1} of 3',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.error,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.7),
                           ),
                         ),
-                      ],
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          TextButton(
-                            onPressed: _isSaving ? null : _back,
-                            child: Text(_stepIndex == 0 ? 'Cancel' : 'Back'),
-                          ),
-                          const Spacer(),
-                          GlassButton(
-                            label: _stepIndex == 2 ? 'Save PIN' : 'Continue',
-                            icon: _stepIndex == 2
-                                ? Icons.lock
-                                : Icons.arrow_forward,
-                            isProminent: true,
-                            onPressed: _isSaving ? null : _next,
+                        const SizedBox(height: 16),
+                        _buildStepContent(context),
+                        if (_error != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _error!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.error,
+                            ),
                           ),
                         ],
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            TextButton(
+                              onPressed: _isSaving ? null : _back,
+                              child: Text(_stepIndex == 0 ? 'Cancel' : 'Back'),
+                            ),
+                            const Spacer(),
+                            GlassButton(
+                              label: _stepIndex == 2 ? 'Save PIN' : 'Continue',
+                              icon: _stepIndex == 2
+                                  ? Icons.lock
+                                  : Icons.arrow_forward,
+                              isProminent: true,
+                              onPressed: _isSaving ? null : _next,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'PINs expire every 90 days. You will be asked to update it.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  const SizedBox(height: 16),
+                  Text(
+                    'PINs expire every 90 days. You will be asked to update it.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -459,146 +462,148 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
           child: SingleChildScrollView(
             padding:
                 const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: DesignConstants.titleTopPadding),
-                Text(widget.title, style: theme.textTheme.displayMedium),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 8),
-                  Text(subtitle, style: theme.textTheme.bodyMedium),
-                ],
-                const SizedBox(height: DesignConstants.sectionSpacing),
-                GlassCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _mode == PinUnlockMode.pin
-                            ? 'Enter PIN'
-                            : 'Recovery Question',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 12),
-                      if (_mode == PinUnlockMode.pin) ...[
-                        TextField(
-                          controller: _pinController,
-                          keyboardType: TextInputType.number,
-                          obscureText: true,
-                          maxLength: 6,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
-                          ],
-                          decoration: const InputDecoration(
-                            labelText: 'PIN',
-                            counterText: '',
-                          ),
+            child: ResponsiveCenter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: DesignConstants.titleTopPadding),
+                  Text(widget.title, style: theme.textTheme.displayMedium),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 8),
+                    Text(subtitle, style: theme.textTheme.bodyMedium),
+                  ],
+                  const SizedBox(height: DesignConstants.sectionSpacing),
+                  GlassCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _mode == PinUnlockMode.pin
+                              ? 'Enter PIN'
+                              : 'Recovery Question',
+                          style: theme.textTheme.titleLarge,
                         ),
-                      ] else ...[
-                        if (_question != null)
-                          Text(
-                            _question!.label,
-                            style: theme.textTheme.bodyMedium,
+                        const SizedBox(height: 12),
+                        if (_mode == PinUnlockMode.pin) ...[
+                          TextField(
+                            controller: _pinController,
+                            keyboardType: TextInputType.number,
+                            obscureText: true,
+                            maxLength: 6,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            decoration: const InputDecoration(
+                              labelText: 'PIN',
+                              counterText: '',
+                            ),
                           ),
-                        if (_question == null)
+                        ] else ...[
+                          if (_question != null)
+                            Text(
+                              _question!.label,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          if (_question == null)
+                            Text(
+                              'Recovery question not set',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _answerController,
+                            decoration: const InputDecoration(
+                              labelText: 'Answer',
+                            ),
+                          ),
+                        ],
+                        if (_error != null) ...[
+                          const SizedBox(height: 12),
                           Text(
-                            'Recovery question not set',
+                            _error!,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.error,
                             ),
                           ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _answerController,
-                          decoration: const InputDecoration(
-                            labelText: 'Answer',
-                          ),
-                        ),
-                      ],
-                      if (_error != null) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          _error!,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.error,
-                          ),
-                        ),
-                      ],
-                      if (lockoutText != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          lockoutText,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          TextButton(
-                            onPressed: _isVerifying
-                                ? null
-                                : () {
-                                    if (_mode == PinUnlockMode.recovery) {
-                                      setState(() {
-                                        _mode = PinUnlockMode.pin;
-                                        _error = null;
-                                      });
-                                      return;
-                                    }
-                                    widget.onCancel?.call();
-                                  },
-                            child: Text(_mode == PinUnlockMode.recovery
-                                ? 'Back'
-                                : 'Cancel'),
-                          ),
-                          const Spacer(),
-                          GlassButton(
-                            label: _mode == PinUnlockMode.pin
-                                ? 'Unlock'
-                                : 'Verify',
-                            icon: _mode == PinUnlockMode.pin
-                                ? Icons.lock_open
-                                : Icons.check,
-                            isProminent: true,
-                            onPressed: _isVerifying
-                                ? null
-                                : (_mode == PinUnlockMode.pin
-                                    ? _verifyPin
-                                    : _verifyRecovery),
+                        ],
+                        if (lockoutText != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            lockoutText,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.7),
+                            ),
                           ),
                         ],
-                      ),
-                      if (_mode == PinUnlockMode.pin) ...[
-                        const SizedBox(height: 12),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _isVerifying
-                                ? null
-                                : () {
-                                    setState(() {
-                                      _mode = PinUnlockMode.recovery;
-                                      _error = null;
-                                    });
-                                  },
-                            child: const Text('Forgot PIN?'),
-                          ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            TextButton(
+                              onPressed: _isVerifying
+                                  ? null
+                                  : () {
+                                      if (_mode == PinUnlockMode.recovery) {
+                                        setState(() {
+                                          _mode = PinUnlockMode.pin;
+                                          _error = null;
+                                        });
+                                        return;
+                                      }
+                                      widget.onCancel?.call();
+                                    },
+                              child: Text(_mode == PinUnlockMode.recovery
+                                  ? 'Back'
+                                  : 'Cancel'),
+                            ),
+                            const Spacer(),
+                            GlassButton(
+                              label: _mode == PinUnlockMode.pin
+                                  ? 'Unlock'
+                                  : 'Verify',
+                              icon: _mode == PinUnlockMode.pin
+                                  ? Icons.lock_open
+                                  : Icons.check,
+                              isProminent: true,
+                              onPressed: _isVerifying
+                                  ? null
+                                  : (_mode == PinUnlockMode.pin
+                                      ? _verifyPin
+                                      : _verifyRecovery),
+                            ),
+                          ],
                         ),
+                        if (_mode == PinUnlockMode.pin) ...[
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _isVerifying
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _mode = PinUnlockMode.recovery;
+                                        _error = null;
+                                      });
+                                    },
+                              child: const Text('Forgot PIN?'),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'PIN access is secured with device encryption.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  const SizedBox(height: 16),
+                  Text(
+                    'PIN access is secured with device encryption.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

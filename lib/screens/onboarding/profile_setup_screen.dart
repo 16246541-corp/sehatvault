@@ -8,6 +8,7 @@ import '../../services/onboarding_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/design/glass_button.dart';
 import '../../widgets/design/glass_card.dart';
+import '../../widgets/design/responsive_center.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -27,7 +28,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final TextEditingController _nameController = TextEditingController();
   String _selectedSex = 'unspecified';
   DateTime? _selectedDob;
-  
+
   final LocalStorageService _storageService = LocalStorageService();
   final AnalyticsService _analyticsService = AnalyticsService();
   final OnboardingService _onboardingService = OnboardingService();
@@ -66,20 +67,23 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   }
 
   Future<void> _saveProfile({bool skipped = false}) async {
-    final profile = skipped 
-        ? UserProfile() 
+    final profile = skipped
+        ? UserProfile()
         : UserProfile(
-            displayName: _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
+            displayName: _nameController.text.trim().isEmpty
+                ? null
+                : _nameController.text.trim(),
             sex: _selectedSex,
             dateOfBirth: _selectedDob,
           );
 
     await _storageService.saveUserProfile(profile);
-    
+
     if (skipped) {
       await _analyticsService.logEvent('profile_skipped');
     } else {
-      if (profile.displayName != null) await _analyticsService.logEvent('profile_name_set');
+      if (profile.displayName != null)
+        await _analyticsService.logEvent('profile_name_set');
       if (_selectedSex != 'unspecified' || _selectedDob != null) {
         await _analyticsService.logEvent('profile_demographics_set');
       }
@@ -105,85 +109,91 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 24),
-                      Text(
-                        'Personalize Your\nExperience',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Providing basic info helps us calibrate lab result ranges for your age and sex. All data stays local on your device.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      
-                      _buildLabel('Display Name (Optional)'),
-                      TextField(
-                        controller: _nameController,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: _inputDecoration('e.g. John Doe'),
-                      ),
-                      
-                      const SizedBox(height: 24),
-                      _buildLabel('Sex (For medical reference ranges)'),
-                      _buildSexSelection(),
-                      
-                      const SizedBox(height: 24),
-                      _buildLabel('Date of Birth'),
-                      InkWell(
-                        onTap: () => _selectDate(context),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          child: ResponsiveCenter(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 24),
+                        Text(
+                          'Personalize Your\nExperience',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 1.2,
                           ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.calendar_today, color: AppTheme.accentTeal.withValues(alpha: 0.7), size: 20),
-                              const SizedBox(width: 12),
-                              Text(
-                                _selectedDob == null 
-                                    ? 'Select Date' 
-                                    : DateFormat('MMMM dd, yyyy').format(_selectedDob!),
-                                style: TextStyle(
-                                  color: _selectedDob == null ? Colors.white54 : Colors.white,
-                                  fontSize: 16,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Providing basic info helps us calibrate lab result ranges for your age and sex. All data stays local on your device.',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        _buildLabel('Display Name (Optional)'),
+                        TextField(
+                          controller: _nameController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: _inputDecoration('e.g. John Doe'),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildLabel('Sex (For medical reference ranges)'),
+                        _buildSexSelection(),
+                        const SizedBox(height: 24),
+                        _buildLabel('Date of Birth'),
+                        InkWell(
+                          onTap: () => _selectDate(context),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.1)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.calendar_today,
+                                    color: AppTheme.accentTeal
+                                        .withValues(alpha: 0.7),
+                                    size: 20),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _selectedDob == null
+                                      ? 'Select Date'
+                                      : DateFormat('MMMM dd, yyyy')
+                                          .format(_selectedDob!),
+                                  style: TextStyle(
+                                    color: _selectedDob == null
+                                        ? Colors.white54
+                                        : Colors.white,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      
-                      const SizedBox(height: 48),
-                      _buildPrivacyNote(),
-                      const SizedBox(height: 32),
-                    ],
+                        const SizedBox(height: 48),
+                        _buildPrivacyNote(),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              _buildBottomAction(),
-            ],
+                _buildBottomAction(),
+              ],
+            ),
           ),
         ),
       ),
@@ -198,7 +208,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           if (widget.onBack != null)
             IconButton(
               onPressed: widget.onBack,
-              icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+              icon:
+                  const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
             )
           else
             const SizedBox(width: 48),
@@ -256,7 +267,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final options = [
       {'id': 'male', 'label': 'Male', 'icon': Icons.male},
       {'id': 'female', 'label': 'Female', 'icon': Icons.female},
-      {'id': 'unspecified', 'label': 'Prefer not to say', 'icon': Icons.remove_circle_outline},
+      {
+        'id': 'unspecified',
+        'label': 'Prefer not to say',
+        'icon': Icons.remove_circle_outline
+      },
     ];
 
     return Wrap(
@@ -281,9 +296,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
           side: BorderSide(
-            color: isSelected ? AppTheme.accentTeal : Colors.white.withValues(alpha: 0.1),
+            color: isSelected
+                ? AppTheme.accentTeal
+                : Colors.white.withValues(alpha: 0.1),
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         );
       }).toList(),
     );
@@ -299,7 +317,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.privacy_tip_outlined, color: AppTheme.healthGreen, size: 20),
+          const Icon(Icons.privacy_tip_outlined,
+              color: AppTheme.healthGreen, size: 20),
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
@@ -319,7 +338,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         children: [
           TextButton(
             onPressed: () => _saveProfile(skipped: true),
-            child: const Text('Skip for Now', style: TextStyle(color: Colors.white60)),
+            child: const Text('Skip for Now',
+                style: TextStyle(color: Colors.white60)),
           ),
           const SizedBox(height: 8),
           SizedBox(

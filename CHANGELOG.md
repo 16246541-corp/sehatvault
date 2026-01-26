@@ -1,5 +1,17 @@
 # Changelog - Sehat Locker
 
+## [1.8.8] - 2026-01-26
+
+### Improved
+- **Desktop Layout Optimization**: Restricted content width and centered UI elements to improve usability on Mac and Windows versions.
+  - Created a reusable `ResponsiveCenter` widget to maintain consistent layout constraints (max width 800px) across desktop platforms.
+  - Optimized the **Settings Screen** to prevent content from spreading too wide on large screens.
+  - Centered and constrained the **Lock Screen** (login flow) for a more focused user experience.
+  - Applied desktop layout optimizations to the entire **Onboarding Flow**, including Welcome Carousel, Privacy & Terms, and Security Setup screens.
+
+### Changed
+- **Repository Hygiene**: Added `.cursorrules` to `.gitignore` to prevent IDE-specific cursor rules from being tracked in version control.
+
 ## [1.8.7] - 2026-01-26
 
 ### Added

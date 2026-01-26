@@ -6,6 +6,7 @@ import '../../utils/theme.dart';
 import '../../services/local_storage_service.dart';
 import '../../widgets/onboarding/page_indicator.dart';
 import '../../widgets/design/glass_button.dart';
+import '../../widgets/design/responsive_center.dart';
 
 /// Welcome carousel model for onboarding pages
 class WelcomePageData {
@@ -221,28 +222,30 @@ class _WelcomeCarouselScreenState extends State<WelcomeCarouselScreen>
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: SafeArea(
-            child: Column(
-              children: [
-                // Header with Skip button
-                _buildHeader(),
+            child: ResponsiveCenter(
+              child: Column(
+                children: [
+                  // Header with Skip button
+                  _buildHeader(),
 
-                // Page content
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: _pages.length,
-                    onPageChanged: (index) {
-                      setState(() => _currentPage = index);
-                    },
-                    itemBuilder: (context, index) {
-                      return _buildPage(_pages[index], index);
-                    },
+                  // Page content
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: _pages.length,
+                      onPageChanged: (index) {
+                        setState(() => _currentPage = index);
+                      },
+                      itemBuilder: (context, index) {
+                        return _buildPage(_pages[index], index);
+                      },
+                    ),
                   ),
-                ),
 
-                // Bottom navigation
-                _buildBottomNav(),
-              ],
+                  // Bottom navigation
+                  _buildBottomNav(),
+                ],
+              ),
             ),
           ),
         ),
@@ -446,7 +449,9 @@ class _WelcomeCarouselScreenState extends State<WelcomeCarouselScreen>
             width: double.infinity,
             child: GlassButton(
               label: isLastPage ? 'Get Started' : 'Continue',
-              icon: isLastPage ? Icons.rocket_launch_rounded : Icons.arrow_forward_rounded,
+              icon: isLastPage
+                  ? Icons.rocket_launch_rounded
+                  : Icons.arrow_forward_rounded,
               onPressed: _nextPage,
               isProminent: true,
               tintColor: AppTheme.accentTeal,

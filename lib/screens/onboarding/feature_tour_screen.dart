@@ -5,6 +5,7 @@ import '../../services/analytics_service.dart';
 import '../../services/onboarding_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/design/glass_button.dart';
+import '../../widgets/design/responsive_center.dart';
 import '../../widgets/education/education_modal.dart';
 
 class FeatureTourScreen extends StatefulWidget {
@@ -37,7 +38,7 @@ class _FeatureTourScreenState extends State<FeatureTourScreen> {
   Future<void> _startTour() async {
     setState(() => _isShowingTour = true);
     await _analyticsService.logEvent('onboarding_tour_started');
-    
+
     for (int i = 0; i < _featureIds.length; i++) {
       if (!mounted) return;
       await EducationModal.show(context, contentId: _featureIds[i]);
@@ -75,55 +76,61 @@ class _FeatureTourScreenState extends State<FeatureTourScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppTheme.accentTeal.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+          child: ResponsiveCenter(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentTeal.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.explore_outlined,
+                                size: 64, color: AppTheme.accentTeal),
                           ),
-                          child: const Icon(Icons.explore_outlined, size: 64, color: AppTheme.accentTeal),
-                        ),
-                        const SizedBox(height: 32),
-                        Text(
-                          'Quick Tour?',
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                          const SizedBox(height: 32),
+                          Text(
+                            'Quick Tour?',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Would you like a quick tour of the key features that make Sehat Locker special? It only takes a minute.',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withValues(alpha: 0.7),
-                            height: 1.5,
+                          const SizedBox(height: 16),
+                          Text(
+                            'Would you like a quick tour of the key features that make Sehat Locker special? It only takes a minute.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white.withValues(alpha: 0.7),
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 48),
-                        _buildFeaturePreview(Icons.storage_rounded, 'Secure Document Vault'),
-                        _buildFeaturePreview(Icons.document_scanner_rounded, 'AI Document Scanning'),
-                        _buildFeaturePreview(Icons.auto_awesome_rounded, 'Health Insights & Trends'),
-                      ],
+                          const SizedBox(height: 48),
+                          _buildFeaturePreview(
+                              Icons.storage_rounded, 'Secure Document Vault'),
+                          _buildFeaturePreview(Icons.document_scanner_rounded,
+                              'AI Document Scanning'),
+                          _buildFeaturePreview(Icons.auto_awesome_rounded,
+                              'Health Insights & Trends'),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              _buildBottomAction(),
-            ],
+                _buildBottomAction(),
+              ],
+            ),
           ),
         ),
       ),
@@ -138,7 +145,8 @@ class _FeatureTourScreenState extends State<FeatureTourScreen> {
           if (widget.onBack != null && !_isShowingTour)
             IconButton(
               onPressed: widget.onBack,
-              icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+              icon:
+                  const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
             )
           else
             const SizedBox(width: 48),
@@ -162,7 +170,8 @@ class _FeatureTourScreenState extends State<FeatureTourScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppTheme.accentTeal.withValues(alpha: 0.7), size: 20),
+          Icon(icon,
+              color: AppTheme.accentTeal.withValues(alpha: 0.7), size: 20),
           const SizedBox(width: 12),
           Text(
             label,
@@ -190,7 +199,8 @@ class _FeatureTourScreenState extends State<FeatureTourScreen> {
           const SizedBox(height: 12),
           TextButton(
             onPressed: _isShowingTour ? null : _skipTour,
-            child: const Text('Skip Tour', style: TextStyle(color: Colors.white60)),
+            child: const Text('Skip Tour',
+                style: TextStyle(color: Colors.white60)),
           ),
         ],
       ),

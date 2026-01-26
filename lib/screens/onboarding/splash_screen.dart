@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/theme.dart';
+import '../../widgets/design/responsive_center.dart';
 import '../../widgets/onboarding/animated_logo.dart';
 import '../../services/onboarding_service.dart';
 
@@ -196,76 +197,78 @@ class _SplashScreenState extends State<SplashScreen>
 
             // Main content
             SafeArea(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Spacer(flex: 2),
+              child: ResponsiveCenter(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Spacer(flex: 2),
 
-                    // Animated Logo
-                    AnimatedLogo(
-                      size: 140,
-                      animate: !_isReducedMotion,
-                      animationDuration: const Duration(milliseconds: 1200),
-                    ),
+                      // Animated Logo
+                      AnimatedLogo(
+                        size: 140,
+                        animate: !_isReducedMotion,
+                        animationDuration: const Duration(milliseconds: 1200),
+                      ),
 
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
-                    // App Name
-                    AnimatedBuilder(
-                      animation: _fadeController,
-                      builder: (context, child) {
-                        return SlideTransition(
-                          position: _titleSlideAnimation,
-                          child: FadeTransition(
-                            opacity: _titleFadeAnimation,
-                            child: Text(
-                              'Sehat Locker',
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 36,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: -0.5,
+                      // App Name
+                      AnimatedBuilder(
+                        animation: _fadeController,
+                        builder: (context, child) {
+                          return SlideTransition(
+                            position: _titleSlideAnimation,
+                            child: FadeTransition(
+                              opacity: _titleFadeAnimation,
+                              child: Text(
+                                'Sehat Locker',
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
 
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                    // Tagline
-                    AnimatedBuilder(
-                      animation: _slideController,
-                      builder: (context, child) {
-                        return SlideTransition(
-                          position: _taglineSlideAnimation,
-                          child: FadeTransition(
-                            opacity: _taglineFadeAnimation,
-                            child: Text(
-                              'Your Health, Your Device',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.white.withValues(alpha: 0.7),
-                                letterSpacing: 1.5,
+                      // Tagline
+                      AnimatedBuilder(
+                        animation: _slideController,
+                        builder: (context, child) {
+                          return SlideTransition(
+                            position: _taglineSlideAnimation,
+                            child: FadeTransition(
+                              opacity: _taglineFadeAnimation,
+                              child: Text(
+                                'Your Health, Your Device',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                  letterSpacing: 1.5,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
 
-                    const Spacer(flex: 2),
+                      const Spacer(flex: 2),
 
-                    // Privacy indicator at bottom
-                    const AnimatedPrivacyShield(
-                      delay: Duration(milliseconds: 1200),
-                    ),
+                      // Privacy indicator at bottom
+                      const AnimatedPrivacyShield(
+                        delay: Duration(milliseconds: 1200),
+                      ),
 
-                    const SizedBox(height: 48),
-                  ],
+                      const SizedBox(height: 48),
+                    ],
+                  ),
                 ),
               ),
             ),

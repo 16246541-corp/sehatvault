@@ -6,6 +6,7 @@ import '../screens/pin_setup_screen.dart'; // For PinUnlockScreen
 import '../utils/theme.dart';
 import '../widgets/design/glass_button.dart';
 import '../widgets/design/liquid_glass_background.dart';
+import '../widgets/design/responsive_center.dart';
 
 class LockScreen extends StatefulWidget {
   const LockScreen({super.key});
@@ -96,71 +97,51 @@ class _LockScreenState extends State<LockScreen>
             ),
 
             // Content
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // App Icon / Logo Placeholder
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentTeal.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppTheme.accentTeal.withOpacity(0.5),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.accentTeal.withOpacity(0.2),
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.lock_outline,
-                      size: 48,
+            ResponsiveCenter(
+              child: SafeArea(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.lock_rounded,
+                      size: 80,
                       color: AppTheme.accentTeal,
                     ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  Text(
-                    'Session Locked',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Unlock to continue',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.white.withOpacity(0.7),
-                        ),
-                  ),
-                  const SizedBox(height: 48),
-
-                  GlassButton(
-                    label: 'Unlock',
-                    icon: Icons.fingerprint,
-                    onPressed: _authenticate,
-                    isProminent: true,
-                  ),
-
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: _showPinUnlock,
-                    child: Text(
-                      'Use PIN',
-                      style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                    const SizedBox(height: 32),
+                    Text(
+                      'Session Locked',
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Unlock to continue',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                    ),
+                    const SizedBox(height: 48),
+                    GlassButton(
+                      label: 'Unlock',
+                      icon: Icons.fingerprint,
+                      onPressed: _authenticate,
+                      isProminent: true,
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: _showPinUnlock,
+                      child: Text(
+                        'Use PIN',
+                        style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            )
           ],
         ),
       ),

@@ -7,6 +7,7 @@ import '../../services/consent_service.dart';
 import '../../services/local_storage_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/design/glass_button.dart';
+import '../../widgets/design/responsive_center.dart';
 import '../../widgets/onboarding/consent_checklist_widget.dart';
 
 /// Consent acceptance screen for Privacy Policy and Terms of Service
@@ -258,104 +259,106 @@ By using Sehat Locker, you agree to use the app for personal health record manag
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: SafeArea(
-            child: Column(
-              children: [
-                // Header
-                _buildHeader(),
+            child: ResponsiveCenter(
+              child: Column(
+                children: [
+                  // Header
+                  _buildHeader(),
 
-                // Scrollable content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
+                  // Scrollable content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
 
-                        // Title
-                        Text(
-                          'Privacy & Terms',
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1.2,
+                          // Title
+                          Text(
+                            'Privacy & Terms',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              height: 1.2,
+                            ),
                           ),
-                        ),
 
-                        const SizedBox(height: 8),
+                          const SizedBox(height: 8),
 
-                        Text(
-                          'Please review and accept our policies to continue',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withValues(alpha: 0.7),
+                          Text(
+                            'Please review and accept our policies to continue',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
                           ),
-                        ),
 
-                        const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                        // Privacy checklist
-                        _buildSectionTitle('Your Privacy Guarantees'),
-                        const SizedBox(height: 16),
-                        const ConsentChecklistWidget(),
+                          // Privacy checklist
+                          _buildSectionTitle('Your Privacy Guarantees'),
+                          const SizedBox(height: 16),
+                          const ConsentChecklistWidget(),
 
-                        const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                        // Privacy Policy Card
-                        _buildConsentCard(
-                          title: 'Privacy Policy',
-                          version: _privacyPolicyVersion,
-                          isAccepted: _privacyPolicyAccepted,
-                          onAcceptChanged: (value) {
-                            setState(() => _privacyPolicyAccepted = value);
-                          },
-                          onViewFull: () => _showFullDocument(
-                            'Privacy Policy',
-                            _privacyPolicyContent,
+                          // Privacy Policy Card
+                          _buildConsentCard(
+                            title: 'Privacy Policy',
+                            version: _privacyPolicyVersion,
+                            isAccepted: _privacyPolicyAccepted,
+                            onAcceptChanged: (value) {
+                              setState(() => _privacyPolicyAccepted = value);
+                            },
+                            onViewFull: () => _showFullDocument(
+                              'Privacy Policy',
+                              _privacyPolicyContent,
+                            ),
+                            summaryPoints: const [
+                              'All data encrypted with AES-256',
+                              'No data collection or sharing',
+                              'You control your health records',
+                              'Delete your data anytime',
+                            ],
                           ),
-                          summaryPoints: const [
-                            'All data encrypted with AES-256',
-                            'No data collection or sharing',
-                            'You control your health records',
-                            'Delete your data anytime',
-                          ],
-                        ),
 
-                        const SizedBox(height: 16),
+                          const SizedBox(height: 16),
 
-                        // Terms of Service Card
-                        _buildConsentCard(
-                          title: 'Terms of Service',
-                          version: _termsOfServiceVersion,
-                          isAccepted: _termsOfServiceAccepted,
-                          onAcceptChanged: (value) {
-                            setState(() => _termsOfServiceAccepted = value);
-                            if (value) {
-                              _logAnalytics('consent_terms_viewed');
-                            }
-                          },
-                          onViewFull: () => _showFullDocument(
-                            'Terms of Service',
-                            _termsOfServiceContent,
+                          // Terms of Service Card
+                          _buildConsentCard(
+                            title: 'Terms of Service',
+                            version: _termsOfServiceVersion,
+                            isAccepted: _termsOfServiceAccepted,
+                            onAcceptChanged: (value) {
+                              setState(() => _termsOfServiceAccepted = value);
+                              if (value) {
+                                _logAnalytics('consent_terms_viewed');
+                              }
+                            },
+                            onViewFull: () => _showFullDocument(
+                              'Terms of Service',
+                              _termsOfServiceContent,
+                            ),
+                            summaryPoints: const [
+                              'For personal health management only',
+                              'Not a substitute for medical advice',
+                              'You own all your data',
+                              'Maintain your own backups',
+                            ],
                           ),
-                          summaryPoints: const [
-                            'For personal health management only',
-                            'Not a substitute for medical advice',
-                            'You own all your data',
-                            'Maintain your own backups',
-                          ],
-                        ),
 
-                        const SizedBox(height: 32),
-                      ],
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                // Bottom action button
-                _buildBottomAction(),
-              ],
+                  // Bottom action button
+                  _buildBottomAction(),
+                ],
+              ),
             ),
           ),
         ),
@@ -542,9 +545,8 @@ By using Sehat Locker, you agree to use the app for personal health record manag
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: isAccepted
-                        ? AppTheme.accentTeal
-                        : Colors.transparent,
+                    color:
+                        isAccepted ? AppTheme.accentTeal : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: isAccepted
@@ -624,7 +626,8 @@ By using Sehat Locker, you agree to use the app for personal health record manag
           SizedBox(
             width: double.infinity,
             child: GlassButton(
-              label: _isSubmitting ? 'Recording Consent...' : 'Accept & Continue',
+              label:
+                  _isSubmitting ? 'Recording Consent...' : 'Accept & Continue',
               icon: _isSubmitting
                   ? Icons.hourglass_top_rounded
                   : Icons.arrow_forward_rounded,

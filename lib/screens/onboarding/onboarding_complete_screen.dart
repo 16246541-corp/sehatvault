@@ -5,6 +5,7 @@ import '../../services/local_storage_service.dart';
 import '../../services/analytics_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/design/glass_button.dart';
+import '../../widgets/design/responsive_center.dart';
 import '../../widgets/onboarding/confetti_animation.dart';
 
 class OnboardingCompleteScreen extends StatefulWidget {
@@ -16,7 +17,8 @@ class OnboardingCompleteScreen extends StatefulWidget {
   });
 
   @override
-  State<OnboardingCompleteScreen> createState() => _OnboardingCompleteScreenState();
+  State<OnboardingCompleteScreen> createState() =>
+      _OnboardingCompleteScreenState();
 }
 
 class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen> {
@@ -42,10 +44,22 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen> {
     final settings = _storageService.getAppSettings();
 
     final checklist = [
-      {'label': 'Privacy policy accepted', 'value': settings.hasAcceptedPrivacyPolicy},
-      {'label': 'Permissions granted', 'value': settings.hasCompletedPermissionsSetup},
-      {'label': 'Security enabled', 'value': settings.hasCompletedSecuritySetup},
-      {'label': 'Profile configured', 'value': settings.hasCompletedProfileSetup},
+      {
+        'label': 'Privacy policy accepted',
+        'value': settings.hasAcceptedPrivacyPolicy
+      },
+      {
+        'label': 'Permissions granted',
+        'value': settings.hasCompletedPermissionsSetup
+      },
+      {
+        'label': 'Security enabled',
+        'value': settings.hasCompletedSecuritySetup
+      },
+      {
+        'label': 'Profile configured',
+        'value': settings.hasCompletedProfileSetup
+      },
       {'label': 'First scan complete', 'value': settings.hasCompletedFirstScan},
     ];
 
@@ -64,67 +78,78 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen> {
             ),
           ),
           child: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 64),
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: AppTheme.healthGreen.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+            child: ResponsiveCenter(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 64),
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color:
+                                  AppTheme.healthGreen.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.verified_rounded,
+                                size: 80, color: AppTheme.healthGreen),
                           ),
-                          child: const Icon(Icons.verified_rounded, size: 80, color: AppTheme.healthGreen),
-                        ),
-                        const SizedBox(height: 32),
-                        Text(
-                          'You\'re All Set,\n$name!',
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1.2,
+                          const SizedBox(height: 32),
+                          Text(
+                            'You\'re All Set,\n$name!',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              height: 1.2,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Your medical vault is ready. Your health data is now secured and stays locally on your device.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white70, fontSize: 16),
-                        ),
-                        const SizedBox(height: 48),
-                        
-                        // Summary Checklist
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Your medical vault is ready. Your health data is now secured and stays locally on your device.',
+                            textAlign: TextAlign.center,
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 16),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Setup Summary',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                              ),
-                              const SizedBox(height: 16),
-                              ...checklist.map((item) => _buildCheckItem(item['label'] as String, item['value'] as bool)),
-                            ],
+                          const SizedBox(height: 48),
+
+                          // Summary Checklist
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.1)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Setup Summary',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18),
+                                ),
+                                const SizedBox(height: 16),
+                                ...checklist.map((item) => _buildCheckItem(
+                                    item['label'] as String,
+                                    item['value'] as bool)),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                _buildBottomAction(),
-              ],
+                  _buildBottomAction(),
+                ],
+              ),
             ),
           ),
         ),
@@ -138,7 +163,9 @@ class _OnboardingCompleteScreenState extends State<OnboardingCompleteScreen> {
       child: Row(
         children: [
           Icon(
-            isChecked ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+            isChecked
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
             color: isChecked ? AppTheme.healthGreen : Colors.white24,
             size: 20,
           ),

@@ -7,6 +7,7 @@ import '../../services/onboarding_service.dart';
 import '../../utils/theme.dart';
 import '../../widgets/design/glass_button.dart';
 import '../../widgets/design/glass_card.dart';
+import '../../widgets/design/responsive_center.dart';
 import '../../widgets/onboarding/security_completion_card.dart';
 import '../pin_setup_screen.dart';
 
@@ -30,7 +31,8 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
   final AnalyticsService _analyticsService = AnalyticsService();
   final OnboardingService _onboardingService = OnboardingService();
 
-  int _currentStep = 0; // 0: Intro, 1: Biometric (if available), 2: PIN Setup, 3: Completed
+  int _currentStep =
+      0; // 0: Intro, 1: Biometric (if available), 2: PIN Setup, 3: Completed
   bool _biometricEnabled = false;
   bool _pinSet = false;
   bool _recoveryQuestionSet = false;
@@ -111,17 +113,19 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _buildStepContent(),
+          child: ResponsiveCenter(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: _buildStepContent(),
+                  ),
                 ),
-              ),
-              _buildBottomAction(),
-            ],
+                _buildBottomAction(),
+              ],
+            ),
           ),
         ),
       ),
@@ -139,12 +143,14 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
               if (_currentStep > 0 && _currentStep < 3)
                 IconButton(
                   onPressed: () => setState(() => _currentStep--),
-                  icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back_ios_rounded,
+                      color: Colors.white),
                 )
               else if (widget.onBack != null && _currentStep == 0)
                 IconButton(
                   onPressed: widget.onBack,
-                  icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back_ios_rounded,
+                      color: Colors.white),
                 )
               else
                 const SizedBox(width: 48),
@@ -164,7 +170,8 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
           LinearProgressIndicator(
             value: progress,
             backgroundColor: Colors.white.withValues(alpha: 0.1),
-            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accentTeal),
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(AppTheme.accentTeal),
             borderRadius: BorderRadius.circular(4),
           ),
         ],
@@ -198,7 +205,8 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
             color: AppTheme.accentTeal.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.security_rounded, size: 48, color: AppTheme.accentTeal),
+          child: const Icon(Icons.security_rounded,
+              size: 48, color: AppTheme.accentTeal),
         ),
         const SizedBox(height: 24),
         Text(
@@ -268,7 +276,8 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
         Center(
           child: Column(
             children: [
-              Icon(Icons.fingerprint, size: 80, color: AppTheme.accentTeal.withValues(alpha: 0.5)),
+              Icon(Icons.fingerprint,
+                  size: 80, color: AppTheme.accentTeal.withValues(alpha: 0.5)),
               const SizedBox(height: 24),
               if (_biometricEnabled)
                 Row(
@@ -276,7 +285,10 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
                   children: [
                     const Icon(Icons.check_circle, color: AppTheme.healthGreen),
                     const SizedBox(width: 8),
-                    const Text('Biometrics Enabled', style: TextStyle(color: AppTheme.healthGreen, fontWeight: FontWeight.bold)),
+                    const Text('Biometrics Enabled',
+                        style: TextStyle(
+                            color: AppTheme.healthGreen,
+                            fontWeight: FontWeight.bold)),
                   ],
                 ),
             ],
@@ -333,7 +345,8 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
   }
 
   Widget _buildBottomAction() {
-    if (_currentStep == 2) return const SizedBox(); // PinSetupScreen has its own buttons
+    if (_currentStep == 2)
+      return const SizedBox(); // PinSetupScreen has its own buttons
 
     String label = 'Continue';
     IconData icon = Icons.arrow_forward_rounded;
@@ -357,7 +370,8 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
           if (_currentStep == 1 && !_biometricEnabled)
             TextButton(
               onPressed: _nextStep,
-              child: const Text('Maybe later (use PIN only)', style: TextStyle(color: Colors.white60)),
+              child: const Text('Maybe later (use PIN only)',
+                  style: TextStyle(color: Colors.white60)),
             ),
           const SizedBox(height: 8),
           SizedBox(
