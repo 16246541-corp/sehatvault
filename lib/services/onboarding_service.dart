@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/app_settings.dart';
 import '../services/local_storage_service.dart';
+import '../services/session_manager.dart';
+
 
 enum OnboardingStep {
   splash,
@@ -94,5 +96,13 @@ class OnboardingService {
     settings.hasCompletedFirstScan = false;
     settings.onboardingCompletedAt = null;
     await LocalStorageService().saveAppSettings(settings);
+  }
+  Future<void> logout({bool clearData = false}) async {
+    SessionManager().resetSession();
+    if (clearData) {
+      await LocalStorageService().clearAllData();
+    } else {
+      await resetOnboarding();
+    }
   }
 }

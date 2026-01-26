@@ -73,13 +73,13 @@ class StorageUsageService {
 
       // Get device storage info
       int freeBytes = 0;
-      int totalSpaceBytes = 1024 * 1024 * 1024 * 64; // Default 64GB
+      int totalSpaceBytes = 1024 * 1024 * 1024 * 256; // Increased to 256GB
 
       try {
         if (!kIsWeb) {
           // Note: In a real app, use a package like 'storage_space' for accurate info.
           // This is a placeholder for demonstration.
-          freeBytes = 1024 * 1024 * 1024 * 10; // Mock 10GB free
+          freeBytes = 1024 * 1024 * 1024 * 200; // Increased to 200GB free
         }
       } catch (e) {
         debugPrint('Error getting free space: $e');

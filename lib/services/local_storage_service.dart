@@ -698,8 +698,28 @@ class LocalStorageService {
 
   /// Clear all data (for settings screen)
   Future<void> clearAllData() async {
-    await _recordsBox.clear();
-    await _papers.clear();
+    // Clear all boxes
+    await Hive.box(_healthRecordsBox).clear();
+    await Hive.box(_settingsBox).clear();
+    await Hive.box(_savedPapersBox).clear();
+    await Hive.box(_searchIndexBox).clear();
+    await Hive.box(_doctorConversationsBox).clear();
+    await Hive.box<FollowUpItem>(_followUpItemsBox).clear();
+    await Hive.box<RecordingAuditEntry>(_recordingAuditEntriesBox).clear();
+    await Hive.box<ExportAuditEntry>(_exportAuditEntriesBox).clear();
+    await Hive.box<AuthAuditEntry>(_authAuditEntriesBox).clear();
+    await Hive.box<IssueReport>(_issueReportsBox).clear();
+    await Hive.box<Citation>(_citationsBox).clear();
+    await Hive.box<ConsentEntry>(_consentEntriesBox).clear();
+    await Hive.box<LocalAuditEntry>(_localAuditEntriesBox).clear();
+    await Hive.box<ConversationMemory>(_conversationMemoryBox).clear();
+    await Hive.box<BatchTask>(_batchTasksBox).clear();
+    await Hive.box<ModelMetadata>(_modelManifestsBox).clear();
+    await Hive.box<UserProfile>(_userProfileBox).clear();
+
+    // Re-initialize app settings metadata
+    await _initializeAppSettingsMetadata();
+    
     debugPrint('All data cleared');
   }
 

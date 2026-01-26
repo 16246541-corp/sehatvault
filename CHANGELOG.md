@@ -1,5 +1,17 @@
 # Changelog - Sehat Locker
 
+## [1.8.7] - 2026-01-26
+
+### Added
+- **Secure Logout System**: Implemented a comprehensive logout flow in the Settings screen.
+  - Added an interactive Logout button with session reset capabilities.
+  - Implemented an optional "Clear all data" workflow during logout for users who want to wipe their local traces.
+  - Ensured secure navigation redirection to the onboarding flow after logout.
+
+### Fixed
+- **Clear All Data Reliability**: Completely overhauled the data wipe functionality to ensure all 17 encrypted Hive boxes are properly cleared.
+- **Session Security**: Added a `resetSession` protocol in `SessionManager` to purge transient memory, AI context, and active timers during logout or data clear operations.
+
 ## [1.8.6] - 2026-01-26
 
 ### Improved

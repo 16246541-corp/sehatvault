@@ -1,7 +1,7 @@
 name: sehatlocker
 description: Sehat Locker - A privacy-first health records locker app running locally
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.8.7+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

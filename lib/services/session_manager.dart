@@ -103,6 +103,20 @@ class SessionManager with WidgetsBindingObserver, ChangeNotifier {
     _releaseAIResources();
   }
 
+  void resetSession() {
+    _timeoutTimer?.cancel();
+    _timeoutTimer = null;
+    _isLocked = false;
+    _currentSessionId = null;
+    _lastActivityTime = null;
+    _lastUnlockTime = null;
+    _validationFailures = 0;
+    _preservedModelContext = null;
+    _temporaryGenerationParameters = null;
+    _releaseAIResources();
+    notifyListeners();
+  }
+
   void _releaseAIResources() {
     final warmupService = ModelWarmupService();
     if (warmupService.isWarmupActive) {

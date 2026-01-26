@@ -27,6 +27,10 @@ import 'compliance_checklist_screen.dart';
 import 'ai_diagnostics_screen.dart';
 import 'model_license_screen.dart';
 import '../services/keyboard_shortcut_service.dart';
+import '../services/onboarding_service.dart';
+import 'onboarding/onboarding_navigator.dart';
+import '../app.dart';
+
 
 enum SettingCategory {
   privacy,
@@ -752,6 +756,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           title: 'Clear All Data',
                           subtitle: 'Permanently delete all records',
                           isDestructive: true,
+                          onTap: _handleClearAllData,
                         ),
                       ],
                     ),
@@ -1330,23 +1335,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     ];
 
-    return GlassCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          for (int i = 0; i < categories.length; i++) ...[
-            _buildSettingsItem(
-              context,
-              icon: categories[i].icon,
-              title: categories[i].title,
-              subtitle: categories[i].subtitle,
-              onTap: () => setState(() => _selectedCategory = categories[i].category),
-            ),
-            if (i < categories.length - 1) _buildDivider(context),
-          ],
-        ],
-      ),
+    return Column(
+      children: [
+        GlassCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (int i = 0; i < categories.length; i++) ...[
+                _buildSettingsItem(
+                  context,
+                  icon: categories[i].icon,
+                  title: categories[i].title,
+                  subtitle: categories[i].subtitle,
+                  onTap: () => setState(() => _selectedCategory = categories[i].category),
+                ),
+                if (i < categories.length - 1) _buildDivider(context),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        GlassCard(
+          padding: EdgeInsets.zero,
+          child: _buildSettingsItem(
+            context,
+            icon: Icons.logout,
+            title: 'Logout',
+            subtitle: 'Securely end your session',
+            onTap: () => _handleLogout(context),
+            isDestructive: true,
+          ),
+        ),
+      ],
     );
+
   }
 
   String _getCategoryTitle(SettingCategory category) {
@@ -1584,6 +1606,115 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
+
+  Future<void> _handleClearAllData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear All Data?'),
+        content: const Text(
+            'This will permanently delete ALL your records, documents, and settings. This action cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete Everything'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await OnboardingService().logout(clearData: true);
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => OnboardingNavigator(
+              onComplete: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (context) => const SehatLockerApp()),
+                  (route) => false,
+                );
+              },
+            ),
+          ),
+          (route) => false,
+        );
+      }
+    }
+  }
+
+
+  Future<void> _handleLogout(BuildContext context) async {
+    bool clearData = false;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Logout'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Are you sure you want to log out?'),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                title: const Text('Clear all data on this device'),
+                subtitle: const Text('Permanently deletes all records'),
+                value: clearData,
+                onChanged: (value) {
+                  setDialogState(() {
+                    clearData = value ?? false;
+                  });
+                },
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: Colors.red,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(
+                foregroundColor: clearData ? Colors.red : null,
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == true) {
+      await OnboardingService().logout(clearData: clearData);
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => OnboardingNavigator(
+              onComplete: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (context) => const SehatLockerApp()),
+                  (route) => false,
+                );
+              },
+            ),
+          ),
+          (route) => false,
+        );
+      }
+    }
+  }
+
+
 
   Future<void> _handleCompressOldRecordings() async {
     await showDialog(
