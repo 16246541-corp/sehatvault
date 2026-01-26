@@ -1,5 +1,24 @@
 # Changelog - Sehat Locker
 
+## [1.9.2] - 2026-01-26
+
+### Fixed
+- **Model Warm-up**: Resolved native library initialization errors (`BACKEND_INIT_FAILED`) on platforms with incompatible `llama_cpp` binaries.
+  - Implemented a **Simulation Mode** in `LLMEngine` that detects dummy model files and bypasses native library loading.
+  - Added simulated inference capabilities to allow the warm-up exercise to complete and verify the UI/UX flow even when native AI acceleration is unavailable.
+  - Corrected `ModelManager` to ensure the simulated model file is created with the expected `.gguf` extension instead of `.json`.
+  - Fixed a bug in `downloadModelIfNotExists` where it would skip "downloading" if the model directory existed but the actual `.gguf` file was missing.
+  - Enhanced `ModelWarmupService` to proactively verify and trigger model downloads before initializing the AI engine.
+  - Updated `isModelDownloaded` and `isModelInstalled` checks to verify the existence of the actual model file.
+  - Implemented simulation-mode bypasses for SHA-256 integrity checks when dummy model files are detected, preventing false-positive corruption errors during development.
+
+### Improved
+- **Desktop UI Responsiveness**: Optimized the layout for desktop platforms (macOS and Windows) by implementing `ResponsiveCenter` constraints across key screens.
+  - Restricted the maximum content width on the **AI Assistant**, **Documents**, and **News** screens to prevent excessive stretching on ultra-wide monitors.
+  - Centered primary dashboard content to maintain visual balance and readability on large displays.
+  - Refined the responsive grid system in the Documents screen to better handle varied screen widths.
+  - Implemented the `ResponsiveCenter` widget to prevent the warm-up and educational content from stretching too wide on large screens.
+
 ## [1.9.1] - 2026-01-26
 
 ### Improved

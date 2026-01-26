@@ -196,8 +196,9 @@ class ModelManager {
       final directory = await getApplicationDocumentsDirectory();
       final modelPath = '${directory.path}/models/$modelId';
       final modelDir = Directory(modelPath);
+      final modelFile = File('$modelPath/model.gguf');
 
-      if (!await modelDir.exists()) return false;
+      if (!await modelDir.exists() || !await modelFile.exists()) return false;
 
       // Check if the requested format matches what is stored
       if (format != null) {
@@ -293,15 +294,17 @@ class ModelManager {
       bool needsDownload = false;
 
       if (await modelDir.exists()) {
+        final modelFile = File('${modelDir.path}/model.gguf');
         final storedFormat = settings.modelQuantizationMap[model.id];
         final versionMismatch = installedVersion != null &&
             installedVersion != model.metadata.version;
         final formatMismatch = storedFormat != selectedFormat.name;
+        final fileMissing = !await modelFile.exists();
 
-        if (versionMismatch || formatMismatch) {
+        if (versionMismatch || formatMismatch || fileMissing) {
           debugPrint(
-              'Version or Format mismatch for ${model.id}. Re-downloading...');
-          await modelDir.delete(recursive: true);
+              'Version/Format mismatch or file missing for ${model.id}. Re-downloading...');
+          if (await modelDir.exists()) await modelDir.delete(recursive: true);
           needsDownload = true;
         } else {
           debugPrint('Model ${model.id} already exists with correct format.');
@@ -338,9 +341,9 @@ class ModelManager {
         await Future.delayed(const Duration(seconds: 2));
 
         await modelDir.create(recursive: true);
-        final dummyFile = File('$modelPath/config.json');
+        final dummyFile = File('$modelPath/model.gguf');
         final content =
-            '{"modelId": "${model.id}", "version": "${model.metadata.version}", "format": "${selectedFormat.name}"}';
+            'DUMMY_MODEL_DATA:${model.id}:${model.metadata.version}:${selectedFormat.name}';
         await dummyFile.writeAsString(content);
 
         // Store quantization format in settings

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/model_option.dart';
 import 'llm_engine.dart';
+import 'model_manager.dart';
 import 'platform_detector.dart';
 import 'analytics_service.dart';
 import 'ai_analytics_service.dart';
@@ -122,6 +123,22 @@ class ModelWarmupService {
       operationType: 'warmup_start',
       isSuccessful: true,
     );
+
+    // Ensure model is downloaded before starting warmup
+    try {
+      final settings = _storage.getAppSettings();
+      final installedVersion = settings.modelMetadataMap[model.id]?.version;
+      await ModelManager.downloadModelIfNotExists(
+        model,
+        installedVersion: installedVersion,
+      );
+    } catch (e) {
+      _updateState(_currentState.copyWith(
+        status: WarmupStatus.failed,
+        errorMessage: "Failed to ensure model download: $e",
+      ));
+      return;
+    }
 
     try {
       _progressSubscription?.cancel();

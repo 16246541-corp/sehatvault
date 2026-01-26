@@ -5,6 +5,7 @@ import '../services/model_warmup_service.dart';
 import '../widgets/design/glass_card.dart';
 import '../widgets/design/glass_progress_bar.dart';
 import '../widgets/design/liquid_glass_background.dart';
+import '../widgets/design/responsive_center.dart';
 import '../utils/design_constants.dart';
 
 class ModelWarmupScreen extends StatefulWidget {
@@ -139,9 +140,9 @@ class _ModelWarmupScreenState extends State<ModelWarmupScreen> {
       child: Scaffold(
         body: LiquidGlassBackground(
           child: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(DesignConstants.standardPadding),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(DesignConstants.standardPadding),
+              child: ResponsiveCenter(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

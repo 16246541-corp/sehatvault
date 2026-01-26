@@ -6,6 +6,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/design/glass_text_field.dart';
 import '../widgets/design/glass_card.dart';
+import '../widgets/design/responsive_center.dart';
 import '../widgets/desktop/file_drop_zone.dart';
 import '../utils/design_constants.dart';
 import '../services/vault_service.dart';
@@ -181,200 +182,205 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       child: FileDropZone(
         vaultService: _vaultService,
         settings: LocalStorageService().getAppSettings(),
-        child: SafeArea(
-          child: LayoutBuilder(builder: (context, constraints) {
-            final columnCount = _calculateColumnCount(constraints.maxWidth);
+        child: ResponsiveCenter(
+          maxContentWidth: 1200,
+          child: SafeArea(
+            child: LayoutBuilder(builder: (context, constraints) {
+              final columnCount = _calculateColumnCount(constraints.maxWidth);
 
-            return Padding(
-              padding:
-                  const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: DesignConstants.titleTopPadding),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Documents',
-                            style: theme.textTheme.displayMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Your health records, stored locally',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          _loadDocuments();
-                          _checkStorage();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        tooltip: 'Refresh',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Storage Warning
-                  if (_storageUsage != null &&
-                      _storageUsage!.usagePercentage > 0.8)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: GlassCard(
-                        backgroundColor: theme.colorScheme.errorContainer
-                            .withValues(alpha: 0.3),
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
+              return Padding(
+                padding:
+                    const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: DesignConstants.titleTopPadding),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.warning_amber_rounded,
-                                color: theme.colorScheme.error),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Storage space low',
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      color: theme.colorScheme.error,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    'You have used ${(_storageUsage!.usagePercentage * 100).toStringAsFixed(1)}% of your device storage.',
-                                    style: theme.textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
+                            Text(
+                              'Documents',
+                              style: theme.textTheme.displayMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Your health records, stored locally',
+                              style: theme.textTheme.bodyMedium,
                             ),
                           ],
                         ),
-                      ),
+                        IconButton(
+                          onPressed: () {
+                            _loadDocuments();
+                            _checkStorage();
+                          },
+                          icon: const Icon(Icons.refresh),
+                          tooltip: 'Refresh',
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 16),
 
-                  // Batch Processing Status
-                  StreamBuilder<List<BatchTask>>(
-                    stream: BatchProcessingService().tasksStream,
-                    builder: (context, snapshot) {
-                      final tasks = snapshot.data ?? [];
-                      final activeTasks = tasks
-                          .where((t) =>
-                              t.status == BatchTaskStatus.pending ||
-                              t.status == BatchTaskStatus.processing)
-                          .toList();
-
-                      if (activeTasks.isEmpty) return const SizedBox.shrink();
-
-                      final processingTask = tasks.firstWhere(
-                        (t) => t.status == BatchTaskStatus.processing,
-                        orElse: () => activeTasks.first,
-                      );
-
-                      return Padding(
+                    // Storage Warning
+                    if (_storageUsage != null &&
+                        _storageUsage!.usagePercentage > 0.8)
+                      Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: GlassCard(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const BatchProcessingScreen(),
-                              ),
-                            );
-                          },
-                          backgroundColor: theme.colorScheme.primaryContainer
+                          backgroundColor: theme.colorScheme.errorContainer
                               .withValues(alpha: 0.3),
                           padding: const EdgeInsets.all(12),
                           child: Row(
                             children: [
-                              SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  value: processingTask.status ==
-                                          BatchTaskStatus.processing
-                                      ? processingTask.progress
-                                      : null,
-                                  strokeWidth: 2,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
+                              Icon(Icons.warning_amber_rounded,
+                                  color: theme.colorScheme.error),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Processing ${activeTasks.length} documents...',
+                                      'Storage space low',
                                       style:
                                           theme.textTheme.titleSmall?.copyWith(
+                                        color: theme.colorScheme.error,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     Text(
-                                      'Currently: ${processingTask.title}',
+                                      'You have used ${(_storageUsage!.usagePercentage * 100).toStringAsFixed(1)}% of your device storage.',
                                       style: theme.textTheme.bodySmall,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
                               ),
-                              Icon(Icons.chevron_right,
-                                  color: theme.colorScheme.primary),
                             ],
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ),
 
-                  // Dashboard
-                  FollowUpDashboard(
-                    onTap: () async {
-                      if (widget.onTasksTap != null) {
-                        widget.onTasksTap!();
-                      } else {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const FollowUpListScreen(),
+                    // Batch Processing Status
+                    StreamBuilder<List<BatchTask>>(
+                      stream: BatchProcessingService().tasksStream,
+                      builder: (context, snapshot) {
+                        final tasks = snapshot.data ?? [];
+                        final activeTasks = tasks
+                            .where((t) =>
+                                t.status == BatchTaskStatus.pending ||
+                                t.status == BatchTaskStatus.processing)
+                            .toList();
+
+                        if (activeTasks.isEmpty) return const SizedBox.shrink();
+
+                        final processingTask = tasks.firstWhere(
+                          (t) => t.status == BatchTaskStatus.processing,
+                          orElse: () => activeTasks.first,
+                        );
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: GlassCard(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const BatchProcessingScreen(),
+                                ),
+                              );
+                            },
+                            backgroundColor: theme.colorScheme.primaryContainer
+                                .withValues(alpha: 0.3),
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    value: processingTask.status ==
+                                            BatchTaskStatus.processing
+                                        ? processingTask.progress
+                                        : null,
+                                    strokeWidth: 2,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Processing ${activeTasks.length} documents...',
+                                        style: theme.textTheme.titleSmall
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Currently: ${processingTask.title}',
+                                        style: theme.textTheme.bodySmall,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(Icons.chevron_right,
+                                    color: theme.colorScheme.primary),
+                              ],
+                            ),
                           ),
                         );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: DesignConstants.sectionSpacing),
-
-                  // Search Bar
-                  GlassTextField(
-                    controller: _searchController,
-                    hintText: 'Search documents...',
-                    prefixIcon: Icons.search,
-                  ),
-
-                  const SizedBox(height: DesignConstants.sectionSpacing),
-
-                  // Content Area
-                  Expanded(
-                    child: FocusTraversalGroup(
-                      child: _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : _searchController.text.isNotEmpty
-                              ? _buildSearchResults(context, columnCount)
-                              : _filteredDocuments.isNotEmpty
-                                  ? _buildDocumentsGrid(context, columnCount)
-                                  : _buildEmptyState(context),
+                      },
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
+
+                    // Dashboard
+                    FollowUpDashboard(
+                      onTap: () async {
+                        if (widget.onTasksTap != null) {
+                          widget.onTasksTap!();
+                        } else {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const FollowUpListScreen(),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(height: DesignConstants.sectionSpacing),
+
+                    // Search Bar
+                    GlassTextField(
+                      controller: _searchController,
+                      hintText: 'Search documents...',
+                      prefixIcon: Icons.search,
+                    ),
+
+                    const SizedBox(height: DesignConstants.sectionSpacing),
+
+                    // Content Area
+                    Expanded(
+                      child: FocusTraversalGroup(
+                        child: _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _searchController.text.isNotEmpty
+                                ? _buildSearchResults(context, columnCount)
+                                : _filteredDocuments.isNotEmpty
+                                    ? _buildDocumentsGrid(context, columnCount)
+                                    : _buildEmptyState(context),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
