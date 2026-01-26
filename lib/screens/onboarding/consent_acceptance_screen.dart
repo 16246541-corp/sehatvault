@@ -29,8 +29,8 @@ class ConsentAcceptanceScreen extends StatefulWidget {
 
 class _ConsentAcceptanceScreenState extends State<ConsentAcceptanceScreen>
     with TickerProviderStateMixin {
-  static const String _privacyPolicyVersion = '1.0.0';
-  static const String _termsOfServiceVersion = '1.0.0';
+  static const String _privacyPolicyVersion = '1.8.9';
+  static const String _termsOfServiceVersion = '1.8.9';
 
   bool _privacyPolicyAccepted = false;
   bool _termsOfServiceAccepted = false;
@@ -362,53 +362,6 @@ By using Sehat Locker, you agree to use the app for personal health record manag
                           const ConsentChecklistWidget(),
 
                           const SizedBox(height: 32),
-
-                          // Privacy Policy Card
-                          _buildConsentCard(
-                            title: 'Privacy Policy',
-                            version: _privacyPolicyVersion,
-                            isAccepted: _privacyPolicyAccepted,
-                            onAcceptChanged: (value) {
-                              setState(() => _privacyPolicyAccepted = value);
-                            },
-                            onViewFull: () => _showFullDocument(
-                              'Privacy Policy',
-                              _privacyPolicyContent,
-                            ),
-                            summaryPoints: const [
-                              'All data encrypted with AES-256',
-                              'No data collection or sharing',
-                              'You control your health records',
-                              'Delete your data anytime',
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Terms of Service Card
-                          _buildConsentCard(
-                            title: 'Terms of Service',
-                            version: _termsOfServiceVersion,
-                            isAccepted: _termsOfServiceAccepted,
-                            onAcceptChanged: (value) {
-                              setState(() => _termsOfServiceAccepted = value);
-                              if (value) {
-                                _logAnalytics('consent_terms_viewed');
-                              }
-                            },
-                            onViewFull: () => _showFullDocument(
-                              'Terms of Service',
-                              _termsOfServiceContent,
-                            ),
-                            summaryPoints: const [
-                              'For personal health management only',
-                              'Not a substitute for medical advice',
-                              'You own all your data',
-                              'Maintain your own backups',
-                            ],
-                          ),
-
-                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
@@ -661,8 +614,9 @@ By using Sehat Locker, you agree to use the app for personal health record manag
           SizedBox(
             width: double.infinity,
             child: GlassButton(
-              label:
-                  _isSubmitting ? 'Recording Consent...' : 'Accept & Continue',
+              label: _isSubmitting
+                  ? 'Recording Consent...'
+                  : 'Review and Continue',
               icon: _isSubmitting
                   ? Icons.hourglass_top_rounded
                   : Icons.arrow_forward_rounded,
@@ -826,6 +780,7 @@ class _ConsentPopupState extends State<_ConsentPopup> {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(24),
       child: Container(
+        constraints: const BoxConstraints(maxWidth: 600),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: const Color(0xFF1E293B),
@@ -978,9 +933,7 @@ class _ConsentPopupState extends State<_ConsentPopup> {
                 icon: Icons.arrow_forward_rounded,
                 onPressed: _isAccepted ? widget.onAccept : null,
                 isProminent: true,
-                tintColor: _isAccepted
-                    ? AppTheme.healthGreen
-                    : Colors.white.withValues(alpha: 0.1),
+                tintColor: AppTheme.healthGreen,
               ),
             ),
           ],

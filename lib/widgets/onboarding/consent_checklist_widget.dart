@@ -34,6 +34,26 @@ class ConsentChecklistWidget extends StatelessWidget {
         title: 'You Own Your Data',
         description: 'Export or delete anytime',
       ),
+      const _ChecklistItem(
+        icon: Icons.fingerprint_rounded,
+        title: 'Biometric Protection',
+        description: 'Face ID, Touch ID & PIN security',
+      ),
+      const _ChecklistItem(
+        icon: Icons.psychology_rounded,
+        title: 'Offline AI Analysis',
+        description: 'Smart insights without internet',
+      ),
+      const _ChecklistItem(
+        icon: Icons.file_download_rounded,
+        title: 'Easy Data Export',
+        description: 'PDF, JSON export – share with doctors',
+      ),
+      const _ChecklistItem(
+        icon: Icons.block_rounded,
+        title: 'Zero Tracking',
+        description: 'No ads, no analytics, no third parties',
+      ),
     ];
 
     if (compact) {

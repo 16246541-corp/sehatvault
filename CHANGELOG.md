@@ -1,5 +1,15 @@
 # Changelog - Sehat Locker
 
+## [1.8.9] - 2026-01-26
+
+### Improved
+- **Consent UI Overhaul**: Redesigned the Privacy & Terms screen for a cleaner, more streamlined experience.
+  - Replaced inline policy cards with a "Review and Continue" sequential popup flow.
+  - Expanded "Your Privacy Guarantees" to include 8 key features (added Biometric Protection, Offline AI Analysis, Easy Data Export, and Zero Tracking).
+  - Restricted popup width to 600px for a more professional look on desktop platforms.
+  - Unified action button styling by applying the primary health green theme to all "Continue" buttons.
+  - Enhanced sequential validation logic to ensure smooth transitions between Privacy Policy and Terms of Service reviews.
+
 ## [1.8.8] - 2026-01-26
 
 ### Improved
