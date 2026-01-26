@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/theme.dart';
 import '../../widgets/onboarding/animated_logo.dart';
+import '../../services/onboarding_service.dart';
 
 /// Animated splash screen with branding and privacy-first messaging
 /// Displays on app launch with smooth transitions
@@ -147,7 +148,9 @@ class _SplashScreenState extends State<SplashScreen>
     _completeSplash();
   }
 
-  void _completeSplash() {
+  Future<void> _completeSplash() async {
+    // Mark splash as completed before navigating away
+    await OnboardingService().markStepCompleted(OnboardingStep.splash);
     widget.onComplete();
   }
 

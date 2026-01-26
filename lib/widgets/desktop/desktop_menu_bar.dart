@@ -134,15 +134,15 @@ class DesktopMenuBar extends StatelessWidget {
                   control: true),
               onSelected: isSessionLocked ? null : onSettings,
             ),
-          PlatformMenuItemGroup(
-            members: [
-              if (!Platform.isMacOS)
+          if (!Platform.isMacOS)
+            PlatformMenuItemGroup(
+              members: [
                 PlatformMenuItem(
                   label: 'Exit',
                   onSelected: () => SystemNavigator.pop(),
                 ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );

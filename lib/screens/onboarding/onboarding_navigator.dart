@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../services/onboarding_service.dart';
 import 'splash_screen.dart';
 import 'welcome_carousel_screen.dart';
@@ -30,16 +31,20 @@ class _OnboardingNavigatorState extends State<OnboardingNavigator> {
   }
 
   Future<void> _loadCurrentStep() async {
+    debugPrint('OnboardingNavigator: Loading current step...');
     final step = await _onboardingService.getFirstIncompleteStep();
+    debugPrint('OnboardingNavigator: First incomplete step is: $step');
     if (mounted) {
       setState(() {
         _currentStep = step;
         _isLoading = false;
       });
+      debugPrint('OnboardingNavigator: Set current step to $_currentStep');
     }
   }
 
   void _next() async {
+    debugPrint('OnboardingNavigator: _next() called, reloading step...');
     await _loadCurrentStep();
   }
 

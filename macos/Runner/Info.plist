@@ -28,5 +28,13 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Sehat Locker needs camera access to scan medical documents and prescriptions.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Sehat Locker needs microphone access to record doctor conversations for local transcription.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Sehat Locker needs calendar access to schedule follow-up appointments and reminders.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Sehat Locker needs to interact with system events for window management.</string>
 </dict>
 </plist>

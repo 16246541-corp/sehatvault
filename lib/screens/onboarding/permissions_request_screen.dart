@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/analytics_service.dart';
@@ -107,8 +109,22 @@ class _PermissionsRequestScreenState extends State<PermissionsRequestScreen>
     );
   }
 
+  /// Check if running on a desktop platform (macOS, Windows, Linux)
+  bool get _isDesktopPlatform {
+    if (kIsWeb) return false;
+    return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+  }
+
   Future<void> _checkExistingPermissions() async {
     setState(() => _isLoading = true);
+
+    // On desktop platforms, permissions work differently and permission_handler
+    // may hang. Skip permission checking and auto-complete this step.
+    if (_isDesktopPlatform) {
+      debugPrint('PermissionsRequestScreen: Desktop platform detected, skipping permission checks');
+      await _completePermissionsSetup();
+      return;
+    }
 
     // Check camera permission
     final cameraGranted = await PermissionService.isCameraPermissionGranted();

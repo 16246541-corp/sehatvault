@@ -8,7 +8,12 @@ class AppDelegate: FlutterAppDelegate {
   var notificationChannel: FlutterMethodChannel?
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
-    let controller = mainFlutterWindow?.contentViewController as! FlutterViewController
+    // Note: Do NOT call super - FlutterAppDelegate doesn't implement this method
+    
+    guard let controller = mainFlutterWindow?.contentViewController as? FlutterViewController else {
+      return
+    }
+    
     trayChannel = FlutterMethodChannel(name: "com.sehatlocker/system_tray", binaryMessenger: controller.engine.binaryMessenger)
     
     trayChannel?.setMethodCallHandler { [weak self] (call, result) in
@@ -28,20 +33,21 @@ class AppDelegate: FlutterAppDelegate {
     notificationChannel?.setMethodCallHandler { (call, result) in
       switch call.method {
       case "isDoNotDisturbEnabled":
-        let isDnd = DistributedNotificationCenter.default().publisher(for: NSNotification.Name("com.apple.notificationcenter.notdisturbstatechanged")).description.contains("1")
-        // Note: The above is a bit hacky. A more robust way to check DND on macOS:
+        // Improved way to check DND on macOS
         let dndEnabled = CFPreferencesCopyAppValue("doNotDisturb" as CFString, "com.apple.notificationcenterui" as CFString) as? Bool ?? false
         result(dndEnabled)
       default:
         result(FlutterMethodNotImplemented)
       }
     }
-    
-    super.applicationDidFinishLaunching(notification)
   }
 
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     return false
+  }
+
+  override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+    return true
   }
 
   private func setupTray(arguments: [String: Any]?) {
@@ -113,7 +119,7 @@ class AppDelegate: FlutterAppDelegate {
       if id == "quit" {
         NSApp.terminate(nil)
       } else {
-        channel?.invokeMethod("onTrayMenuItemClick", arguments: id)
+        trayChannel?.invokeMethod("onTrayMenuItemClick", arguments: id)
       }
     }
   }

@@ -26,14 +26,25 @@ class SearchService {
   static Future<void> init() async {
     if (_store != null) return;
 
-    final docsDir = await getApplicationDocumentsDirectory();
-    final storeDir = Directory(p.join(docsDir.path, 'search_index'));
-    if (!storeDir.existsSync()) {
-      storeDir.createSync(recursive: true);
-    }
+    try {
+      // Use Application Support directory which is more appropriate for app data
+      // and works better with macOS sandbox restrictions
+      final supportDir = await getApplicationSupportDirectory();
+      final storeDir = Directory(p.join(supportDir.path, 'search_index'));
+      if (!storeDir.existsSync()) {
+        storeDir.createSync(recursive: true);
+      }
 
-    _store = await openStore(directory: storeDir.path);
-    _box = _store!.box<SearchEntry>();
+      _store = await openStore(directory: storeDir.path);
+      _box = _store!.box<SearchEntry>();
+      debugPrint('SearchService: ObjectBox initialized at ${storeDir.path}');
+    } catch (e) {
+      debugPrint('SearchService: Failed to initialize ObjectBox: $e');
+      // On failure, continue without search indexing
+      // The app should still work, just without advanced search
+      _store = null;
+      _box = null;
+    }
   }
 
   void startListening() {

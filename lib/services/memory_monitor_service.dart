@@ -69,11 +69,29 @@ class MemoryMonitorService with WidgetsBindingObserver {
       
       final usageRatio = usedGB / totalGB;
       
+      // On macOS/desktop, the "free" memory reported by system_info2 is very low
+      // because file cache memory is reported as "used" even though it's available.
+      // We use much more conservative thresholds for desktops.
+      final bool isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+      
       MemoryPressureLevel level = MemoryPressureLevel.normal;
-      if (usageRatio > 0.9 || freeGB < 0.5) {
-        level = MemoryPressureLevel.critical;
-      } else if (usageRatio > 0.75 || freeGB < 1.0) {
-        level = MemoryPressureLevel.warning;
+      
+      if (isDesktop) {
+        // Desktop: Only critical if truly exhausted (< 0.2GB absolute free)
+        // macOS typically shows low "free" because of aggressive file caching
+        if (freeGB < 0.2) {
+          level = MemoryPressureLevel.critical;
+        } else if (freeGB < 0.5) {
+          level = MemoryPressureLevel.warning;
+        }
+        // Otherwise normal - don't use percentage on desktop
+      } else {
+        // Mobile: Original thresholds are appropriate
+        if (usageRatio > 0.9 || freeGB < 0.5) {
+          level = MemoryPressureLevel.critical;
+        } else if (usageRatio > 0.75 || freeGB < 1.0) {
+          level = MemoryPressureLevel.warning;
+        }
       }
 
       final status = MemoryStatus(
@@ -87,8 +105,9 @@ class MemoryMonitorService with WidgetsBindingObserver {
       _lastStatus = status;
       _statusController.add(status);
       
-      if (level != MemoryPressureLevel.normal) {
-        debugPrint('Memory Monitor: Low memory detected! $status');
+      // Only log if actually concerning (not just normal macOS behavior)
+      if (level == MemoryPressureLevel.critical) {
+        debugPrint('Memory Monitor: Critical memory! $status');
       }
     } catch (e) {
       debugPrint('Memory Monitor: Error checking memory: $e');

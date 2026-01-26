@@ -8,17 +8,23 @@
 .buildlog/
 .history
 .svn/
+*.bak
+*.tmp
+*.temp
 
 # IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
+.idea_modules/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code related
+.vscode/
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -30,6 +36,12 @@
 .pub/
 build/
 !build/config/
+**/GeneratedPluginRegistrant.dart
+**/GeneratedPluginRegistrant.m
+**/GeneratedPluginRegistrant.objc.m
+**/GeneratedPluginRegistrant.swift
+**/GeneratedPluginRegistrant.java
+**/GeneratedPluginRegistrant.h
 
 # Android related
 **/android/**/gradle-wrapper.jar
@@ -40,3 +52,76 @@ build/
 **/android/local.properties
 **/android/generated/
 **/android/key.properties
+**/android/app/google-services.json
+**/*.keystore
+**/*.jks
+**/*.p12
+**/*.ap_
+**/*.apk
+**/*.aab
+.cxx/
+
+# iOS related
+**/ios/.symlinks/
+**/ios/Pods/
+**/ios/DerivedData/
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.h
+**/ios/Runner/GeneratedPluginRegistrant.m
+**/ios/Runner/GeneratedPluginRegistrant.swift
+**/ios/Runner/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+**/ios/Runner/Base.lproj/LaunchScreen.storyboard
+**/ios/*.mode1v3
+**/ios/*.mode2v3
+**/ios/*.moved-aside
+**/ios/*.pbxuser
+**/ios/*.perspectivev3
+**/ios/xcuserdata/
+**/ios/.tags*
+**/ios/*.p8
+**/ios/*.mobileprovision
+**/ios/*.cer
+**/ios/*.p12
+
+# macOS related
+**/macos/Flutter/ephemeral/
+**/macos/Flutter/Generated.xcconfig
+**/macos/Flutter/flutter_export_environment.sh
+**/macos/Runner/GeneratedPluginRegistrant.swift
+**/macos/Runner/GoogleService-Info.plist
+**/macos/xcuserdata/
+
+# Windows related
+**/windows/flutter/generated_config.cmake
+**/windows/runner/GeneratedPluginRegistrant.cc
+**/windows/runner/GeneratedPluginRegistrant.h
+**/windows/out/
+**/*.pfx
+**/*.snk
+**/*.pfx.install.log
+**/windows/runner/*.res
+
+# Secrets & Environment
+.env*
+*.env
+secrets.yaml
+*secrets.dart
+credentials.json
+google-services.json
+GoogleService-Info.plist
+
+# Fastlane
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/gc_keys.json
+
+# Symbolication
+*.symbols
+*.app.dSYM
+*.pdm

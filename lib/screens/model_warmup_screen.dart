@@ -205,9 +205,22 @@ class _ModelWarmupScreenState extends State<ModelWarmupScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => _warmupService.startWarmup(widget.model),
-                child: const Text("Retry Warm-up"),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      "Go Back",
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () => _warmupService.startWarmup(widget.model),
+                    child: const Text("Retry Warm-up"),
+                  ),
+                ],
               ),
             ],
             if (_currentState.status != WarmupStatus.completed &&

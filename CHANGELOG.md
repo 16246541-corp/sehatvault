@@ -1,5 +1,34 @@
 # Changelog - Sehat Locker
 
+## [1.8.5] - 2026-01-26
+
+### Improved
+- **Model Warm-up Experience**: Added a "Go Back" button to the failure state, allowing users to navigate away from the error screen if the AI engine fails to initialize.
+
+## [1.8.4] - 2026-01-26
+
+### Fixed
+- **macOS Permissions Screen Hang**: Resolved infinite loading screen after accepting Terms & Conditions on desktop platforms.
+  - Root cause: The `permission_handler` package doesn't work correctly on macOS/Windows/Linux and hangs when checking permission status.
+  - Added platform detection to skip permission checks on desktop platforms and auto-complete the onboarding step.
+  - Permissions are handled natively by the OS when user actually uses camera/mic on desktop.
+- **macOS PlatformMenuBar Crash**: Fixed red error screen ("members.isNotEmpty" assertion failure) when navigating to main dashboard.
+  - Root cause: `PlatformMenuItemGroup` in `DesktopMenuBar` was being created with an empty `members` list on macOS because the "Exit" menu item was only added for non-macOS platforms.
+  - Wrapped the entire `PlatformMenuItemGroup` with the platform conditional check instead of just the menu item.
+
+## [1.8.3] - 2026-01-26
+
+### Fixed
+- **macOS Black Screen After Splash**: Resolved a critical bug where the app would show a black screen after the splash animation on macOS.
+  - Root cause: `SplashScreen` was not calling `markStepCompleted(OnboardingStep.splash)` before navigating, causing the onboarding navigator to endlessly reload the splash screen.
+  - Added `OnboardingService().markStepCompleted(OnboardingStep.splash)` call before completing the splash screen.
+- **macOS AppDelegate Crash**: Fixed `unrecognized selector` crash in `AppDelegate.applicationDidFinishLaunching` by removing invalid `super` call that doesn't exist in `FlutterAppDelegate`.
+- **macOS Secure Restorable State Warning**: Added `applicationSupportsSecureRestorableState` method to silence the macOS warning about secure coding.
+- **Memory Monitor False Positives on Desktop**: Fixed incorrect "critical memory pressure" detection on macOS/Windows/Linux where file cache memory was being reported as "used" memory.
+  - Desktop platforms now use absolute free memory thresholds instead of percentage-based detection.
+  - Disabled memory-based model fallback on desktop platforms since the OS handles memory pressure better than app-level intervention.
+- **ObjectBox Sandbox Permissions**: Changed ObjectBox storage directory from Documents to Application Support for better macOS sandbox compatibility, with graceful fallback if initialization fails.
+
 ## [1.8.2] - 2026-01-26
 
 ### Added

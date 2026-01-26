@@ -44,6 +44,13 @@ class ModelManager {
     final settings = LocalStorageService().getAppSettings();
     if (!settings.unloadOnLowMemory) return;
 
+    // On desktop (macOS/Windows/Linux), memory reporting via system_info2 is unreliable
+    // because file cache memory is reported as "used". The OS handles memory pressure
+    // much better than app-level intervention, so we skip this on desktop.
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      return;
+    }
+
     if (status.level == MemoryPressureLevel.critical) {
       debugPrint(
           'ModelManager: Critical memory pressure! Attempting fallback...');
