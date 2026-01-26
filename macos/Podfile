@@ -24,6 +24,26 @@ end
 
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
+def flutter_parse_xcconfig_file(file)
+  file_abs_path = File.expand_path(file)
+  return {} unless File.exist?(file_abs_path)
+
+  entries = {}
+  skip_line_start_symbols = ["#", "/"]
+  File.foreach(file_abs_path) do |line|
+    next if skip_line_start_symbols.any? { |symbol| line =~ /^\s*#{symbol}/ }
+
+    key, value = line.split('=', 2)
+    if value
+      entries[key.strip] = value.strip
+    else
+      puts "Invalid key/value pair: #{line}"
+    end
+  end
+
+  entries
+end
+
 flutter_macos_podfile_setup
 
 target 'Runner' do
@@ -36,7 +56,68 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  installer.pods_project.root_object.attributes['LastUpgradeCheck'] = '1700'
+
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
+
+    target.build_configurations.each do |config|
+      config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
+      config.build_settings['SWIFT_VERSION'] = '5.0'
+
+      if target.name == 'whisper_flutter_new'
+        config.build_settings['CLANG_WARN__64_TO_32'] = 'NO'
+        config.build_settings['CLANG_WARN_SHORTEN_64_TO_32'] = 'NO'
+        config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+
+        other_cflags = config.build_settings['OTHER_CFLAGS']
+        if other_cflags.is_a?(String)
+          config.build_settings['OTHER_CFLAGS'] = "#{other_cflags} -Wno-shorten-64-to-32"
+        elsif other_cflags.is_a?(Array)
+          config.build_settings['OTHER_CFLAGS'] = (other_cflags + ['-Wno-shorten-64-to-32']).uniq
+        else
+          config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-shorten-64-to-32'
+        end
+
+        other_cxxflags = config.build_settings['OTHER_CPLUSPLUSFLAGS']
+        if other_cxxflags.is_a?(String)
+          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = "#{other_cxxflags} -Wno-shorten-64-to-32"
+        elsif other_cxxflags.is_a?(Array)
+          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = (other_cxxflags + ['-Wno-shorten-64-to-32']).uniq
+        else
+          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -Wno-shorten-64-to-32'
+        end
+      end
+
+      other_ldflags = config.build_settings['OTHER_LDFLAGS']
+      if other_ldflags.is_a?(String)
+        config.build_settings['OTHER_LDFLAGS'] = other_ldflags.split.uniq.join(' ')
+      elsif other_ldflags.is_a?(Array)
+        config.build_settings['OTHER_LDFLAGS'] = other_ldflags.uniq
+      end
+    end
+  end
+
+  xcconfig_paths = Dir.glob(File.join(File.dirname(__FILE__), 'Pods', 'Target Support Files', '**', '*.xcconfig'))
+  xcconfig_paths.each do |xcconfig_path|
+    next unless File.file?(xcconfig_path)
+    content = File.read(xcconfig_path)
+    next unless content.include?('c++')
+
+    updated_lines = content.each_line.map do |line|
+      if line.start_with?('OTHER_LDFLAGS') && line.include?('c++')
+        sanitized = line.chomp
+        sanitized = sanitized.gsub(/\s*-lc\+\+\s*/, ' ')
+        sanitized = sanitized.gsub(/\s*-l"c\+\+"\s*/, ' ')
+        sanitized = sanitized.gsub(/\s*-l'c\+\+'\s*/, ' ')
+        sanitized = sanitized.gsub(/\s+/, ' ').strip
+        "#{sanitized}\n"
+      else
+        line
+      end
+    end
+
+    File.write(xcconfig_path, updated_lines.join)
   end
 end

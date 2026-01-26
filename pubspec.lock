@@ -715,10 +715,9 @@ packages:
   flutter_tts:
     dependency: "direct main"
     description:
-      name: flutter_tts
-      sha256: ce5eb209b40e95f2f4a1397116c87ab2fcdff32257d04ed7a764e75894c03775
-      url: "https://pub.dev"
-    source: hosted
+      path: "third_party/flutter_tts"
+      relative: true
+    source: path
     version: "4.2.5"
   flutter_web_plugins:
     dependency: transitive
@@ -1637,10 +1636,9 @@ packages:
   whisper_flutter_new:
     dependency: "direct main"
     description:
-      name: whisper_flutter_new
-      sha256: "56f5449cd459ed9bbb9d3641aae6a72ed594e1a200f56b1939891996fbd7dd4d"
-      url: "https://pub.dev"
-    source: hosted
+      path: "third_party/whisper_flutter_new"
+      relative: true
+    source: path
     version: "1.0.1"
   win32:
     dependency: transitive

@@ -10,7 +10,7 @@ import '../../screens/documents_screen.dart';
 import '../../screens/home_screen.dart';
 import '../../screens/model_warmup_screen.dart';
 import '../../screens/news_screen.dart';
-import '../../screens/settings_screen.dart';
+import 'screens/desktop_settings_screen.dart';
 import '../../services/biometric_service.dart';
 import '../../services/education_service.dart';
 import '../../services/export_service.dart';
@@ -19,12 +19,10 @@ import '../../services/local_storage_service.dart';
 import '../../services/model_manager.dart';
 import '../../services/model_warmup_service.dart';
 import '../../services/session_manager.dart';
-import '../../utils/design_constants.dart';
 import '../../utils/theme.dart';
 import '../../widgets/auth_gate.dart';
 import '../../widgets/dialogs/biometric_enrollment_dialog.dart';
 import '../../widgets/education/education_gate.dart';
-import '../../widgets/navigation/glass_bottom_nav.dart';
 
 import 'widgets/desktop_menu_bar.dart';
 
@@ -53,7 +51,7 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
       ),
       _buildAIScreen(),
       const NewsScreen(),
-      const SettingsScreen(),
+      const DesktopSettingsScreen(),
     ];
 
     SessionManager().addListener(_onSessionChanged);
@@ -290,59 +288,32 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
           builder: (context, snapshot) {
             final attentionIndicators = snapshot.data;
 
-            final navTotalHeight = DesignConstants.bottomNavHeight +
-                DesignConstants.bottomNavPadding.vertical;
-            const sidebarWidth = 280.0;
-            const dividerWidth = 1.0;
-            const horizontalMargin = 16.0;
-
             return Scaffold(
-              extendBody: true,
-              body: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  SafeArea(
-                    bottom: false,
-                    child: Row(
-                      children: [
-                        _DesktopSidebar(
-                          currentIndex: _currentIndex,
-                          attentionIndicators: attentionIndicators,
-                          overdueCount: overdueCount,
-                          isSessionLocked: isLocked,
-                          onSelect: (index) => _onItemTapped(index),
-                        ),
-                        const VerticalDivider(width: 1),
-                        Expanded(
-                          child: Padding(
-                            padding:
-                                EdgeInsets.only(bottom: navTotalHeight + 16),
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 180),
-                              switchInCurve: Curves.easeOut,
-                              switchOutCurve: Curves.easeIn,
-                              child: KeyedSubtree(
-                                key: ValueKey<int>(_currentIndex),
-                                child: _screens[_currentIndex],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    left: sidebarWidth + dividerWidth + horizontalMargin,
-                    right: horizontalMargin,
-                    bottom: 8,
-                    child: GlassBottomNav(
+              body: SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    _DesktopSidebar(
                       currentIndex: _currentIndex,
-                      onItemTapped: (index) => _onItemTapped(index),
-                      badgeCounts: overdueCount > 0 ? {0: overdueCount} : null,
                       attentionIndicators: attentionIndicators,
+                      overdueCount: overdueCount,
+                      isSessionLocked: isLocked,
+                      onSelect: (index) => _onItemTapped(index),
                     ),
-                  ),
-                ],
+                    const VerticalDivider(width: 1),
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeIn,
+                        child: KeyedSubtree(
+                          key: ValueKey<int>(_currentIndex),
+                          child: _screens[_currentIndex],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               floatingActionButton: _currentIndex == 1
                   ? FloatingActionButton(

@@ -87,3 +87,9 @@ flutter:
     - assets/data/education_content/
     - assets/data/consent_templates/
     - assets/data/onboarding/
+
+dependency_overrides:
+  flutter_tts:
+    path: third_party/flutter_tts
+  whisper_flutter_new:
+    path: third_party/whisper_flutter_new
