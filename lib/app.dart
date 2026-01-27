@@ -11,7 +11,7 @@ import 'screens/settings_screen.dart';
 import 'screens/model_warmup_screen.dart';
 import 'services/model_warmup_service.dart';
 import 'services/model_manager.dart';
-import 'widgets/navigation/glass_bottom_nav.dart';
+import 'ui/mobile/widgets/mobile_floating_nav_bar.dart';
 import 'widgets/auth_gate.dart';
 import 'services/biometric_service.dart';
 import 'widgets/dialogs/biometric_enrollment_dialog.dart';
@@ -304,51 +304,67 @@ class _SehatLockerAppState extends State<SehatLockerApp>
         },
         child: Scaffold(
           extendBody: true,
-          body: KeyedSubtree(
-            key: ValueKey<int>(_currentIndex),
-            child: _getScreen(_currentIndex),
-          ),
-          floatingActionButton: _currentIndex == 1
-              ? FloatingActionButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EducationGate(
-                          contentId: 'document_scanner',
-                          child: DocumentScannerScreen(),
-                        ),
-                      ),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              KeyedSubtree(
+                key: ValueKey<int>(_currentIndex),
+                child: _getScreen(_currentIndex),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: ValueListenableBuilder<Box<FollowUpItem>>(
+                  valueListenable: LocalStorageService().followUpItemsListenable,
+                  builder: (context, box, _) {
+                    final now = DateTime.now();
+                    final overdueCount = box.values
+                        .where((item) =>
+                            !item.isCompleted &&
+                            item.dueDate != null &&
+                            item.dueDate!.isBefore(now))
+                        .length;
+
+                    return FutureBuilder<Map<int, bool>>(
+                      future: _getEducationIndicators(),
+                      builder: (context, snapshot) {
+                        return MobileFloatingNavBar(
+                          currentIndex: _currentIndex,
+                          onItemTapped: _onItemTapped,
+                          badgeCounts:
+                              overdueCount > 0 ? {0: overdueCount} : null,
+                          attentionIndicators: snapshot.data,
+                        );
+                      },
                     );
                   },
-                  backgroundColor: AppTheme.accentTeal,
-                  child: const Icon(Icons.document_scanner),
+                ),
+              ),
+            ],
+          ),
+          floatingActionButton: _currentIndex == 1
+              ? Padding(
+                  padding: EdgeInsets.only(
+                    bottom: 92 + MediaQuery.of(context).viewPadding.bottom,
+                  ),
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EducationGate(
+                            contentId: 'document_scanner',
+                            child: DocumentScannerScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                    backgroundColor: AppTheme.accentTeal,
+                    child: const Icon(Icons.document_scanner),
+                  ),
                 )
               : null,
-          bottomNavigationBar: ValueListenableBuilder<Box<FollowUpItem>>(
-            valueListenable: LocalStorageService().followUpItemsListenable,
-            builder: (context, box, _) {
-              final now = DateTime.now();
-              final overdueCount = box.values
-                  .where((item) =>
-                      !item.isCompleted &&
-                      item.dueDate != null &&
-                      item.dueDate!.isBefore(now))
-                  .length;
-
-              return FutureBuilder<Map<int, bool>>(
-                future: _getEducationIndicators(),
-                builder: (context, snapshot) {
-                  return GlassBottomNav(
-                    currentIndex: _currentIndex,
-                    onItemTapped: _onItemTapped,
-                    badgeCounts: overdueCount > 0 ? {0: overdueCount} : null,
-                    attentionIndicators: snapshot.data,
-                  );
-                },
-              );
-            },
-          ),
         ),
       ),
     );

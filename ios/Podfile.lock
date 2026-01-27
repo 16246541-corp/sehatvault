@@ -1,0 +1,190 @@
+PODS:
+  - add_2_calendar (0.0.1):
+    - Flutter
+  - app_settings (5.1.1):
+    - Flutter
+  - battery_plus (1.0.0):
+    - Flutter
+  - camera_avfoundation (0.0.1):
+    - Flutter
+  - connectivity_plus (0.0.1):
+    - Flutter
+  - device_info_plus (0.0.1):
+    - Flutter
+  - file_selector_ios (0.0.1):
+    - Flutter
+  - Flutter (1.0.0)
+  - flutter_image_compress_common (1.0.0):
+    - Flutter
+    - Mantle
+    - SDWebImage
+    - SDWebImageWebPCoder
+  - flutter_local_notifications (0.0.1):
+    - Flutter
+  - flutter_secure_storage (6.0.0):
+    - Flutter
+  - flutter_sound (9.30.0):
+    - Flutter
+    - flutter_sound_core (= 9.30.0)
+  - flutter_sound_core (9.30.0)
+  - flutter_tesseract_ocr (0.3.4):
+    - Flutter
+    - SwiftyTesseract
+  - flutter_tts (0.0.1):
+    - Flutter
+  - home_widget (0.0.1):
+    - Flutter
+  - libwebp (1.5.0):
+    - libwebp/demux (= 1.5.0)
+    - libwebp/mux (= 1.5.0)
+    - libwebp/sharpyuv (= 1.5.0)
+    - libwebp/webp (= 1.5.0)
+  - libwebp/demux (1.5.0):
+    - libwebp/webp
+  - libwebp/mux (1.5.0):
+    - libwebp/demux
+  - libwebp/sharpyuv (1.5.0)
+  - libwebp/webp (1.5.0):
+    - libwebp/sharpyuv
+  - local_auth_darwin (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - Mantle (2.2.0):
+    - Mantle/extobjc (= 2.2.0)
+  - Mantle/extobjc (2.2.0)
+  - ObjectBox (1.9.2)
+  - objectbox_flutter_libs (0.0.1):
+    - Flutter
+    - ObjectBox (= 1.9.2)
+  - permission_handler_apple (9.3.0):
+    - Flutter
+  - printing (1.0.0):
+    - Flutter
+  - SDWebImage (5.21.5):
+    - SDWebImage/Core (= 5.21.5)
+  - SDWebImage/Core (5.21.5)
+  - SDWebImageWebPCoder (0.15.0):
+    - libwebp (~> 1.0)
+    - SDWebImage/Core (~> 5.17)
+  - share_plus (0.0.1):
+    - Flutter
+  - SwiftyTesseract (3.1.3)
+  - url_launcher_ios (0.0.1):
+    - Flutter
+  - whisper_flutter_new (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - add_2_calendar (from `.symlinks/plugins/add_2_calendar/ios`)
+  - app_settings (from `.symlinks/plugins/app_settings/ios`)
+  - battery_plus (from `.symlinks/plugins/battery_plus/ios`)
+  - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
+  - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
+  - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
+  - file_selector_ios (from `.symlinks/plugins/file_selector_ios/ios`)
+  - Flutter (from `Flutter`)
+  - flutter_image_compress_common (from `.symlinks/plugins/flutter_image_compress_common/ios`)
+  - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
+  - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
+  - flutter_sound (from `.symlinks/plugins/flutter_sound/ios`)
+  - flutter_tesseract_ocr (from `.symlinks/plugins/flutter_tesseract_ocr/ios`)
+  - flutter_tts (from `.symlinks/plugins/flutter_tts/ios`)
+  - home_widget (from `.symlinks/plugins/home_widget/ios`)
+  - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
+  - objectbox_flutter_libs (from `.symlinks/plugins/objectbox_flutter_libs/ios`)
+  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - printing (from `.symlinks/plugins/printing/ios`)
+  - share_plus (from `.symlinks/plugins/share_plus/ios`)
+  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
+  - whisper_flutter_new (from `.symlinks/plugins/whisper_flutter_new/ios`)
+
+SPEC REPOS:
+  trunk:
+    - flutter_sound_core
+    - libwebp
+    - Mantle
+    - ObjectBox
+    - SDWebImage
+    - SDWebImageWebPCoder
+    - SwiftyTesseract
+
+EXTERNAL SOURCES:
+  add_2_calendar:
+    :path: ".symlinks/plugins/add_2_calendar/ios"
+  app_settings:
+    :path: ".symlinks/plugins/app_settings/ios"
+  battery_plus:
+    :path: ".symlinks/plugins/battery_plus/ios"
+  camera_avfoundation:
+    :path: ".symlinks/plugins/camera_avfoundation/ios"
+  connectivity_plus:
+    :path: ".symlinks/plugins/connectivity_plus/ios"
+  device_info_plus:
+    :path: ".symlinks/plugins/device_info_plus/ios"
+  file_selector_ios:
+    :path: ".symlinks/plugins/file_selector_ios/ios"
+  Flutter:
+    :path: Flutter
+  flutter_image_compress_common:
+    :path: ".symlinks/plugins/flutter_image_compress_common/ios"
+  flutter_local_notifications:
+    :path: ".symlinks/plugins/flutter_local_notifications/ios"
+  flutter_secure_storage:
+    :path: ".symlinks/plugins/flutter_secure_storage/ios"
+  flutter_sound:
+    :path: ".symlinks/plugins/flutter_sound/ios"
+  flutter_tesseract_ocr:
+    :path: ".symlinks/plugins/flutter_tesseract_ocr/ios"
+  flutter_tts:
+    :path: ".symlinks/plugins/flutter_tts/ios"
+  home_widget:
+    :path: ".symlinks/plugins/home_widget/ios"
+  local_auth_darwin:
+    :path: ".symlinks/plugins/local_auth_darwin/darwin"
+  objectbox_flutter_libs:
+    :path: ".symlinks/plugins/objectbox_flutter_libs/ios"
+  permission_handler_apple:
+    :path: ".symlinks/plugins/permission_handler_apple/ios"
+  printing:
+    :path: ".symlinks/plugins/printing/ios"
+  share_plus:
+    :path: ".symlinks/plugins/share_plus/ios"
+  url_launcher_ios:
+    :path: ".symlinks/plugins/url_launcher_ios/ios"
+  whisper_flutter_new:
+    :path: ".symlinks/plugins/whisper_flutter_new/ios"
+
+SPEC CHECKSUMS:
+  add_2_calendar: e626377f607d055070093cbd56abd1fafa1a02a5
+  app_settings: 5127ae0678de1dcc19f2293271c51d37c89428b2
+  battery_plus: b42253f6d2dde71712f8c36fef456d99121c5977
+  camera_avfoundation: 5675ca25298b6f81fa0a325188e7df62cc217741
+  connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
+  device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
+  file_selector_ios: ec57ec07954363dd730b642e765e58f199bb621a
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  flutter_image_compress_common: 1697a328fd72bfb335507c6bca1a65fa5ad87df1
+  flutter_local_notifications: a5a732f069baa862e728d839dd2ebb904737effb
+  flutter_secure_storage: 1ed9476fba7e7a782b22888f956cce43e2c62f13
+  flutter_sound: d95194f6476c9ad211d22b3a414d852c12c7ca44
+  flutter_sound_core: 7f2626d249d3a57bfa6da892ef7e22d234482c1a
+  flutter_tesseract_ocr: fffe5de044967e12d184feaded7fabfb546b6042
+  flutter_tts: 35ac3c7d42412733e795ea96ad2d7e05d0a75113
+  home_widget: f169fc41fd807b4d46ab6615dc44d62adbf9f64f
+  libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
+  local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
+  Mantle: c5aa8794a29a022dfbbfc9799af95f477a69b62d
+  ObjectBox: 46757a559717ab49b1cc0612eaff82b705acf394
+  objectbox_flutter_libs: d196bad2ce3e05e9a8e18529f31634a1a2457c4c
+  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
+  printing: 54ff03f28fe9ba3aa93358afb80a8595a071dd07
+  SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
+  SDWebImageWebPCoder: 0e06e365080397465cc73a7a9b472d8a3bd0f377
+  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
+  SwiftyTesseract: 1f3d96668ae92dc2208d9842c8a59bea9fad2cbb
+  url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
+  whisper_flutter_new: 9276535665f51f845831fe94859b2cccd0334a70
+
+PODFILE CHECKSUM: 05ac6d5d165939fa7f649505f1c23feb9305755f
+
+COCOAPODS: 1.16.2

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../../main_common.dart'; // for storageService
 import '../../../models/app_settings.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/storage_usage_service.dart';
@@ -9,75 +8,110 @@ import '../../../services/onboarding_service.dart';
 import '../../../screens/onboarding/onboarding_navigator.dart';
 import '../../../app.dart';
 
+class DesktopSettingsCategory {
+  final String id;
+  final String label;
+  final String subtitle;
+  final String description;
+  final IconData icon;
+  final Color color;
+
+  const DesktopSettingsCategory({
+    required this.id,
+    required this.label,
+    required this.subtitle,
+    required this.description,
+    required this.icon,
+    required this.color,
+  });
+}
+
+final List<DesktopSettingsCategory> desktopSettingsCategories = [
+  const DesktopSettingsCategory(
+    id: 'privacy',
+    label: 'Privacy & Security',
+    subtitle: 'Biometric, locker',
+    description:
+        'Manage how Sehat Locker protects your sensitive health data, configure biometric access, and control encryption levels.',
+    icon: Icons.security,
+    color: Colors.purpleAccent,
+  ),
+  const DesktopSettingsCategory(
+    id: 'storage',
+    label: 'Storage',
+    subtitle: 'Usage, cleanup',
+    description:
+        'Review storage usage, manage cache, and keep your locker tidy over time.',
+    icon: Icons.storage,
+    color: Colors.blueAccent,
+  ),
+  const DesktopSettingsCategory(
+    id: 'recording',
+    label: 'Recording',
+    subtitle: 'Auto-stop, retention',
+    description:
+        'Control recording behavior, retention policies, and capture preferences.',
+    icon: Icons.mic,
+    color: Colors.pinkAccent,
+  ),
+  const DesktopSettingsCategory(
+    id: 'notifications',
+    label: 'Notifications',
+    subtitle: 'Alerts, masking',
+    description:
+        'Configure alerts, privacy masking, and how updates appear while you work.',
+    icon: Icons.notifications,
+    color: Colors.orangeAccent,
+  ),
+  const DesktopSettingsCategory(
+    id: 'ai',
+    label: 'AI Model',
+    subtitle: 'Local LLM, memory',
+    description:
+        'Choose your on-device model, adjust behavior, and review assistant settings.',
+    icon: Icons.psychology,
+    color: Colors.tealAccent,
+  ),
+  const DesktopSettingsCategory(
+    id: 'accessibility',
+    label: 'Accessibility',
+    subtitle: 'Hotkeys, reader',
+    description:
+        'Improve readability and navigation with accessibility preferences and shortcuts.',
+    icon: Icons.accessibility_new,
+    color: Colors.greenAccent,
+  ),
+  const DesktopSettingsCategory(
+    id: 'desktop',
+    label: 'Desktop Experience',
+    subtitle: 'Window settings',
+    description: 'Configure desktop-only behaviors and window preferences.',
+    icon: Icons.desktop_windows,
+    color: Colors.cyanAccent,
+  ),
+  const DesktopSettingsCategory(
+    id: 'about',
+    label: 'About',
+    subtitle: 'Version, licenses',
+    description: 'Version details, licenses, and app information.',
+    icon: Icons.info_outline,
+    color: Colors.indigoAccent,
+  ),
+];
+
 class DesktopSettingsScreen extends StatefulWidget {
-  const DesktopSettingsScreen({super.key});
+  final String selectedCategoryId;
+
+  const DesktopSettingsScreen({
+    super.key,
+    required this.selectedCategoryId,
+  });
 
   @override
   State<DesktopSettingsScreen> createState() => _DesktopSettingsScreenState();
 }
 
 class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
-  // Categories matching the screenshot + existing functionality
-  final List<_SettingsCategory> _categories = [
-    _SettingsCategory(
-      id: 'privacy',
-      label: 'Privacy & Security',
-      subtitle: 'Biometric, locker',
-      icon: Icons.security,
-      color: Colors.purpleAccent,
-    ),
-    _SettingsCategory(
-      id: 'storage',
-      label: 'Storage',
-      subtitle: 'Usage, cleanup',
-      icon: Icons.storage,
-      color: Colors.blueAccent,
-    ),
-    _SettingsCategory(
-      id: 'recording',
-      label: 'Recording',
-      subtitle: 'Auto-stop, retention',
-      icon: Icons.mic,
-      color: Colors.pinkAccent,
-    ),
-    _SettingsCategory(
-      id: 'notifications',
-      label: 'Notifications',
-      subtitle: 'Alerts, masking',
-      icon: Icons.notifications,
-      color: Colors.orangeAccent,
-    ),
-    _SettingsCategory(
-      id: 'ai',
-      label: 'AI Model',
-      subtitle: 'Local LLM, memory',
-      icon: Icons.psychology,
-      color: Colors.tealAccent,
-    ),
-    _SettingsCategory(
-      id: 'accessibility',
-      label: 'Accessibility',
-      subtitle: 'Hotkeys, reader',
-      icon: Icons.accessibility_new,
-      color: Colors.greenAccent,
-    ),
-    _SettingsCategory(
-      id: 'desktop',
-      label: 'Desktop Experience',
-      subtitle: 'Window settings',
-      icon: Icons.desktop_windows,
-      color: Colors.cyanAccent,
-    ),
-    _SettingsCategory(
-      id: 'about',
-      label: 'About',
-      subtitle: 'Version, licenses',
-      icon: Icons.info_outline,
-      color: Colors.indigoAccent,
-    ),
-  ];
-
-  String? _selectedId; // Null means showing list, non-null means showing detail
   late final StorageUsageService _storageUsageService;
   StorageUsage? _storageUsage;
   bool _isLoadingUsage = false;
@@ -103,21 +137,23 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     // Custom Theme Colors for this screen based on screenshot
-    final bgGradientStart = const Color(0xFF0F172A); // Deep Navy
-    final bgGradientEnd = const Color(0xFF1E1B4B); // Indigo
+    final selectedCategory = desktopSettingsCategories.firstWhere(
+      (c) => c.id == widget.selectedCategoryId,
+      orElse: () => desktopSettingsCategories.first,
+    );
 
     return Scaffold(
       body: ValueListenableBuilder(
           valueListenable: Hive.box('settings').listenable(),
           builder: (context, box, _) {
             return Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: RadialGradient(
                   center: Alignment.topRight,
                   radius: 1.5,
                   colors: [
-                    const Color(0xFF1E293B), // Slate 800
-                    bgGradientStart,
+                    Color(0xFF1E293B), // Slate 800
+                    Color(0xFF0F172A), // Deep Navy
                   ],
                 ),
               ),
@@ -125,11 +161,48 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
                 children: [
                   _buildTopBar(),
                   Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: _selectedId == null
-                          ? _buildCategoryList(context)
-                          : _buildDetailView(context),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(48, 28, 48, 40),
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 980),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Settings  ›  ${selectedCategory.label}',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                selectedCategory.label,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.6,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                selectedCategory.description,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 14,
+                                  height: 1.35,
+                                ),
+                              ),
+                              const SizedBox(height: 28),
+                              _buildContent(selectedCategory.id),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -177,193 +250,29 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          Icon(Icons.settings,
-              size: 20, color: Colors.white.withValues(alpha: 0.4)),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: Icon(
+              Icons.settings,
+              size: 18,
+              color: Colors.white.withValues(alpha: 0.45),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryList(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Settings',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Privacy-first health locker',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
-              fontSize: 15,
-            ),
-          ),
-          const SizedBox(height: 32),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _categories.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final category = _categories[index];
-              return _SettingsCategoryCard(
-                category: category,
-                onTap: () => setState(() => _selectedId = category.id),
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-          _buildLogoutButton(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailView(BuildContext context) {
-    final category = _categories.firstWhere((c) => c.id == _selectedId);
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(32, 24, 32, 8),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => setState(() => _selectedId = null),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    category.label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    category.subtitle,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32),
-            child: _buildContent(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLogoutButton(BuildContext context) {
-    return _SettingsCategoryCard(
-      category: _SettingsCategory(
-        id: 'logout',
-        label: 'Logout',
-        subtitle: 'Secure session end',
-        icon: Icons.logout,
-        color: Colors.redAccent,
-      ),
-      isDestructive: true,
-      onTap: () => _handleLogout(context),
-    );
-  }
-
-  Future<void> _handleLogout(BuildContext context) async {
-    bool clearData = false;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Logout'),
-          backgroundColor: const Color(0xFF1E293B),
-          titleTextStyle: const TextStyle(
-              color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-          contentTextStyle: const TextStyle(color: Colors.white70),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Are you sure you want to log out?'),
-              const SizedBox(height: 16),
-              CheckboxListTile(
-                title: const Text('Clear all data on this device',
-                    style: TextStyle(color: Colors.white)),
-                subtitle: const Text('Permanently deletes all records',
-                    style: TextStyle(color: Colors.white54)),
-                value: clearData,
-                onChanged: (value) {
-                  setDialogState(() {
-                    clearData = value ?? false;
-                  });
-                },
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                activeColor: Colors.redAccent,
-                checkColor: Colors.white,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.white70)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text('Logout',
-                  style: TextStyle(
-                      color: clearData ? Colors.redAccent : Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (confirmed == true && context.mounted) {
-      await OnboardingService().logout(clearData: clearData);
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => OnboardingNavigator(
-              onComplete: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (context) => const SehatLockerApp()),
-                  (route) => false,
-                );
-              },
-            ),
-          ),
-          (route) => false,
-        );
-      }
-    }
-  }
-
-  Widget _buildContent() {
+  Widget _buildContent(String categoryId) {
     final settings = LocalStorageService().getAppSettings();
 
-    switch (_selectedId) {
+    switch (categoryId) {
       case 'privacy':
         return _buildPrivacyContent(settings);
       case 'storage':
@@ -389,7 +298,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'ACCESS CONTROL'),
+        const _SectionHeader(title: 'ACCESS CONTROL'),
         _SettingsCard(
           icon: Icons.fingerprint,
           iconColor: Colors.purpleAccent,
@@ -405,7 +314,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
               await LocalStorageService().saveAppSettings(settings);
               setState(() {});
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.blueAccent,
             inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
             inactiveThumbColor: Colors.grey,
@@ -424,7 +333,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
           ),
         ),
         const SizedBox(height: 32),
-        _SectionHeader(title: 'DATA PROTECTION'),
+        const _SectionHeader(title: 'DATA PROTECTION'),
         _SettingsCard(
           icon: Icons.lock,
           iconColor: Colors.greenAccent,
@@ -434,7 +343,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
           trailing: Switch(
             value: true,
             onChanged: (v) {}, // Always on for now
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.blueAccent,
           ),
           isHighlighted: true,
@@ -454,14 +363,14 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
               await LocalStorageService().saveAppSettings(settings);
               setState(() {});
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.blueAccent,
             inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
             inactiveThumbColor: Colors.grey,
           ),
         ),
         const SizedBox(height: 32),
-        _SectionHeader(title: 'DANGER ZONE', color: Colors.redAccent),
+        const _SectionHeader(title: 'DANGER ZONE', color: Colors.redAccent),
         _SettingsCard(
           title: 'Reset Local Database',
           description:
@@ -483,8 +392,28 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_isLoadingUsage && _storageUsage == null) ...[
+          const _SectionHeader(title: 'USAGE'),
+          _SettingsCard(
+            title: 'Calculating Storage Usage',
+            description: 'Scanning local files and records…',
+            icon: Icons.data_usage,
+            iconColor: Colors.blueAccent,
+            trailing: SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Colors.white.withValues(alpha: 0.8),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
         if (_storageUsage != null) ...[
-          _SectionHeader(title: 'USAGE'),
+          const _SectionHeader(title: 'USAGE'),
           _SettingsCard(
             title: 'Storage Usage',
             description:
@@ -499,7 +428,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
           ),
           const SizedBox(height: 32),
         ],
-        _SectionHeader(title: 'CLEANUP'),
+        const _SectionHeader(title: 'CLEANUP'),
         _SettingsCard(
           icon: Icons.delete_sweep,
           iconColor: Colors.orangeAccent,
@@ -525,7 +454,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
               await LocalStorageService().setAutoDeleteOriginal(v);
               setState(() {});
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.blueAccent,
             inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
             inactiveThumbColor: Colors.grey,
@@ -539,7 +468,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'RECORDING BEHAVIOR'),
+        const _SectionHeader(title: 'RECORDING BEHAVIOR'),
         _SettingsCard(
           icon: Icons.timer,
           iconColor: Colors.pinkAccent,
@@ -570,7 +499,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'DESKTOP NOTIFICATIONS'),
+        const _SectionHeader(title: 'DESKTOP NOTIFICATIONS'),
         _SettingsCard(
           icon: Icons.notifications_active,
           iconColor: Colors.orangeAccent,
@@ -583,7 +512,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
               await LocalStorageService().saveAppSettings(settings);
               setState(() {});
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.blueAccent,
             inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
             inactiveThumbColor: Colors.grey,
@@ -602,7 +531,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
               await LocalStorageService().saveAppSettings(settings);
               setState(() {});
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.blueAccent,
             inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
             inactiveThumbColor: Colors.grey,
@@ -616,7 +545,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'MODEL CONFIGURATION'),
+        const _SectionHeader(title: 'MODEL CONFIGURATION'),
         _SettingsCard(
           icon: Icons.psychology,
           iconColor: Colors.tealAccent,
@@ -640,7 +569,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
               await LocalStorageService().saveAppSettings(settings);
               setState(() {});
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.blueAccent,
             inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
             inactiveThumbColor: Colors.grey,
@@ -654,7 +583,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'INPUT'),
+        const _SectionHeader(title: 'INPUT'),
         _SettingsCard(
           icon: Icons.keyboard,
           iconColor: Colors.greenAccent,
@@ -667,7 +596,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
               await LocalStorageService().saveAppSettings(settings);
               setState(() {});
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.blueAccent,
             inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
             inactiveThumbColor: Colors.grey,
@@ -681,7 +610,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'WINDOW'),
+        const _SectionHeader(title: 'WINDOW'),
         _SettingsCard(
           icon: Icons.window,
           iconColor: Colors.blueGrey,
@@ -694,7 +623,7 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
               await LocalStorageService().saveAppSettings(settings);
               setState(() {});
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.blueAccent,
             inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
             inactiveThumbColor: Colors.grey,
@@ -708,13 +637,13 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(title: 'APPLICATION'),
-        _SettingsCard(
+        const _SectionHeader(title: 'APPLICATION'),
+        const _SettingsCard(
           icon: Icons.info,
           iconColor: Colors.indigoAccent,
           title: 'Version',
           description: '1.0.0 (Build 100)',
-          trailing: const SizedBox(),
+          trailing: SizedBox(),
         ),
         const SizedBox(height: 16),
         _SettingsCard(
@@ -771,7 +700,9 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
                 settings.sessionTimeoutMinutes = selectedMinutes;
                 await LocalStorageService().saveAppSettings(settings);
                 SessionManager().resetActivity();
-                Navigator.pop(context);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
                 if (mounted) setState(() {});
               },
               child: const Text('Save',
@@ -809,147 +740,21 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
 
     if (confirmed == true) {
       await OnboardingService().logout(clearData: true);
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => OnboardingNavigator(
-              onComplete: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (context) => const SehatLockerApp()),
-                  (route) => false,
-                );
-              },
-            ),
-          ),
-          (route) => false,
-        );
-      }
-    }
-  }
-}
-
-class _SettingsCategory {
-  final String id;
-  final String label;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-
-  _SettingsCategory({
-    required this.id,
-    required this.label,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-  });
-}
-
-class _SettingsCategoryCard extends StatefulWidget {
-  final _SettingsCategory category;
-  final VoidCallback onTap;
-  final bool isDestructive;
-
-  const _SettingsCategoryCard({
-    required this.category,
-    required this.onTap,
-    this.isDestructive = false,
-  });
-
-  @override
-  State<_SettingsCategoryCard> createState() => _SettingsCategoryCardState();
-}
-
-class _SettingsCategoryCardState extends State<_SettingsCategoryCard> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            color: widget.isDestructive
-                ? Colors.redAccent.withValues(alpha: 0.1)
-                : const Color(0xFF0F172A).withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: widget.isDestructive
-                  ? Colors.redAccent.withValues(alpha: 0.3)
-                  : _isHovered
-                      ? widget.category.color.withValues(alpha: 0.3)
-                      : Colors.white.withValues(alpha: 0.05),
-              width: 1,
-            ),
-            boxShadow: [
-              if (_isHovered)
-                BoxShadow(
-                  color: (widget.isDestructive
-                          ? Colors.redAccent
-                          : widget.category.color)
-                      .withValues(alpha: 0.1),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: widget.category.color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  widget.category.icon,
-                  size: 24,
-                  color: widget.category.color,
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.category.label,
-                      style: TextStyle(
-                        color: widget.isDestructive
-                            ? Colors.redAccent
-                            : Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.category.subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: widget.isDestructive
-                    ? Colors.redAccent
-                    : Colors.white.withValues(alpha: 0.3),
-              ),
-            ],
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => OnboardingNavigator(
+            onComplete: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const SehatLockerApp()),
+                (route) => false,
+              );
+            },
           ),
         ),
-      ),
-    );
+        (route) => false,
+      );
+    }
   }
 }
 

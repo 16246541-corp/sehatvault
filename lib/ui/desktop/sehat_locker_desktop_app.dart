@@ -12,18 +12,21 @@ import '../../screens/model_warmup_screen.dart';
 import '../../screens/news_screen.dart';
 import 'screens/desktop_settings_screen.dart';
 import '../../services/biometric_service.dart';
-import '../../services/education_service.dart';
 import '../../services/export_service.dart';
 import '../../services/keyboard_shortcut_service.dart';
 import '../../services/local_storage_service.dart';
 import '../../services/model_manager.dart';
 import '../../services/model_warmup_service.dart';
+import '../../services/onboarding_service.dart';
 import '../../services/session_manager.dart';
 import '../../utils/theme.dart';
 import '../../widgets/auth_gate.dart';
 import '../../widgets/dialogs/biometric_enrollment_dialog.dart';
 import '../../widgets/education/education_gate.dart';
+import '../../screens/onboarding/onboarding_navigator.dart';
+import '../../app.dart';
 
+import 'widgets/desktop_floating_overlay_bar.dart';
 import 'widgets/desktop_menu_bar.dart';
 
 class SehatLockerDesktopApp extends StatefulWidget {
@@ -37,21 +40,25 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
     with WidgetsBindingObserver {
   int _currentIndex = 0;
 
-  late final List<Widget> _screens;
+  late final List<Widget Function()> _screenBuilders;
+  late String _settingsCategoryId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _screens = [
-      const HomeScreen(),
-      DocumentsScreen(
-        onRecordTap: () => _onItemTapped(2),
-      ),
-      _buildAIScreen(),
-      const NewsScreen(),
-      const DesktopSettingsScreen(),
+    _settingsCategoryId = desktopSettingsCategories.first.id;
+    _screenBuilders = [
+      () => const HomeScreen(),
+      () => DocumentsScreen(
+            onRecordTap: () => _onItemTapped(2),
+          ),
+      () => _buildAIScreen(),
+      () => const NewsScreen(),
+      () => DesktopSettingsScreen(
+            selectedCategoryId: _settingsCategoryId,
+          ),
     ];
 
     SessionManager().addListener(_onSessionChanged);
@@ -172,19 +179,76 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
     });
   }
 
-  Future<Map<int, bool>> _getEducationIndicators() async {
-    final educationService = EducationService();
-    final aiComplete =
-        await educationService.isEducationCompleted('ai_features');
-    final documentComplete =
-        await educationService.isEducationCompleted('document_scanner');
-    final storageComplete =
-        await educationService.isEducationCompleted('secure_storage');
+  Future<void> _handleLogout(BuildContext context) async {
+    bool clearData = false;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Logout'),
+          backgroundColor: const Color(0xFF1E293B),
+          titleTextStyle: const TextStyle(
+              color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          contentTextStyle: const TextStyle(color: Colors.white70),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Are you sure you want to log out?'),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                title: const Text('Clear all data on this device',
+                    style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Permanently deletes all records',
+                    style: TextStyle(color: Colors.white54)),
+                value: clearData,
+                onChanged: (value) {
+                  setDialogState(() {
+                    clearData = value ?? false;
+                  });
+                },
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: Colors.redAccent,
+                checkColor: Colors.white,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child:
+                  const Text('Cancel', style: TextStyle(color: Colors.white70)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text('Logout',
+                  style: TextStyle(
+                      color: clearData ? Colors.redAccent : Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
 
-    return {
-      1: !(documentComplete && storageComplete),
-      2: !aiComplete,
-    };
+    if (confirmed == true && context.mounted) {
+      await OnboardingService().logout(clearData: clearData);
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => OnboardingNavigator(
+              onComplete: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (context) => const SehatLockerApp()),
+                  (route) => false,
+                );
+              },
+            ),
+          ),
+          (route) => false,
+        );
+      }
+    }
   }
 
   Widget _buildAIScreen() {
@@ -209,56 +273,107 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
   Widget build(BuildContext context) {
     final isLocked = SessionManager().isLocked;
     final overdueCount = LocalStorageService().getOverdueItems().length;
+    final isSettings = _currentIndex == 4;
+
+    void onNewScan() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const EducationGate(
+            contentId: 'document_scanner',
+            child: DocumentScannerScreen(),
+          ),
+        ),
+      );
+    }
+
+    void onExportPdf() {
+      ExportService().exportAuditLogReport(context);
+    }
+
+    void onExportJson() {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('JSON Export coming soon')),
+      );
+    }
+
+    void onOpenRecent(HealthRecord record) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DocumentDetailScreen(healthRecordId: record.id),
+        ),
+      );
+    }
+
+    void onSettings() {
+      _onItemTapped(4);
+    }
+
+    void onLock() {
+      SessionManager().lockImmediately();
+    }
+
+    void onAbout() {
+      showAboutDialog(
+        context: context,
+        applicationName: 'Sehat Locker',
+        applicationVersion: '1.0.0',
+        applicationIcon: const Icon(Icons.lock, size: 48),
+        applicationLegalese: '© 2026 Sehat Locker Team',
+      );
+    }
+
+    void onToggleShortcuts() {
+      KeyboardShortcutService().executeAction('toggle_cheat_sheet');
+    }
+
+    final overlayActionsEnabled = !isLocked;
+
+    final overlayItems = <DesktopOverlayBarItem>[
+      DesktopOverlayBarItem(
+        icon: Icons.home_rounded,
+        tooltip: 'Home',
+        onPressed: overlayActionsEnabled ? () => _onItemTapped(0) : null,
+        isSelected: _currentIndex == 0,
+      ),
+      DesktopOverlayBarItem(
+        icon: Icons.psychology_rounded,
+        tooltip: 'AI',
+        onPressed: overlayActionsEnabled ? () => _onItemTapped(2) : null,
+        isSelected: _currentIndex == 2,
+      ),
+      DesktopOverlayBarItem(
+        icon: Icons.article_rounded,
+        tooltip: 'News',
+        onPressed: overlayActionsEnabled ? () => _onItemTapped(3) : null,
+        isSelected: _currentIndex == 3,
+      ),
+      DesktopOverlayBarItem(
+        icon: Icons.folder_rounded,
+        tooltip: 'Documents',
+        onPressed: overlayActionsEnabled ? () => _onItemTapped(1) : null,
+        isSelected: _currentIndex == 1,
+      ),
+      DesktopOverlayBarItem(
+        icon: Icons.settings_rounded,
+        tooltip: 'Settings',
+        onPressed: overlayActionsEnabled ? () => _onItemTapped(4) : null,
+        isSelected: _currentIndex == 4,
+      ),
+    ];
 
     return DesktopMenuBar(
       canExport: true,
       isSessionLocked: isLocked,
-      onNewScan: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const EducationGate(
-              contentId: 'document_scanner',
-              child: DocumentScannerScreen(),
-            ),
-          ),
-        );
-      },
-      onExportPdf: () {
-        ExportService().exportAuditLogReport(context);
-      },
-      onExportJson: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('JSON Export coming soon')),
-        );
-      },
-      onOpenRecent: (HealthRecord record) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                DocumentDetailScreen(healthRecordId: record.id),
-          ),
-        );
-      },
-      onSettings: () {
-        _onItemTapped(4);
-      },
-      onLock: () {
-        SessionManager().lockImmediately();
-      },
-      onAbout: () {
-        showAboutDialog(
-          context: context,
-          applicationName: 'Sehat Locker',
-          applicationVersion: '1.0.0',
-          applicationIcon: const Icon(Icons.lock, size: 48),
-          applicationLegalese: '© 2026 Sehat Locker Team',
-        );
-      },
-      onToggleShortcuts: () {
-        KeyboardShortcutService().executeAction('toggle_cheat_sheet');
-      },
+      onNewScan: onNewScan,
+      onExportPdf: onExportPdf,
+      onExportJson: onExportJson,
+      onOpenRecent: onOpenRecent,
+      onSettings: onSettings,
+      onLock: onLock,
+      onAbout: onAbout,
+      onToggleShortcuts: onToggleShortcuts,
       child: AppShortcutManager(
         onRecordToggle: () {
           if (_currentIndex != 2) {
@@ -283,57 +398,69 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
         onSettingsOpen: () {
           _onItemTapped(4);
         },
-        child: FutureBuilder<Map<int, bool>>(
-          future: _getEducationIndicators(),
-          builder: (context, snapshot) {
-            final attentionIndicators = snapshot.data;
-
-            return Scaffold(
-              body: SafeArea(
-                bottom: false,
-                child: Row(
-                  children: [
-                    _DesktopSidebar(
-                      currentIndex: _currentIndex,
-                      attentionIndicators: attentionIndicators,
-                      overdueCount: overdueCount,
-                      isSessionLocked: isLocked,
-                      onSelect: (index) => _onItemTapped(index),
-                    ),
-                    const VerticalDivider(width: 1),
-                    Expanded(
-                      child: AnimatedSwitcher(
+        child: Scaffold(
+          body: SafeArea(
+            bottom: false,
+            child: Row(
+              children: [
+                _DesktopSidebar(
+                  overdueCount: overdueCount,
+                  isSessionLocked: isLocked,
+                  settingsCategories:
+                      isSettings ? desktopSettingsCategories : null,
+                  selectedSettingsCategoryId:
+                      isSettings ? _settingsCategoryId : null,
+                  onSelectSettingsCategory: isSettings
+                      ? (id) => setState(() => _settingsCategoryId = id)
+                      : null,
+                  onLogout: isSettings ? () => _handleLogout(context) : null,
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      AnimatedSwitcher(
                         duration: const Duration(milliseconds: 180),
                         switchInCurve: Curves.easeOut,
                         switchOutCurve: Curves.easeIn,
                         child: KeyedSubtree(
                           key: ValueKey<int>(_currentIndex),
-                          child: _screens[_currentIndex],
+                          child: _screenBuilders[_currentIndex](),
                         ),
                       ),
-                    ),
-                  ],
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 18 + MediaQuery.of(context).viewPadding.bottom,
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: DesktopFloatingOverlayBar(items: overlayItems),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              floatingActionButton: _currentIndex == 1
-                  ? FloatingActionButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EducationGate(
-                              contentId: 'document_scanner',
-                              child: DocumentScannerScreen(),
-                            ),
-                          ),
-                        );
-                      },
-                      backgroundColor: AppTheme.accentTeal,
-                      child: const Icon(Icons.document_scanner),
-                    )
-                  : null,
-            );
-          },
+              ],
+            ),
+          ),
+          floatingActionButton: _currentIndex == 1
+              ? FloatingActionButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EducationGate(
+                          contentId: 'document_scanner',
+                          child: DocumentScannerScreen(),
+                        ),
+                      ),
+                    );
+                  },
+                  backgroundColor: AppTheme.accentTeal,
+                  child: const Icon(Icons.document_scanner),
+                )
+              : null,
         ),
       ),
     );
@@ -341,93 +468,130 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
 }
 
 class _DesktopSidebar extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onSelect;
-  final Map<int, bool>? attentionIndicators;
   final int overdueCount;
   final bool isSessionLocked;
+  final List<DesktopSettingsCategory>? settingsCategories;
+  final String? selectedSettingsCategoryId;
+  final ValueChanged<String>? onSelectSettingsCategory;
+  final VoidCallback? onLogout;
 
   const _DesktopSidebar({
-    required this.currentIndex,
-    required this.onSelect,
-    required this.attentionIndicators,
     required this.overdueCount,
     required this.isSessionLocked,
+    this.settingsCategories,
+    this.selectedSettingsCategoryId,
+    this.onSelectSettingsCategory,
+    this.onLogout,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isSettingsSidebar = settingsCategories != null &&
+        selectedSettingsCategoryId != null &&
+        onSelectSettingsCategory != null;
 
     return SizedBox(
       width: 280,
       child: Container(
-        color: isDark
-            ? Colors.black.withValues(alpha: 0.25)
-            : Colors.white.withValues(alpha: 0.65),
+        decoration: BoxDecoration(
+          gradient: isSettingsSidebar
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF0B1220),
+                    Color(0xFF070A14),
+                  ],
+                )
+              : null,
+          color: isSettingsSidebar
+              ? null
+              : isDark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.65),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              child: Row(
-                children: [
-                  const Icon(Icons.lock, size: 18),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Sehat Locker',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
+              child: isSettingsSidebar
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Settings',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Privacy-first health locker',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.55),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        const Icon(Icons.lock, size: 18),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Sehat Locker',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
             ),
             const Divider(height: 1),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(8),
-                children: [
-                  _NavItem(
-                    selected: currentIndex == 0,
-                    icon: Icons.home_outlined,
-                    selectedIcon: Icons.home,
-                    label: 'Home',
-                    onTap: () => onSelect(0),
-                  ),
-                  _NavItem(
-                    selected: currentIndex == 1,
-                    icon: Icons.folder_outlined,
-                    selectedIcon: Icons.folder,
-                    label: 'Documents',
-                    showAttention: attentionIndicators?[1] == true,
-                    onTap: () => onSelect(1),
-                  ),
-                  _NavItem(
-                    selected: currentIndex == 2,
-                    icon: Icons.psychology_outlined,
-                    selectedIcon: Icons.psychology,
-                    label: 'AI',
-                    showAttention: attentionIndicators?[2] == true,
-                    onTap: () => onSelect(2),
-                  ),
-                  _NavItem(
-                    selected: currentIndex == 3,
-                    icon: Icons.article_outlined,
-                    selectedIcon: Icons.article,
-                    label: 'News',
-                    onTap: () => onSelect(3),
-                  ),
-                  _NavItem(
-                    selected: currentIndex == 4,
-                    icon: Icons.settings_outlined,
-                    selectedIcon: Icons.settings,
-                    label: 'Settings',
-                    onTap: () => onSelect(4),
-                  ),
-                ],
-              ),
+              child: isSettingsSidebar
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                      child: ListView.separated(
+                        padding: EdgeInsets.zero,
+                        itemCount: settingsCategories!.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 6),
+                        itemBuilder: (context, index) {
+                          final category = settingsCategories![index];
+                          final isSelected =
+                              category.id == selectedSettingsCategoryId;
+                          return _DesktopSettingsSidebarItem(
+                            icon: category.icon,
+                            iconColor: category.color,
+                            title: category.label,
+                            subtitle: category.subtitle,
+                            isSelected: isSelected,
+                            onTap: () => onSelectSettingsCategory!(category.id),
+                          );
+                        },
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
+            if (isSettingsSidebar && onLogout != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: _DesktopSettingsSidebarItem(
+                  icon: Icons.logout,
+                  iconColor: Colors.redAccent,
+                  title: 'Logout',
+                  subtitle: 'Secure session end',
+                  isSelected: false,
+                  isDestructive: true,
+                  onTap: onLogout!,
+                ),
+              ),
             _DesktopStatusBar(
               overdueCount: overdueCount,
               isSessionLocked: isSessionLocked,
@@ -439,64 +603,149 @@ class _DesktopSidebar extends StatelessWidget {
   }
 }
 
-class _NavItem extends StatelessWidget {
-  final bool selected;
+class _DesktopSettingsSidebarItem extends StatefulWidget {
   final IconData icon;
-  final IconData selectedIcon;
-  final String label;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final bool isSelected;
+  final bool isDestructive;
   final VoidCallback onTap;
-  final bool showAttention;
 
-  const _NavItem({
-    required this.selected,
+  const _DesktopSettingsSidebarItem({
     required this.icon,
-    required this.selectedIcon,
-    required this.label,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.isSelected,
     required this.onTap,
-    this.showAttention = false,
+    this.isDestructive = false,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final activeColor = theme.colorScheme.primary;
-    final inactiveColor =
-        isDark ? Colors.white.withValues(alpha: 0.8) : Colors.black87;
+  State<_DesktopSettingsSidebarItem> createState() =>
+      _DesktopSettingsSidebarItemState();
+}
 
-    return ListTile(
-      selected: selected,
-      leading: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Icon(
-            selected ? selectedIcon : icon,
-            color: selected ? activeColor : inactiveColor,
+class _DesktopSettingsSidebarItemState
+    extends State<_DesktopSettingsSidebarItem> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = widget.isDestructive
+        ? Colors.redAccent.withValues(alpha: widget.isSelected ? 0.18 : 0.10)
+        : Colors.white.withValues(alpha: widget.isSelected ? 0.06 : 0.0);
+    final border = widget.isDestructive
+        ? Colors.redAccent.withValues(alpha: widget.isSelected ? 0.35 : 0.22)
+        : widget.isSelected
+            ? Colors.white.withValues(alpha: 0.14)
+            : Colors.white.withValues(alpha: 0.06);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: _isHovered && !widget.isSelected
+                ? Colors.white.withValues(alpha: 0.04)
+                : bg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: border, width: 1),
+            boxShadow: widget.isSelected || _isHovered
+                ? [
+                    BoxShadow(
+                      color: (widget.isDestructive
+                              ? Colors.redAccent
+                              : widget.iconColor)
+                          .withValues(alpha: widget.isSelected ? 0.10 : 0.06),
+                      blurRadius: widget.isSelected ? 18 : 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : null,
           ),
-          if (showAttention)
-            Positioned(
-              right: -2,
-              top: -2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppTheme.accentTeal,
-                  shape: BoxShape.circle,
+          child: Row(
+            children: [
+              if (widget.isSelected)
+                Container(
+                  width: 3,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: (widget.isDestructive
+                            ? Colors.redAccent
+                            : widget.iconColor)
+                        .withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                )
+              else
+                const SizedBox(width: 3),
+              const SizedBox(width: 9),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: widget.iconColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  widget.icon,
+                  size: 18,
+                  color: widget.isDestructive
+                      ? Colors.redAccent
+                      : widget.iconColor,
                 ),
               ),
-            ),
-        ],
-      ),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: selected ? activeColor : inactiveColor,
-          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: widget.isDestructive
+                            ? Colors.redAccent
+                            : Colors.white.withValues(alpha: 0.92),
+                        fontSize: 13.5,
+                        fontWeight: widget.isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.55),
+                        fontSize: 11.5,
+                        height: 1.1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (widget.isSelected)
+                Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: Colors.white.withValues(alpha: 0.55),
+                ),
+            ],
+          ),
         ),
       ),
-      onTap: onTap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 }

@@ -64,6 +64,7 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
       config.build_settings['SWIFT_VERSION'] = '5.0'
+      config.build_settings['ENABLE_MODULE_VERIFIER'] = 'NO'
 
       if target.name == 'whisper_flutter_new'
         config.build_settings['CLANG_WARN__64_TO_32'] = 'NO'
