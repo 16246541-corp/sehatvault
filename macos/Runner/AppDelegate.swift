@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import Vision
 
 @main
 class AppDelegate: FlutterAppDelegate {
@@ -36,6 +37,62 @@ class AppDelegate: FlutterAppDelegate {
         // Improved way to check DND on macOS
         let dndEnabled = CFPreferencesCopyAppValue("doNotDisturb" as CFString, "com.apple.notificationcenterui" as CFString) as? Bool ?? false
         result(dndEnabled)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+
+    let ocrChannel = FlutterMethodChannel(
+      name: "com.sehatlocker/apple_vision_ocr",
+      binaryMessenger: controller.engine.binaryMessenger
+    )
+
+    ocrChannel.setMethodCallHandler { (call, result) in
+      switch call.method {
+      case "extractText":
+        guard let args = call.arguments as? [String: Any],
+              let imagePath = args["imagePath"] as? String else {
+          result(FlutterError(code: "bad_args", message: "Missing imagePath", details: nil))
+          return
+        }
+
+        let url = URL(fileURLWithPath: imagePath)
+        if !FileManager.default.fileExists(atPath: url.path) {
+          result(FlutterError(code: "not_found", message: "Image not found", details: imagePath))
+          return
+        }
+
+        let semaphore = DispatchSemaphore(value: 0)
+        var recognizedText: String = ""
+        var requestError: Error?
+
+        let request = VNRecognizeTextRequest { req, err in
+          defer { semaphore.signal() }
+          if let err = err {
+            requestError = err
+            return
+          }
+          let observations = req.results as? [VNRecognizedTextObservation] ?? []
+          let lines = observations.compactMap { obs in
+            obs.topCandidates(1).first?.string
+          }
+          recognizedText = lines.joined(separator: "\n")
+        }
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+
+        do {
+          let handler = VNImageRequestHandler(url: url, options: [:])
+          try handler.perform([request])
+          _ = semaphore.wait(timeout: .now() + 10)
+          if let err = requestError {
+            result(FlutterError(code: "vision_error", message: err.localizedDescription, details: nil))
+            return
+          }
+          result(recognizedText)
+        } catch {
+          result(FlutterError(code: "vision_error", message: error.localizedDescription, details: nil))
+        }
       default:
         result(FlutterMethodNotImplemented)
       }

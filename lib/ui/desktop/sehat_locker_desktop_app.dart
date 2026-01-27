@@ -6,7 +6,7 @@ import '../../models/health_record.dart';
 import '../../screens/ai_screen.dart';
 import '../../screens/document_detail_screen.dart';
 import '../../screens/document_scanner_screen.dart';
-import '../../screens/documents_screen.dart';
+import 'screens/documents_screen_desktop.dart';
 import '../../screens/home_screen.dart';
 import '../../screens/model_warmup_screen.dart';
 import '../../screens/news_screen.dart';
@@ -51,7 +51,7 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
     _settingsCategoryId = desktopSettingsCategories.first.id;
     _screenBuilders = [
       () => const HomeScreen(),
-      () => DocumentsScreen(
+      () => DesktopDocumentsScreen(
             onRecordTap: () => _onItemTapped(2),
           ),
       () => _buildAIScreen(),

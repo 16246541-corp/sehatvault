@@ -1,5 +1,20 @@
 # Changelog - Sehat Locker
 
+## [1.9.8] - 2026-01-27
+
+### Fixed
+- **OCR (macOS/iOS)**: Fixed empty OCR output on Apple platforms by switching to a dedicated native Apple Vision method-channel implementation (avoids plugin event timing issues).
+- **Health Insights**: Triggered a background Health Insights refresh after saving a document to the vault so Insights update immediately after OCR completes.
+
+## [1.9.7] - 2026-01-27
+
+### Added
+- **OCR**: Enabled native macOS OCR support using `apple_vision_recognize_text`. This replaces the mobile-only Tesseract implementation for desktop users.
+- **Dependencies**: Added `apple_vision_recognize_text` and `apple_vision_commons` for native Apple Vision Framework integration.
+
+### Fixed
+- **OCR**: Fixed a `MissingPluginException` crash on Desktop by adding a platform check in `OCRService`. Desktop users (Windows/Linux) will now see a friendly error message until native support is added.
+
 ## [1.9.6] - 2026-01-27
 
 ### Added
@@ -8,14 +23,42 @@
   - **Split-View Layout**: Introduced a two-column layout with a persistent sidebar navigation and a spacious content area.
   - **Categorization**: Organized settings into clear categories (Privacy, Storage, Recording, Notifications, AI, Accessibility, Desktop, About).
   - **Interactive Components**: Created custom styled widgets (`_SettingsCard`, `_SidebarItem`, `_ValueButton`) for a polished look.
+- **Health Insights (Foundation)**: Added `HealthPatternInsight` Hive model (TypeId 42) to persist on-device pattern insights.
+- **Safety**: Added `SafetyFilterService.hasDiagnosticLanguage()` for deterministic diagnostic-language detection.
+- **Storage**: Opened encrypted Hive box for Health Insights (`health_pattern_insights`) via `LocalStorageService`.
+- **Batch Processing**: Added `runThrottledJob()` to reuse resource throttling and pause/resume for non-UI workloads.
+- **Health Insights (Foundation)**: Added `HealthIntelligenceEngine` service for on-device pattern detection with audit logging + citations.
+- **Privacy**: Added `showHealthInsights` toggle (default OFF) in `EnhancedPrivacySettings`.
+- **Health Insights (Performance)**: Chunked large-dataset insight analysis via `BatchProcessingService` throttling to reduce UI jank.
+- **Health Insights UI (Shared)**: Added reusable insight card widget with expandable source attribution.
+- **Health Insights UI (Mobile)**: Added `HealthInsightsScreen` with fixed compliance banners and on-device analysis gating under low battery.
+- **File Drop**: Added `FileDropService.extractTextForOneTimeAnalysis()` to support ephemeral PDF/TXT/image analysis without saving to the vault.
+- **Health Insights (Desktop Parity)**: Added ephemeral-file analysis support for Health Insights without persisting the dropped document.
+- **Health Insights UI (Desktop)**: Added right-sidebar `HealthInsightsSidebar` with drag-and-drop ephemeral analysis and fixed compliance banners.
+- **Health Insights UI (Desktop)**: Applied `ResponsiveCenter` width constraints to the insights sidebar content.
+- **Batch Processing**: Added an `ignoreThrottle` option to `runThrottledJob()` for deterministic testing.
+- **Compliance**: Added Health Intelligence Engine validation steps to the developer compliance checklist.
+- **Docs**: Added `HealthPatternInsight` (TypeId 42) to the Hive Type IDs table.
+- **Tests**: Added Health Intelligence Engine coverage (patterns, safety gating, batch pause/cancel, pipeline metadata).
+- **Documents UI (Mobile)**: Added `MobileDocumentsScreen` with a new Health Insights entry point.
+- **Documents UI (Desktop)**: Added `DesktopDocumentsScreen` with a right-side Health Insights panel.
 
 ### Changed
 - **Navigation**: Updated `SehatLockerDesktopApp` to route the "Settings" tab to the new `DesktopSettingsScreen` instead of the shared mobile version.
+- **Navigation**: Routed the mobile Documents tab to `MobileDocumentsScreen`.
+- **Navigation**: Routed the desktop Documents tab to `DesktopDocumentsScreen` (with right insights panel).
+- **Maintenance**: Cleaned up unused imports in the new Documents screens.
+- **Storage**: Fixed `LocalStorageService.getAllRecords()` to ignore non-record entries stored in `health_records` (e.g., `DocumentExtraction`).
+- **AI Context**: Added `GenerationParameters.enablePatternContext` to optionally inject Health Insights context into AI pipeline.
+- **Output Pipeline**: Added support for passing initial metadata into `OutputPipeline.process()` for context enrichment.
+- **AI**: When enabled, injects cached Health Insights into pipeline metadata as `patternContext`.
+- **Testing**: Exposed a test-only helper to build pattern-context metadata for the pipeline.
 - **Desktop UI**: Removed the lower/bottom menu bar from the Desktop shell (sidebar navigation remains).
 - **Desktop UI**: Added a glass-like floating overlay bar as the primary desktop navigation (Home, AI, News, Documents, Settings) with a cleared sidebar for page-specific options.
 - **Mobile UI**: Switched primary navigation to a matching floating glass overlay bar (Home, AI, News, Documents, Settings) instead of a reserved bottom navigation region.
 - **Integration**: Wired up existing settings logic (Hive persistence, Storage Usage, Security Toggles) to the new desktop UI.
 - **Desktop Settings UI**: Reused the now-empty desktop sidebar for Settings sections (persistent section navigation + selected indicator styling).
+- **Documentation**: Updated `docs/index.md` to reflect the latest architecture (UI target split, services, workflows, Hive models/typeIds, and platform build notes).
 - **macOS**: Enabled App Sandbox in `DebugProfile.entitlements` to match `ENABLE_APP_SANDBOX=YES`.
 - **macOS**: Updated `Runner.xcodeproj` metadata to current recommended settings.
 - **macOS**: Normalized CocoaPods build settings (deployment target + Swift version + warning policy) via `Podfile` post-install hooks.
@@ -26,6 +69,15 @@
 - **macOS**: Removed unused `FlutterMacOS` import from `RunnerTests` to keep XCTest targets independent of Flutter engine modules.
 - **iOS**: Restored CocoaPods integration (Pods workspace ref + Runner pod build phases) and added `ios/Podfile.lock` to fix `Module 'add_2_calendar' not found`.
 - **iOS**: Fixed iOS Simulator builds by excluding `arm64` for `iphonesimulator` (SwiftyTesseract/libtesseract compatibility; requires running Simulator under Rosetta on Apple silicon).
+
+### Fixed
+- **Desktop UI**: Prevented Health Insights compliance banners from overlapping sidebar content on narrow windows.
+- **OCR**: Fixed Desktop OCR failures by bundling the required `assets/tessdata_config.json` asset for Tesseract initialization.
+- **Vault**: Enabled PDF/TXT ingestion via the shared OCR pipeline (PDFs are rasterized before OCR) and avoided invalid image previews for non-image files.
+- **OCR (PDF)**: Avoided transient raster PNG paths during OCR to prevent `PathNotFound` failures on macOS Desktop imports.
+- **OCR (PDF)**: Awaited Tesseract extraction before deleting preprocessed temp images to prevent `PathNotFound` errors.
+- **macOS Build**: Restored the default Flutter entrypoint (`lib/main.dart`) so app builds launch the normal onboarding/home flow.
+- **Settings (Desktop)**: Exposed the Health Insights privacy toggle so the sidebar can be enabled/disabled.
 
 
 # Changelog - Sehat Locker

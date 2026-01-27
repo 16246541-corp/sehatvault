@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
@@ -10,6 +12,12 @@ import 'ocr_service.dart';
 import 'local_storage_service.dart';
 import 'search_service.dart';
 import 'citation_service.dart';
+import 'health_intelligence_engine.dart';
+import 'local_audit_service.dart';
+import 'medical_field_extractor.dart';
+import 'reference_range_service.dart';
+import 'safety_filter_service.dart';
+import 'session_manager.dart';
 
 /// Service for saving documents to the encrypted vault
 /// Handles the complete pipeline: OCR → DocumentExtraction → HealthRecord → Encrypted Storage
@@ -89,13 +97,17 @@ class VaultService {
       onProgress?.call('Creating health record...');
 
       final bool autoDelete = _storageService.autoDeleteOriginal;
+      final ext = p.extension(extraction.originalImagePath).toLowerCase();
+      final isPreviewableImage = ['.jpg', '.jpeg', '.png'].contains(ext);
 
       final healthRecord = HealthRecord(
         id: const Uuid().v4(),
         title: title,
         category: category,
         createdAt: DateTime.now(),
-        filePath: autoDelete ? null : extraction.originalImagePath,
+        filePath: autoDelete
+            ? null
+            : (isPreviewableImage ? extraction.originalImagePath : null),
         notes: notes,
         recordType: HealthRecord.typeDocumentExtraction,
         extractionId: extraction.id,
@@ -130,6 +142,16 @@ class VaultService {
 
       debugPrint('HealthRecord saved with ID: ${healthRecord.id}');
       onProgress?.call('Document saved successfully!');
+
+      unawaited(
+        HealthIntelligenceEngine(
+          storage: _storageService,
+          fieldExtractor: MedicalFieldExtractor(),
+          referenceRanges: ReferenceRangeService(),
+          safetyFilter: SafetyFilterService(),
+          auditLogger: LocalAuditService(_storageService, SessionManager()),
+        ).detectAndPersistInsights().catchError((_) {}),
+      );
 
       return healthRecord;
     } catch (e, stackTrace) {
@@ -199,7 +221,10 @@ class VaultService {
       title: title,
       category: category,
       createdAt: DateTime.now(),
-      filePath: extraction.originalImagePath,
+      filePath: ['.jpg', '.jpeg', '.png']
+              .contains(p.extension(extraction.originalImagePath).toLowerCase())
+          ? extraction.originalImagePath
+          : null,
       notes: notes,
       recordType: HealthRecord.typeDocumentExtraction,
       extractionId: extraction.id,
@@ -220,6 +245,16 @@ class VaultService {
 
     debugPrint('HealthRecord saved with auto-detected category: $category');
     onProgress?.call('Document saved successfully!');
+
+    unawaited(
+      HealthIntelligenceEngine(
+        storage: _storageService,
+        fieldExtractor: MedicalFieldExtractor(),
+        referenceRanges: ReferenceRangeService(),
+        safetyFilter: SafetyFilterService(),
+        auditLogger: LocalAuditService(_storageService, SessionManager()),
+      ).detectAndPersistInsights().catchError((_) {}),
+    );
 
     return healthRecord;
   }

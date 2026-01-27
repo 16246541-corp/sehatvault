@@ -1,0 +1,1 @@
+Any code change that alters architecture, responsibilities, data models, services, workflows, or file structure MUST update index.md in the same change.

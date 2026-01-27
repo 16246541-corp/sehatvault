@@ -27,6 +27,9 @@ import 'ai_middleware/pipeline_debugger.dart';
 import 'safety_filter_service.dart';
 import 'hallucination_validation_service.dart';
 import 'conversation_memory_service.dart';
+import 'health_intelligence_engine.dart';
+import 'local_audit_service.dart';
+import 'reference_range_service.dart';
 
 class AIService {
   static final AIService _instance = AIService.internal();
@@ -159,6 +162,8 @@ class AIService {
     final managedPrompt =
         llmEngine.manageContext(systemPrompt, activeHistory, prompt);
 
+    final pipelineMetadata = await buildPatternContextMetadataForPipeline();
+
     // 3. Stream generation from LLMEngine
     Stream<String>? llmStream;
     try {
@@ -203,6 +208,7 @@ class AIService {
         prompt,
         accumulatedResponse,
         history: activeHistory,
+        initialMetadata: pipelineMetadata,
       );
 
       // Performance and Debugging
@@ -252,9 +258,47 @@ class AIService {
 
   /// Processes existing content through the output pipeline.
   Future<String> processContent(String content, {String prompt = ""}) async {
-    final context = await _pipeline.process(prompt, content);
+    final pipelineMetadata = await buildPatternContextMetadataForPipeline();
+    final context = await _pipeline.process(
+      prompt,
+      content,
+      initialMetadata: pipelineMetadata,
+    );
     PipelineDebugger.logPipelineExecution(context);
     return context.content;
+  }
+
+  @visibleForTesting
+  Future<Map<String, dynamic>> buildPatternContextMetadataForPipeline() async {
+    final settings = LocalStorageService().getAppSettings();
+    if (!settings.generationParameters.enablePatternContext) {
+      return const {};
+    }
+    if (!settings.enhancedPrivacySettings.showHealthInsights) {
+      return const {};
+    }
+
+    final engine = HealthIntelligenceEngine(
+      storage: LocalStorageService(),
+      fieldExtractor: MedicalFieldExtractor(),
+      referenceRanges: ReferenceRangeService(),
+      safetyFilter: SafetyFilterService(),
+      auditLogger: LocalAuditService(LocalStorageService(), SessionManager()),
+    );
+
+    final insights = await engine.getCachedInsights();
+    if (insights.isEmpty) return const {};
+
+    final top = insights.take(3).toList();
+    final contextText = top
+        .map((i) => '- ${i.title}: ${i.summary}')
+        .join('\n');
+
+    return {
+      'patternContextEnabled': true,
+      'patternContext': contextText,
+      'patternContextCount': top.length,
+    };
   }
 
   Stream<String> _getSimulatedResponseStream(String prompt) async* {

@@ -22,6 +22,7 @@ import '../models/conversation_memory.dart';
 import '../models/ai_usage_metric.dart';
 import '../models/batch_task.dart';
 import '../models/user_profile.dart';
+import '../models/health_pattern_insight.dart';
 import 'platform_detector.dart';
 import 'model_quantization_service.dart';
 import '../models/generation_parameters.dart';
@@ -50,6 +51,7 @@ class LocalStorageService {
   static const String _userProfileKey = 'user_profile_object';
   static const String _autoDeleteOriginalKey = 'auto_delete_original';
   static const String _userProfileBox = 'user_profile';
+  static const String _healthPatternInsightsBox = 'health_pattern_insights';
 
   // Singleton instance
   static final LocalStorageService _instance = LocalStorageService._internal();
@@ -143,6 +145,9 @@ class LocalStorageService {
     if (!Hive.isAdapterRegistered(41)) {
       Hive.registerAdapter(QuantizationFormatAdapter());
     }
+    if (!Hive.isAdapterRegistered(42)) {
+      Hive.registerAdapter(HealthPatternInsightAdapter());
+    }
 
     // Get or create encryption key
     final encryptionKey = await _getOrCreateEncryptionKey();
@@ -233,6 +238,11 @@ class LocalStorageService {
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
 
+    await Hive.openBox<HealthPatternInsight>(
+      _healthPatternInsightsBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
     _isInitialized = true;
 
     // Initialize model metadata on first load
@@ -299,7 +309,10 @@ class LocalStorageService {
 
   /// Get all health records
   List<Map<String, dynamic>> getAllRecords() {
-    return _recordsBox.values.cast<Map<String, dynamic>>().toList();
+    return _recordsBox.values
+        .whereType<Map>()
+        .map((v) => v.cast<String, dynamic>())
+        .toList();
   }
 
   /// Get records by category
@@ -600,6 +613,24 @@ class LocalStorageService {
 
   /// Get citations box
   Box<Citation> get citationsBox => Hive.box<Citation>(_citationsBox);
+
+  // MARK: - Health Pattern Insights
+
+  Box<HealthPatternInsight> get healthPatternInsightsBox =>
+      Hive.box<HealthPatternInsight>(_healthPatternInsightsBox);
+
+  Future<void> saveHealthPatternInsight(HealthPatternInsight insight) async {
+    await healthPatternInsightsBox.put(insight.id, insight);
+  }
+
+  List<HealthPatternInsight> getAllHealthPatternInsights() {
+    if (!Hive.isBoxOpen(_healthPatternInsightsBox)) return [];
+    return healthPatternInsightsBox.values.toList();
+  }
+
+  Future<void> clearHealthPatternInsights() async {
+    await healthPatternInsightsBox.clear();
+  }
 
   /// Save a recording audit entry
   Future<void> saveRecordingAuditEntry(RecordingAuditEntry entry) async {

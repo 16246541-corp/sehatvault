@@ -33,6 +33,17 @@ This document tracks compliance and validation requirements for new features.
   - [x] AES-256 enabled for all local storage
   - [x] Biometric auth required for access
 
+## Health Intelligence Engine
+
+- [ ] **Health Intelligence Engine (`health_intelligence_engine`)**
+  - [ ] **Validation**:
+    1. Verify `SafetyFilterService.sanitize()` is applied to all displayed insights.
+    2. Confirm `SafetyFilterService.hasDiagnosticLanguage()` blocks diagnostic phrasing (regex audit).
+    3. Confirm every insight includes source citations via `CitationService`.
+    4. Validate `EmergencyUseBanner` + `FdaDisclaimerWidget` are visible on every insight surface.
+    5. Verify audit trail entries exist with `action = 'health_pattern_generated'` and only redacted hashes in details.
+    6. Confirm analysis is on-device only (no network calls) via `SecureLogger` review.
+
 ## AI Safety & Factual Accuracy
 
 - [ ] **Hallucination Prevention System**

@@ -1,12 +1,26 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
+import 'package:flutter/services.dart';
+import 'package:meta/meta.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:image/image.dart' as img;
+import 'package:printing/printing.dart';
 import '../models/document_extraction.dart';
 import 'data_extraction_service.dart';
 
 class OCRService {
+  static const MethodChannel _appleVisionOcrChannel =
+      MethodChannel('com.sehatlocker/apple_vision_ocr');
+
+  @visibleForTesting
+  static Future<String> Function(
+    String imagePath, {
+    String? language,
+    Map? args,
+  })? tesseractExtractTextOverride;
+
   /// Extracts text from an image file using Tesseract OCR.
   /// Handles rotation and low-light preprocessing.
   static Future<String> extractTextFromImage(File image) async {
@@ -18,21 +32,7 @@ class OCRService {
     final File processedImageFile = await _preprocessImage(image);
 
     try {
-      // 2. Run Tesseract OCR
-      final String text = await FlutterTesseractOcr.extractText(
-        processedImageFile.path,
-        language: 'eng',
-        args: {
-          "psm": "3", // Fully automatic page segmentation
-          "preserve_interword_spaces": "1",
-          // Whitelist characters common in medical reports to speed up processing
-          "tessedit_char_whitelist":
-              "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,:;()[]{}!@#\$%^&*-+=<>?/|_ '\"\n",
-        },
-      );
-
-      // 3. Clean and return the extracted text
-      return _cleanText(text);
+      return await _runTesseract(processedImageFile.path);
     } catch (e) {
       throw Exception("OCR Extraction failed: $e");
     } finally {
@@ -52,9 +52,28 @@ class OCRService {
     return extractTextFromImage(File(imagePath));
   }
 
+  static Future<String> extractTextFromFile(File file) async {
+    if (!await file.exists()) {
+      throw Exception("File not found at ${file.path}");
+    }
+
+    final ext = p.extension(file.path).toLowerCase();
+    if (ext == '.txt') {
+      final text = await file.readAsString();
+      return _cleanText(text);
+    }
+
+    if (ext == '.pdf') {
+      final bytes = await file.readAsBytes();
+      return _extractTextFromPdfBytes(bytes);
+    }
+
+    return extractTextFromImage(file);
+  }
+
   /// Full pipeline: Extracts text and then runs data extraction to get structured fields.
   static Future<DocumentExtraction> processDocument(File image) async {
-    final String extractedText = await extractTextFromImage(image);
+    final String extractedText = await extractTextFromFile(image);
     final Map<String, dynamic> structuredData =
         DataExtractionService.extractStructuredData(extractedText);
 
@@ -73,6 +92,114 @@ class OCRService {
       structuredData: structuredData,
       confidenceScore: confidenceScore,
     );
+  }
+
+  static Future<String> _extractTextFromPdfBytes(List<int> bytes) async {
+    final buffer = StringBuffer();
+    final pdfBytes = Uint8List.fromList(bytes);
+    int pageIndex = 0;
+
+    await for (final page in Printing.raster(pdfBytes, dpi: 160)) {
+      final pngBytes = await page.toPng();
+      final text = await extractTextFromImageBytes(pngBytes);
+      if (text.trim().isNotEmpty) {
+        buffer.writeln(text);
+        buffer.writeln();
+      }
+      pageIndex++;
+      if (pageIndex >= 5) break;
+    }
+
+    return buffer.toString().trim();
+  }
+
+  static Future<String> extractTextFromImageBytes(Uint8List bytes) async {
+    img.Image? image = img.decodeImage(bytes);
+    if (image == null) {
+      throw Exception('Unsupported image data');
+    }
+
+    if (image.width > 1024) {
+      image = img.copyResize(image, width: 1024);
+    }
+
+    image = img.bakeOrientation(image);
+    image = img.adjustColor(
+      image,
+      contrast: 1.5,
+      brightness: 1.1,
+      gamma: 1.2,
+    );
+    image = img.grayscale(image);
+    image = img.contrast(image, contrast: 1.2);
+
+    final directory = await getTemporaryDirectory();
+    final tempPath = p.join(
+      directory.path,
+      'ocr_pdf_prep_${DateTime.now().microsecondsSinceEpoch}.jpg',
+    );
+
+    final preprocessedFile = File(tempPath);
+    await preprocessedFile.writeAsBytes(
+      img.encodeJpg(image, quality: 90),
+      flush: true,
+    );
+
+    try {
+      if (!await preprocessedFile.exists()) {
+        throw Exception('Failed to prepare OCR image');
+      }
+      return await _runTesseract(preprocessedFile.path);
+    } catch (e) {
+      throw Exception("OCR Extraction failed: $e");
+    } finally {
+      try {
+        if (await preprocessedFile.exists()) {
+          await preprocessedFile.delete();
+        }
+      } catch (_) {}
+    }
+  }
+
+  static Future<String> _runTesseract(String imagePath) async {
+    if (Platform.isIOS || Platform.isMacOS) {
+      try {
+        final text = await _runAppleVision(imagePath);
+        if (text.trim().isNotEmpty) return text;
+        if (Platform.isMacOS) return text;
+      } catch (e) {
+        if (Platform.isMacOS) {
+          throw Exception("Apple Vision OCR failed on Desktop: $e");
+        }
+      }
+    }
+
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      throw Exception(
+          "OCR on Windows is not currently supported due to lack of native package compatibility. Please use the mobile app for OCR.");
+    }
+
+    final runner =
+        tesseractExtractTextOverride ?? FlutterTesseractOcr.extractText;
+    final text = await runner(
+      imagePath,
+      language: 'eng',
+      args: {
+        "psm": "3",
+        "preserve_interword_spaces": "1",
+        "tessedit_char_whitelist":
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,:;()[]{}!@#\$%^&*-+=<>?/|_ '\"\n",
+      },
+    );
+    return _cleanText(text);
+  }
+
+  static Future<String> _runAppleVision(String path) async {
+    final text = await _appleVisionOcrChannel.invokeMethod<String>(
+      'extractText',
+      {'imagePath': path},
+    );
+    return _cleanText(text ?? '');
   }
 
   /// Internal preprocessing: handles rotation, low-light enhancement, and grayscale.

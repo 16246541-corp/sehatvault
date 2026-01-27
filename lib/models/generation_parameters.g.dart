@@ -24,13 +24,14 @@ class GenerationParametersAdapter extends TypeAdapter<GenerationParameters> {
       presencePenalty: fields[4] as double,
       frequencyPenalty: fields[5] as double,
       seed: fields[6] as int,
+      enablePatternContext: fields[7] as bool? ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, GenerationParameters obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.temperature)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class GenerationParametersAdapter extends TypeAdapter<GenerationParameters> {
       ..writeByte(5)
       ..write(obj.frequencyPenalty)
       ..writeByte(6)
-      ..write(obj.seed);
+      ..write(obj.seed)
+      ..writeByte(7)
+      ..write(obj.enablePatternContext);
   }
 
   @override

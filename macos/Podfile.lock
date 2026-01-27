@@ -1,6 +1,9 @@
 PODS:
   - app_settings (5.1.1):
     - FlutterMacOS
+  - apple_vision_recognize_text (0.0.4):
+    - Flutter
+    - FlutterMacOS
   - battery_plus (0.0.1):
     - FlutterMacOS
   - connectivity_plus (0.0.1):
@@ -44,6 +47,7 @@ PODS:
 
 DEPENDENCIES:
   - app_settings (from `Flutter/ephemeral/.symlinks/plugins/app_settings/macos`)
+  - apple_vision_recognize_text (from `Flutter/ephemeral/.symlinks/plugins/apple_vision_recognize_text/darwin`)
   - battery_plus (from `Flutter/ephemeral/.symlinks/plugins/battery_plus/macos`)
   - connectivity_plus (from `Flutter/ephemeral/.symlinks/plugins/connectivity_plus/macos`)
   - desktop_drop (from `Flutter/ephemeral/.symlinks/plugins/desktop_drop/macos`)
@@ -71,6 +75,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   app_settings:
     :path: Flutter/ephemeral/.symlinks/plugins/app_settings/macos
+  apple_vision_recognize_text:
+    :path: Flutter/ephemeral/.symlinks/plugins/apple_vision_recognize_text/darwin
   battery_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/battery_plus/macos
   connectivity_plus:
@@ -112,6 +118,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   app_settings: cd21e176b56f8172043640ade81322a98896bff4
+  apple_vision_recognize_text: bfeefd7756b6f96c40c1b840a444b345a31ff15b
   battery_plus: f51ad29136e025b714b96f7d096f44f604615da7
   connectivity_plus: 4adf20a405e25b42b9c9f87feff8f4b6fde18a4e
   desktop_drop: e0b672a7d84c0a6cbc378595e82cdb15f2970a43

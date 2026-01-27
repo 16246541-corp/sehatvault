@@ -53,6 +53,7 @@ class BatchProcessingService {
   bool _isPaused = false;
   final List<BatchTask> _queue = [];
   final Map<String, bool> _cancellationTokens = {};
+  final Map<String, bool> _jobCancellationTokens = {};
   final Set<String> _activeTaskIds = {};
   StreamSubscription? _boxSubscription;
 
@@ -141,6 +142,48 @@ class BatchProcessingService {
         priority: priority,
       );
       await _storageService.saveBatchTask(task);
+    }
+  }
+
+  void cancelJob(String jobId) {
+    _jobCancellationTokens[jobId] = true;
+  }
+
+  void clearJobCancellation(String jobId) {
+    _jobCancellationTokens.remove(jobId);
+  }
+
+  Future<void> runThrottledJob({
+    required String jobId,
+    required int totalUnits,
+    required Future<void> Function(int start, int end) processChunk,
+    int chunkSize = 50,
+    bool ignoreThrottle = false,
+  }) async {
+    if (totalUnits <= 0) return;
+    clearJobCancellation(jobId);
+
+    for (var start = 0; start < totalUnits; start += chunkSize) {
+      if (_jobCancellationTokens[jobId] == true) {
+        throw 'Cancelled by user';
+      }
+
+      while (_isPaused) {
+        if (_jobCancellationTokens[jobId] == true) {
+          throw 'Cancelled by user';
+        }
+        await Future.delayed(const Duration(milliseconds: 150));
+      }
+
+      if (!ignoreThrottle && await _shouldThrottle()) {
+        await Future.delayed(const Duration(milliseconds: 250));
+        start -= chunkSize;
+        continue;
+      }
+
+      final end = (start + chunkSize) > totalUnits ? totalUnits : start + chunkSize;
+      await processChunk(start, end);
+      await Future.delayed(const Duration(milliseconds: 1));
     }
   }
 

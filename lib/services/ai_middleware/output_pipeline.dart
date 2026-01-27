@@ -20,12 +20,16 @@ class OutputPipeline {
     String prompt,
     String content, {
     List<Map<String, String>> history = const [],
+    Map<String, dynamic> initialMetadata = const {},
   }) async {
     final context = PipelineContext(
       originalPrompt: prompt,
       content: content,
       history: history,
     );
+    if (initialMetadata.isNotEmpty) {
+      context.metadata.addAll(initialMetadata);
+    }
 
     for (final stage in _stages) {
       if (!stage.enabled) continue;

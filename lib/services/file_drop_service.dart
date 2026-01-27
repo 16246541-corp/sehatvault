@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:printing/printing.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'vault_service.dart';
 import 'image_quality_service.dart';
 import '../models/app_settings.dart';
 import 'local_storage_service.dart';
+import 'ocr_service.dart';
 
 enum FileProcessingStatus {
   pending,
@@ -150,6 +153,82 @@ class FileDropService {
       throw Exception(
           'Security violation: Executable files are not allowed for health records');
     }
+  }
+
+  Future<String> extractTextForOneTimeAnalysis(
+    File file, {
+    required AppSettings settings,
+  }) async {
+    final fileName = p.basename(file.path);
+    final fileSize = await file.length();
+    final ext = p.extension(fileName).toLowerCase();
+
+    final maxSizeInBytes = settings.maxFileUploadSizeMB * 1024 * 1024;
+    if (fileSize > maxSizeInBytes) {
+      throw Exception(
+          'File too large (${(fileSize / (1024 * 1024)).toStringAsFixed(1)}MB). Max allowed: ${settings.maxFileUploadSizeMB}MB');
+    }
+
+    if (!allowedExtensions.contains(ext)) {
+      throw Exception(
+          'Unsupported file type: $ext. Allowed: ${allowedExtensions.join(", ")}');
+    }
+
+    final maliciousExtensions = ['.exe', '.msi', '.sh', '.bat', '.js', '.vbs'];
+    if (maliciousExtensions.contains(ext)) {
+      throw Exception(
+          'Security violation: Executable files are not allowed for health records');
+    }
+
+    if (ext == '.txt') {
+      return file.readAsString();
+    }
+
+    if (ext == '.pdf') {
+      final bytes = await file.readAsBytes();
+      return _extractTextFromPdfBytes(bytes);
+    }
+
+    if (_isImage(fileName)) {
+      return OCRService.extractTextFromImage(file);
+    }
+
+    throw Exception('No supported extraction method for $ext');
+  }
+
+  Future<String> _extractTextFromPdfBytes(List<int> bytes) async {
+    final buffer = StringBuffer();
+    final pdfBytes = Uint8List.fromList(bytes);
+
+    final tempDir = await getTemporaryDirectory();
+    int pageIndex = 0;
+
+    await for (final page in Printing.raster(pdfBytes, dpi: 160)) {
+      final pngBytes = await page.toPng();
+      final tempPath = p.join(
+        tempDir.path,
+        'ephemeral_pdf_page_${DateTime.now().millisecondsSinceEpoch}_$pageIndex.png',
+      );
+      final tempFile = File(tempPath);
+      try {
+        await tempFile.writeAsBytes(pngBytes, flush: true);
+        final text = await OCRService.extractTextFromImage(tempFile);
+        if (text.trim().isNotEmpty) {
+          buffer.writeln(text);
+          buffer.writeln();
+        }
+      } finally {
+        try {
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
+        } catch (_) {}
+      }
+      pageIndex++;
+      if (pageIndex >= 5) break;
+    }
+
+    return buffer.toString().trim();
   }
 
   bool _isImage(String fileName) {

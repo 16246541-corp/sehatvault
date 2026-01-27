@@ -36,6 +36,8 @@ class SafetyFilterService {
   final Map<String, RegExp> _prohibitedPatterns = {
     'you have': RegExp(r'\b(you|u)\s+have\b', caseSensitive: false),
     'diagnosis': RegExp(r'\bdiagnosis\b', caseSensitive: false),
+    'diagnosed with':
+        RegExp(r'\bdiagnosed\s+with\b', caseSensitive: false),
     'likely condition': RegExp(r'\blikely\s+condition\b', caseSensitive: false),
     'suffer from': RegExp(r'\bsuffer\s+from\b', caseSensitive: false),
     'symptoms indicate':
@@ -45,7 +47,17 @@ class SafetyFilterService {
     'it seems you have':
         RegExp(r'\bit\s+seems\s+(you|u)\s+have\b', caseSensitive: false),
     'i suspect': RegExp(r'\bi\s+suspect\b', caseSensitive: false),
+    'condition is': RegExp(r'\bcondition\s+is\b', caseSensitive: false),
+    'prediabetic': RegExp(r'\bprediabet\w*\b', caseSensitive: false),
   };
+
+  bool hasDiagnosticLanguage(String text) {
+    if (text.isEmpty) return false;
+    for (final pattern in _prohibitedPatterns.values) {
+      if (pattern.hasMatch(text)) return true;
+    }
+    return false;
+  }
 
   /// Scans the input text and replaces prohibited diagnostic language with educational alternatives.
   ///

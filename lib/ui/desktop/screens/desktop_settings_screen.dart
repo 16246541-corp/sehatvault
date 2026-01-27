@@ -369,6 +369,26 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
             inactiveThumbColor: Colors.grey,
           ),
         ),
+        const SizedBox(height: 16),
+        _SettingsCard(
+          icon: Icons.auto_awesome,
+          iconColor: Colors.tealAccent,
+          title: 'Health Insights',
+          description:
+              'Enable one-time analysis insights from dropped PDFs, images, and text without saving the file.',
+          trailing: Switch(
+            value: settings.enhancedPrivacySettings.showHealthInsights,
+            onChanged: (v) async {
+              settings.enhancedPrivacySettings.showHealthInsights = v;
+              await LocalStorageService().saveAppSettings(settings);
+              setState(() {});
+            },
+            activeThumbColor: Colors.white,
+            activeTrackColor: Colors.blueAccent,
+            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+            inactiveThumbColor: Colors.grey,
+          ),
+        ),
         const SizedBox(height: 32),
         const _SectionHeader(title: 'DANGER ZONE', color: Colors.redAccent),
         _SettingsCard(

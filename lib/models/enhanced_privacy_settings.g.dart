@@ -24,13 +24,15 @@ class EnhancedPrivacySettingsAdapter
       requireBiometricsForSettings: fields[3] as bool,
       tempFileRetentionMinutes: fields[4] as int,
       maskNotifications: fields[5] as bool,
+      showHealthInsights: fields[6] as bool? ?? false,
+      userPrivacyThreshold: fields[7] as int? ?? 0,
     );
   }
 
   @override
   void write(BinaryWriter writer, EnhancedPrivacySettings obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.requireBiometricsForSensitiveData)
       ..writeByte(1)
@@ -42,7 +44,11 @@ class EnhancedPrivacySettingsAdapter
       ..writeByte(4)
       ..write(obj.tempFileRetentionMinutes)
       ..writeByte(5)
-      ..write(obj.maskNotifications);
+      ..write(obj.maskNotifications)
+      ..writeByte(6)
+      ..write(obj.showHealthInsights)
+      ..writeByte(7)
+      ..write(obj.userPrivacyThreshold);
   }
 
   @override

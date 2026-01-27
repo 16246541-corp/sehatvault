@@ -3,7 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'models/follow_up_item.dart';
 import 'services/local_storage_service.dart';
 import 'screens/home_screen.dart';
-import 'screens/documents_screen.dart';
+import 'ui/mobile/screens/documents_screen_mobile.dart';
 import 'screens/follow_up_list_screen.dart';
 import 'screens/ai_screen.dart';
 import 'screens/news_screen.dart';
@@ -49,7 +49,7 @@ class _SehatLockerAppState extends State<SehatLockerApp>
     WidgetsBinding.instance.addObserver(this);
     _screenBuilders = [
       () => const HomeScreen(),
-      () => DocumentsScreen(
+      () => MobileDocumentsScreen(
             onRecordTap: () => _onItemTapped(2),
           ),
       _buildAIScreen,
@@ -316,7 +316,8 @@ class _SehatLockerAppState extends State<SehatLockerApp>
                 right: 0,
                 bottom: 0,
                 child: ValueListenableBuilder<Box<FollowUpItem>>(
-                  valueListenable: LocalStorageService().followUpItemsListenable,
+                  valueListenable:
+                      LocalStorageService().followUpItemsListenable,
                   builder: (context, box, _) {
                     final now = DateTime.now();
                     final overdueCount = box.values

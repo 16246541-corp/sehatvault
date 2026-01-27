@@ -25,6 +25,9 @@ class GenerationParameters extends HiveObject {
   @HiveField(6)
   int seed;
 
+  @HiveField(7)
+  bool enablePatternContext;
+
   GenerationParameters({
     this.temperature = 0.7,
     this.topP = 0.9,
@@ -33,6 +36,7 @@ class GenerationParameters extends HiveObject {
     this.presencePenalty = 0.0,
     this.frequencyPenalty = 0.0,
     this.seed = -1,
+    this.enablePatternContext = false,
   });
 
   GenerationParameters copyWith({
@@ -43,6 +47,7 @@ class GenerationParameters extends HiveObject {
     double? presencePenalty,
     double? frequencyPenalty,
     int? seed,
+    bool? enablePatternContext,
   }) {
     return GenerationParameters(
       temperature: temperature ?? this.temperature,
@@ -52,6 +57,7 @@ class GenerationParameters extends HiveObject {
       presencePenalty: presencePenalty ?? this.presencePenalty,
       frequencyPenalty: frequencyPenalty ?? this.frequencyPenalty,
       seed: seed ?? this.seed,
+      enablePatternContext: enablePatternContext ?? this.enablePatternContext,
     );
   }
 
