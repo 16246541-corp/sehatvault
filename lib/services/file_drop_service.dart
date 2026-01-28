@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart'; // Add this import
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -9,6 +10,10 @@ import 'image_quality_service.dart';
 import '../models/app_settings.dart';
 import 'local_storage_service.dart';
 import 'ocr_service.dart';
+import '../models/document_extraction.dart';
+import '../models/health_record.dart';
+import '../services/document_classification_service.dart';
+import '../screens/document_categorization_screen.dart';
 
 enum FileProcessingStatus {
   pending,
@@ -113,11 +118,21 @@ class FileDropService {
         }
       }
 
-      // 3. Vault Processing
+      // 3. Extract text and get categorization suggestion
+      final extraction = await OCRService.processDocument(item.file);
+      final suggestion = DocumentClassificationService.suggestCategory(
+          extraction.extractedText);
+
+      // 4. Show categorization screen (this needs context, so we'll need to modify the approach)
+      // For now, we'll use a default category and log that categorization is needed
+      debugPrint(
+          'File dropped - categorization needed for ${item.fileName}: ${suggestion.category?.displayName} (${suggestion.confidence * 100}%)');
+
+      // 5. Vault Processing with suggested category (user can re-categorize later)
       await vaultService.saveDocumentToVault(
         imageFile: item.file,
         title: p.basenameWithoutExtension(item.fileName),
-        category: 'Uncategorized',
+        category: suggestion.category?.displayName ?? 'Uncategorized',
         onProgress: (status) {
           // Map vault status to progress
           if (status.contains('Extracting')) item.progress = 0.5;
@@ -198,7 +213,105 @@ class FileDropService {
       return OCRService.extractTextFromImage(file);
     }
 
-    throw Exception('No supported extraction method for $ext');
+    throw Exception('Unsupported file type: $ext');
+  }
+
+  /// Process a single file with categorization screen
+  Future<void> processFileWithCategorization(
+    File file, {
+    required BuildContext context,
+    required VaultService vaultService,
+    required AppSettings settings,
+  }) async {
+    try {
+      // Validate file
+      await _validateFileForCategorization(file, settings);
+
+      // Extract text and get categorization suggestion
+      final extraction = await OCRService.processDocument(file);
+      final suggestion = DocumentClassificationService.suggestCategory(
+          extraction.extractedText);
+
+      // Show categorization screen
+      if (context.mounted) {
+        final HealthCategory? selectedCategory =
+            await Navigator.push<HealthCategory>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DocumentCategorizationScreen(
+              extraction: extraction,
+              suggestedCategory: suggestion.category,
+              confidence: suggestion.confidence,
+              reasoning: suggestion.reasoning,
+            ),
+          ),
+        );
+
+        if (selectedCategory != null && context.mounted) {
+          // User selected a category - save to vault
+          await vaultService.saveProcessedDocument(
+            extraction: extraction,
+            title: _getFileNameWithoutExtension(file.path),
+            category: selectedCategory.displayName,
+          );
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    Text('✅ ${selectedCategory.displayName} added to vault'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        } else {
+          // User cancelled - clean up
+          debugPrint('User cancelled categorization for ${file.path}');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error processing file: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _validateFileForCategorization(
+      File file, AppSettings settings) async {
+    final fileName = p.basename(file.path);
+    final fileSize = await file.length();
+    final ext = p.extension(fileName).toLowerCase();
+
+    // Check file size
+    final maxSizeInBytes = settings.maxFileUploadSizeMB * 1024 * 1024;
+    if (fileSize > maxSizeInBytes) {
+      throw Exception(
+          'File too large (${(fileSize / (1024 * 1024)).toStringAsFixed(1)}MB). Max allowed: ${settings.maxFileUploadSizeMB}MB');
+    }
+
+    // Check extension
+    if (!allowedExtensions.contains(ext)) {
+      throw Exception(
+          'Unsupported file type: $ext. Allowed: ${allowedExtensions.join(", ")}');
+    }
+
+    // Security check
+    final maliciousExtensions = ['.exe', '.msi', '.sh', '.bat', '.js', '.vbs'];
+    if (maliciousExtensions.contains(ext)) {
+      throw Exception(
+          'Security violation: Executable files are not allowed for health records');
+    }
+  }
+
+  String _getFileNameWithoutExtension(String filePath) {
+    return p.basenameWithoutExtension(filePath);
   }
 
   Future<String> _extractTextFromPdfBytes(List<int> bytes) async {

@@ -7,10 +7,13 @@
 - **Document Classification**: Added pattern matching for all 14 `HealthCategory` types.
 - **Document Classification**: Implemented deterministic confidence scoring using keyword density, structured field extraction (Labs/Meds), and Reference Range validation.
 - **Document Classification**: Updated keyword dictionaries with expanded terms for Genetic Tests, Doctor Visits, and more.
+- **File Drop Zone Categorization**: Modified file drop workflow to show categorization screen before saving documents to vault.
+- **Batch Processing Categorization**: Updated batch processing flow to use same categorization screen as camera scanner.
 - **Compliance**: Updated `DEVELOPER_COMPLIANCE_CHECKLIST.md` to reflect deterministic classification logic.
 
 ### Improved
 - **Document Classification**: Integration with `MedicalFieldExtractor` and `ReferenceRangeService` to boost confidence for Lab Results and Prescriptions.
+- **Unified Workflow**: All document ingestion methods (camera, file drop, batch) now follow consistent categorization flow.
 
 ## [1.9.13] - 2026-01-28
 

@@ -172,17 +172,28 @@ Sehat Locker enforces session security via:
 ### **Extraction Pipeline**
 When a document is scanned, it passes through the following stages:
 1. **OCR**: Raw text is extracted locally on-device (Android uses Tesseract; iOS/macOS use Apple Vision; PDFs are rasterized to images before OCR).
-2. **Classification**: AI identifies the type of document (Prescription, Lab Result, etc.).
-3. **Field Extraction**: Specific extractors ([MedicationExtractor](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/extractors/medication_extractor.dart), [TestExtractor](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/extractors/test_extractor.dart), etc.) parse structured data.
-4. **Validation**: AI middleware stages (e.g. [SafetyFilterStage](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_middleware/stages/safety_filter_stage.dart), [HallucinationValidationStage](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_middleware/stages/hallucination_validation_stage.dart)) ensure outputs are safe and accurate.
-5. **Vault Storage**: The structured data is encrypted and saved to the local vault.
+2. **Classification**: AI identifies the type of document (Prescription, Lab Result, etc.) using deterministic pattern matching with confidence scoring.
+3. **Categorization Screen**: Users review OCR results and AI suggestions, then manually select the appropriate category before saving.
+4. **Field Extraction**: Specific extractors ([MedicationExtractor](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/extractors/medication_extractor.dart), [TestExtractor](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/extractors/test_extractor.dart), etc.) parse structured data.
+5. **Validation**: AI middleware stages (e.g. [SafetyFilterStage](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_middleware/stages/safety_filter_stage.dart), [HallucinationValidationStage](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_middleware/stages/hallucination_validation_stage.dart)) ensure outputs are safe and accurate.
+6. **Vault Storage**: The structured data is encrypted and saved to the local vault.
+
+### **Document Categorization Workflow**
+All document ingestion methods (camera scanner, file drop, batch processing) now follow a unified categorization flow:
+- **OCR Processing**: Documents are processed with on-device OCR to extract text
+- **AI Classification**: Deterministic pattern matching suggests document categories with confidence scores
+- **User Review**: Categorization screen shows OCR preview, suggestions, and manual category selection
+- **Biometric Security**: Sensitive categories require biometric authentication before saving
+- **Audit Logging**: All categorization actions are logged for transparency
+
+The categorization system supports 14 health document types including Lab Results, Prescriptions, Imaging Reports, Genetic Tests, and more.
 ### **Exports & Auditing**
 - Exports are orchestrated by **[ExportService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/export_service.dart)** and may generate PDFs via **[PdfExportService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/pdf_export_service.dart)**.
 - Export activity is tracked with **[ExportAuditEntry](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/export_audit_entry.dart)** and broader actions are tracked by **[LocalAuditService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/local_audit_service.dart)**.
 
 ### **Desktop Workflows (Tray, Windowing, Drag & Drop)**
 - Tray and window persistence: **[SystemTrayService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/system_tray_service.dart)**, **[WindowManagerService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/window_manager_service.dart)**
-- Drag-and-drop ingestion: **[FileDropService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/file_drop_service.dart)** and desktop widgets under `lib/ui/desktop/widgets/`
+- Drag-and-drop ingestion: **[FileDropService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/file_drop_service.dart)** and desktop widgets under `lib/ui/desktop/widgets/` - now includes categorization screen before saving to vault
 
 
 ---

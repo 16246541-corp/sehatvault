@@ -13,12 +13,14 @@ class FileDropZone extends StatefulWidget {
   final Widget child;
   final VaultService vaultService;
   final AppSettings settings;
+  final VoidCallback? onFilesProcessed;
 
   const FileDropZone({
     super.key,
     required this.child,
     required this.vaultService,
     required this.settings,
+    this.onFilesProcessed,
   });
 
   @override
@@ -41,11 +43,26 @@ class _FileDropZoneState extends State<FileDropZone> {
       onDragDone: (details) async {
         setState(() => _isDragging = false);
         final files = details.files.map((xf) => File(xf.path)).toList();
-        await _dropService.processFiles(
-          files,
-          vaultService: widget.vaultService,
-          settings: widget.settings,
-        );
+
+        // Use categorization for each file instead of direct processing
+        for (final file in files) {
+          try {
+            await _dropService.processFileWithCategorization(
+              file,
+              context: context,
+              vaultService: widget.vaultService,
+              settings: widget.settings,
+            );
+          } catch (e) {
+            debugPrint('Error processing file with categorization: $e');
+            // Continue with other files even if one fails
+          }
+        }
+
+        // Call the callback after processing is complete
+        if (widget.onFilesProcessed != null) {
+          widget.onFilesProcessed!();
+        }
       },
       child: Stack(
         children: [
@@ -303,11 +320,21 @@ class _FileDropZoneState extends State<FileDropZone> {
     final files = await openFiles(acceptedTypeGroups: [typeGroup]);
     if (files.isNotEmpty) {
       final fileList = files.map((xf) => File(xf.path)).toList();
-      await _dropService.processFiles(
-        fileList,
-        vaultService: widget.vaultService,
-        settings: widget.settings,
-      );
+
+      // Use categorization for each file instead of direct processing
+      for (final file in fileList) {
+        try {
+          await _dropService.processFileWithCategorization(
+            file,
+            context: context,
+            vaultService: widget.vaultService,
+            settings: widget.settings,
+          );
+        } catch (e) {
+          debugPrint('Error processing file with categorization: $e');
+          // Continue with other files even if one fails
+        }
+      }
     }
   }
 }

@@ -428,6 +428,7 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
   }
 
   Future<void> _processImages() async {
+    debugPrint('_processImages called with ${_capturedImages.length} images');
     if (_capturedImages.isEmpty) return;
 
     setState(() {
@@ -457,6 +458,9 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
       final suggestion = DocumentClassificationService.suggestCategory(
           extraction.extractedText);
 
+      debugPrint(
+          'OCR completed, suggestion: ${suggestion.category?.displayName}, confidence: ${suggestion.confidence}');
+
       if (!mounted) return;
 
       setState(() {
@@ -464,18 +468,26 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
       });
 
       // Step 4: Show Categorization Screen
-      final HealthCategory? selectedCategory =
-          await Navigator.push<HealthCategory>(
-        context,
-        MaterialPageRoute(
-          builder: (_) => DocumentCategorizationScreen(
-            extraction: extraction,
-            suggestedCategory: suggestion.category,
-            confidence: suggestion.confidence,
-            reasoning: suggestion.reasoning,
+      debugPrint('Navigating to categorization screen...');
+      HealthCategory? selectedCategory;
+      try {
+        selectedCategory = await Navigator.push<HealthCategory>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DocumentCategorizationScreen(
+              extraction: extraction,
+              suggestedCategory: suggestion.category,
+              confidence: suggestion.confidence,
+              reasoning: suggestion.reasoning,
+            ),
           ),
-        ),
-      );
+        );
+      } catch (e) {
+        debugPrint('Error navigating to categorization screen: $e');
+        selectedCategory = null;
+      }
+
+      debugPrint('Categorization screen returned: $selectedCategory');
 
       if (selectedCategory != null && mounted) {
         // User confirmed selection - proceed to save
@@ -592,6 +604,7 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
         }
       }
     } catch (e) {
+      debugPrint('Error in _processImages: $e');
       if (mounted) {
         setState(() {
           _isCompressing = false;
@@ -621,55 +634,86 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
     });
 
     try {
-      final List<({String title, String filePath})> batchItems = [];
-      final now = DateTime.now();
-      final dateStr = DateFormat('yyyyMMdd_HHmm').format(now);
-
-      for (int i = 0; i < _capturedImages.length; i++) {
-        final image = _capturedImages[i];
+      // Step 1: Compress all images
+      List<String> compressedPaths = [];
+      for (var image in _capturedImages) {
         final compressedPath =
             await ImageService.compressImage(File(image.path));
+        compressedPaths.add(compressedPath);
 
-        // Preserve compressed file for batch processing
+        // Register compressed file too
         TempFileManager().registerFile(compressedPath);
         TempFileManager().preserveFile(compressedPath);
-
-        batchItems.add((
-          title: 'Batch Scan $dateStr ${i + 1}',
-          filePath: compressedPath,
-        ));
       }
 
-      final batchService = BatchProcessingService();
-      await batchService.addBatch(batchItems);
+      if (!mounted) return;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                '${batchItems.length} documents added to processing queue'),
-            backgroundColor: Colors.blue,
-            action: SnackBarAction(
-              label: 'View Queue',
-              textColor: Colors.white,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const BatchProcessingScreen(),
-                  ),
-                );
-              },
+      setState(() {
+        _isCompressing = false;
+      });
+
+      // Step 2: Process each image with categorization
+      for (int i = 0; i < compressedPaths.length; i++) {
+        final imageFile = File(compressedPaths[i]);
+        final extraction = await OCRService.processDocument(imageFile);
+        final suggestion = DocumentClassificationService.suggestCategory(
+            extraction.extractedText);
+
+        // Show categorization screen for each image
+        final HealthCategory? selectedCategory =
+            await Navigator.push<HealthCategory>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DocumentCategorizationScreen(
+              extraction: extraction,
+              suggestedCategory: suggestion.category,
+              confidence: suggestion.confidence,
+              reasoning: suggestion.reasoning,
             ),
           ),
         );
 
-        // Cleanup original images as we've created compressed ones for the batch
-        for (var img in _capturedImages) {
-          TempFileManager().releaseFile(img.path);
-        }
-        await TempFileManager().purgeAll(reason: 'moved_to_batch');
+        if (selectedCategory != null && mounted) {
+          // User confirmed selection - proceed to save
+          final categoryName = selectedCategory.displayName;
 
+          // Initialize services
+          final storageService = LocalStorageService();
+          await storageService.initialize();
+          final vaultService = VaultService(storageService);
+
+          // Save the document
+          await vaultService.saveProcessedDocument(
+            extraction: extraction,
+            title: 'Batch Scan ${i + 1}',
+            category: categoryName,
+          );
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('✅ $categoryName added to vault'),
+                backgroundColor: AppTheme.accentTeal,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        } else {
+          // User cancelled this image - skip it
+          debugPrint('User cancelled categorization for image ${i + 1}');
+        }
+      }
+
+      // Cleanup all temp files (original + compressed)
+      for (var path in compressedPaths) {
+        TempFileManager().releaseFile(path);
+      }
+      for (var img in _capturedImages) {
+        TempFileManager().releaseFile(img.path);
+      }
+      await TempFileManager().purgeAll(reason: 'saved_to_vault');
+
+      if (mounted) {
         Navigator.pop(context);
       }
     } catch (e) {
@@ -677,7 +721,7 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
         setState(() => _isCompressing = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Error adding to batch: $e'),
+              content: Text('Error processing batch: $e'),
               backgroundColor: Colors.red),
         );
       }
