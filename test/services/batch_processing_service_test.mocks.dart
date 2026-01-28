@@ -4,18 +4,18 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i15;
-import 'dart:io' as _i26;
-import 'dart:ui' as _i29;
+import 'dart:io' as _i27;
+import 'dart:ui' as _i30;
 
-import 'package:battery_plus/battery_plus.dart' as _i33;
+import 'package:battery_plus/battery_plus.dart' as _i34;
 import 'package:flutter/foundation.dart' as _i2;
-import 'package:flutter/material.dart' as _i31;
-import 'package:flutter/services.dart' as _i30;
+import 'package:flutter/material.dart' as _i32;
+import 'package:flutter/services.dart' as _i31;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     as _i8;
 import 'package:hive_flutter/hive_flutter.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i27;
+import 'package:mockito/src/dummies.dart' as _i28;
 import 'package:sehatlocker/models/app_settings.dart' as _i4;
 import 'package:sehatlocker/models/auth_audit_entry.dart' as _i22;
 import 'package:sehatlocker/models/batch_task.dart' as _i11;
@@ -30,14 +30,15 @@ import 'package:sehatlocker/models/health_pattern_insight.dart' as _i14;
 import 'package:sehatlocker/models/health_record.dart' as _i6;
 import 'package:sehatlocker/models/issue_report.dart' as _i23;
 import 'package:sehatlocker/models/local_audit_entry.dart' as _i16;
+import 'package:sehatlocker/models/metric_snapshot.dart' as _i25;
 import 'package:sehatlocker/models/recording_audit_entry.dart' as _i20;
 import 'package:sehatlocker/models/user_profile.dart' as _i5;
-import 'package:sehatlocker/services/battery_monitor_service.dart' as _i32;
-import 'package:sehatlocker/services/desktop_notification_service.dart' as _i28;
+import 'package:sehatlocker/services/battery_monitor_service.dart' as _i33;
+import 'package:sehatlocker/services/desktop_notification_service.dart' as _i29;
 import 'package:sehatlocker/services/local_storage_service.dart' as _i10;
 import 'package:sehatlocker/services/memory_monitor_service.dart' as _i9;
 import 'package:sehatlocker/services/storage_usage_service.dart' as _i7;
-import 'package:sehatlocker/services/vault_service.dart' as _i25;
+import 'package:sehatlocker/services/vault_service.dart' as _i26;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -631,6 +632,17 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i15.Future<void>);
 
   @override
+  List<_i18.DocumentExtraction> getDocumentsWithVerifiedExtractions() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentsWithVerifiedExtractions,
+          [],
+        ),
+        returnValue: <_i18.DocumentExtraction>[],
+        returnValueForMissingStub: <_i18.DocumentExtraction>[],
+      ) as List<_i18.DocumentExtraction>);
+
+  @override
   _i15.Future<void> saveDoctorConversation(
           _i19.DoctorConversation? conversation) =>
       (super.noSuchMethod(
@@ -882,6 +894,48 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i24.ConsentEntry?);
 
   @override
+  _i15.Future<void> saveMetricSnapshot(_i25.MetricSnapshot? snapshot) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveMetricSnapshot,
+          [snapshot],
+        ),
+        returnValue: _i15.Future<void>.value(),
+        returnValueForMissingStub: _i15.Future<void>.value(),
+      ) as _i15.Future<void>);
+
+  @override
+  _i25.MetricSnapshot? getMetricSnapshot(String? metricName) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getMetricSnapshot,
+          [metricName],
+        ),
+        returnValueForMissingStub: null,
+      ) as _i25.MetricSnapshot?);
+
+  @override
+  List<_i25.MetricSnapshot> getAllMetricSnapshots() => (super.noSuchMethod(
+        Invocation.method(
+          #getAllMetricSnapshots,
+          [],
+        ),
+        returnValue: <_i25.MetricSnapshot>[],
+        returnValueForMissingStub: <_i25.MetricSnapshot>[],
+      ) as List<_i25.MetricSnapshot>);
+
+  @override
+  _i15.Future<void> deleteMetricSnapshot(String? metricName) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteMetricSnapshot,
+          [metricName],
+        ),
+        returnValue: _i15.Future<void>.value(),
+        returnValueForMissingStub: _i15.Future<void>.value(),
+      ) as _i15.Future<void>);
+
+  @override
   _i15.Future<void> clearAllData() => (super.noSuchMethod(
         Invocation.method(
           #clearAllData,
@@ -905,10 +959,10 @@ class MockLocalStorageService extends _i1.Mock
 /// A class which mocks [VaultService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockVaultService extends _i1.Mock implements _i25.VaultService {
+class MockVaultService extends _i1.Mock implements _i26.VaultService {
   @override
   _i15.Future<_i6.HealthRecord> saveDocumentToVault({
-    required _i26.File? imageFile,
+    required _i27.File? imageFile,
     required String? title,
     required String? category,
     String? notes,
@@ -1018,7 +1072,7 @@ class MockVaultService extends _i1.Mock implements _i25.VaultService {
 
   @override
   _i15.Future<_i6.HealthRecord> saveDocumentWithAutoCategory({
-    required _i26.File? imageFile,
+    required _i27.File? imageFile,
     required String? title,
     String? notes,
     Map<String, dynamic>? additionalMetadata,
@@ -1173,6 +1227,48 @@ class MockVaultService extends _i1.Mock implements _i25.VaultService {
                   })>>);
 
   @override
+  _i15.Future<
+          List<
+              ({_i18.DocumentExtraction? extraction, _i6.HealthRecord record})>>
+      getDocumentsByDateRange({
+    required DateTime? startDate,
+    required DateTime? endDate,
+  }) =>
+          (super.noSuchMethod(
+            Invocation.method(
+              #getDocumentsByDateRange,
+              [],
+              {
+                #startDate: startDate,
+                #endDate: endDate,
+              },
+            ),
+            returnValue: _i15.Future<
+                List<
+                    ({
+                      _i18.DocumentExtraction? extraction,
+                      _i6.HealthRecord record
+                    })>>.value(<({
+              _i18.DocumentExtraction? extraction,
+              _i6.HealthRecord record
+            })>[]),
+            returnValueForMissingStub: _i15.Future<
+                List<
+                    ({
+                      _i18.DocumentExtraction? extraction,
+                      _i6.HealthRecord record
+                    })>>.value(<({
+              _i18.DocumentExtraction? extraction,
+              _i6.HealthRecord record
+            })>[]),
+          ) as _i15.Future<
+              List<
+                  ({
+                    _i18.DocumentExtraction? extraction,
+                    _i6.HealthRecord record
+                  })>>);
+
+  @override
   _i15.Future<void> deleteDocument(String? healthRecordId) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1230,14 +1326,14 @@ class MockStorageUsageService extends _i1.Mock
           #formatBytes,
           [bytes],
         ),
-        returnValue: _i27.dummyValue<String>(
+        returnValue: _i28.dummyValue<String>(
           this,
           Invocation.method(
             #formatBytes,
             [bytes],
           ),
         ),
-        returnValueForMissingStub: _i27.dummyValue<String>(
+        returnValueForMissingStub: _i28.dummyValue<String>(
           this,
           Invocation.method(
             #formatBytes,
@@ -1251,7 +1347,7 @@ class MockStorageUsageService extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockDesktopNotificationService extends _i1.Mock
-    implements _i28.DesktopNotificationService {
+    implements _i29.DesktopNotificationService {
   @override
   set debugSettings(_i4.AppSettings? _debugSettings) => super.noSuchMethod(
         Invocation.setter(
@@ -1315,7 +1411,7 @@ class MockDesktopNotificationService extends _i1.Mock
   @override
   void registerActionCallback(
     String? actionId,
-    _i29.VoidCallback? callback,
+    _i30.VoidCallback? callback,
   ) =>
       super.noSuchMethod(
         Invocation.method(
@@ -1344,7 +1440,7 @@ class MockDesktopNotificationService extends _i1.Mock
     required String? title,
     required String? body,
     String? groupKey = r'general_alerts',
-    List<_i28.NotificationAction>? actions,
+    List<_i29.NotificationAction>? actions,
     bool? sensitive = false,
     _i8.Importance? importance = _i8.Importance.max,
     _i8.Priority? priority = _i8.Priority.high,
@@ -1524,7 +1620,7 @@ class MockMemoryMonitorService extends _i1.Mock
       ) as _i15.Future<bool>);
 
   @override
-  bool handleStartBackGesture(_i30.PredictiveBackEvent? backEvent) =>
+  bool handleStartBackGesture(_i31.PredictiveBackEvent? backEvent) =>
       (super.noSuchMethod(
         Invocation.method(
           #handleStartBackGesture,
@@ -1535,7 +1631,7 @@ class MockMemoryMonitorService extends _i1.Mock
       ) as bool);
 
   @override
-  void handleUpdateBackGestureProgress(_i30.PredictiveBackEvent? backEvent) =>
+  void handleUpdateBackGestureProgress(_i31.PredictiveBackEvent? backEvent) =>
       super.noSuchMethod(
         Invocation.method(
           #handleUpdateBackGestureProgress,
@@ -1574,7 +1670,7 @@ class MockMemoryMonitorService extends _i1.Mock
 
   @override
   _i15.Future<bool> didPushRouteInformation(
-          _i31.RouteInformation? routeInformation) =>
+          _i32.RouteInformation? routeInformation) =>
       (super.noSuchMethod(
         Invocation.method(
           #didPushRouteInformation,
@@ -1612,7 +1708,7 @@ class MockMemoryMonitorService extends _i1.Mock
       );
 
   @override
-  void didChangeLocales(List<_i29.Locale>? locales) => super.noSuchMethod(
+  void didChangeLocales(List<_i30.Locale>? locales) => super.noSuchMethod(
         Invocation.method(
           #didChangeLocales,
           [locales],
@@ -1621,7 +1717,7 @@ class MockMemoryMonitorService extends _i1.Mock
       );
 
   @override
-  void didChangeAppLifecycleState(_i29.AppLifecycleState? state) =>
+  void didChangeAppLifecycleState(_i30.AppLifecycleState? state) =>
       super.noSuchMethod(
         Invocation.method(
           #didChangeAppLifecycleState,
@@ -1631,7 +1727,7 @@ class MockMemoryMonitorService extends _i1.Mock
       );
 
   @override
-  void didChangeViewFocus(_i29.ViewFocusEvent? event) => super.noSuchMethod(
+  void didChangeViewFocus(_i30.ViewFocusEvent? event) => super.noSuchMethod(
         Invocation.method(
           #didChangeViewFocus,
           [event],
@@ -1640,16 +1736,16 @@ class MockMemoryMonitorService extends _i1.Mock
       );
 
   @override
-  _i15.Future<_i29.AppExitResponse> didRequestAppExit() => (super.noSuchMethod(
+  _i15.Future<_i30.AppExitResponse> didRequestAppExit() => (super.noSuchMethod(
         Invocation.method(
           #didRequestAppExit,
           [],
         ),
         returnValue:
-            _i15.Future<_i29.AppExitResponse>.value(_i29.AppExitResponse.exit),
+            _i15.Future<_i30.AppExitResponse>.value(_i30.AppExitResponse.exit),
         returnValueForMissingStub:
-            _i15.Future<_i29.AppExitResponse>.value(_i29.AppExitResponse.exit),
-      ) as _i15.Future<_i29.AppExitResponse>);
+            _i15.Future<_i30.AppExitResponse>.value(_i30.AppExitResponse.exit),
+      ) as _i15.Future<_i30.AppExitResponse>);
 
   @override
   void didChangeAccessibilityFeatures() => super.noSuchMethod(
@@ -1665,7 +1761,7 @@ class MockMemoryMonitorService extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockBatteryMonitorService extends _i1.Mock
-    implements _i32.BatteryMonitorService {
+    implements _i33.BatteryMonitorService {
   @override
   _i15.Future<int> get batteryLevel => (super.noSuchMethod(
         Invocation.getter(#batteryLevel),
@@ -1674,13 +1770,13 @@ class MockBatteryMonitorService extends _i1.Mock
       ) as _i15.Future<int>);
 
   @override
-  _i15.Future<_i33.BatteryState> get batteryState => (super.noSuchMethod(
+  _i15.Future<_i34.BatteryState> get batteryState => (super.noSuchMethod(
         Invocation.getter(#batteryState),
         returnValue:
-            _i15.Future<_i33.BatteryState>.value(_i33.BatteryState.full),
+            _i15.Future<_i34.BatteryState>.value(_i34.BatteryState.full),
         returnValueForMissingStub:
-            _i15.Future<_i33.BatteryState>.value(_i33.BatteryState.full),
-      ) as _i15.Future<_i33.BatteryState>);
+            _i15.Future<_i34.BatteryState>.value(_i34.BatteryState.full),
+      ) as _i15.Future<_i34.BatteryState>);
 
   @override
   _i15.Future<String?> checkPreRecordingBattery() => (super.noSuchMethod(
@@ -1706,9 +1802,9 @@ class MockBatteryMonitorService extends _i1.Mock
   void startMonitoring({
     required dynamic Function(
       int,
-      _i33.BatteryState,
+      _i34.BatteryState,
     )? onUpdate,
-    required _i29.VoidCallback? onCritical,
+    required _i30.VoidCallback? onCritical,
   }) =>
       super.noSuchMethod(
         Invocation.method(
@@ -1746,11 +1842,11 @@ class MockBox extends _i1.Mock implements _i3.Box<_i11.BatchTask> {
   @override
   String get name => (super.noSuchMethod(
         Invocation.getter(#name),
-        returnValue: _i27.dummyValue<String>(
+        returnValue: _i28.dummyValue<String>(
           this,
           Invocation.getter(#name),
         ),
-        returnValueForMissingStub: _i27.dummyValue<String>(
+        returnValueForMissingStub: _i28.dummyValue<String>(
           this,
           Invocation.getter(#name),
         ),

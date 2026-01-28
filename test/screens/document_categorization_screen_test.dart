@@ -52,14 +52,12 @@ void main() {
 
   testWidgets('DocumentCategorizationScreenMobile returns category on save',
       (WidgetTester tester) async {
-    HealthCategory? result;
-
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
           builder: (context) => TextButton(
-            onPressed: () async {
-              result = await Navigator.push(
+            onPressed: () {
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => DocumentCategorizationScreenMobile(
@@ -88,7 +86,7 @@ void main() {
     await tester.tap(find.text('Add to Vault'));
     await tester.pumpAndSettle();
 
-    // Verify result
-    expect(result, HealthCategory.prescriptions);
+    // Verify verification screen is pushed
+    expect(find.text('Verify Extraction'), findsOneWidget);
   });
 }

@@ -30,33 +30,41 @@ class GlassButton extends StatelessWidget {
     final callback = isInteractive ? onPressed : null;
 
     Widget buildProminent() {
-      return ElevatedButton(
-        onPressed: callback,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: effectiveTintColor,
-          foregroundColor: Colors.white,
-          padding: DesignConstants.buttonPadding,
-          shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(DesignConstants.buttonCornerRadius),
+      return Container(
+        decoration: BoxDecoration(
+          color: effectiveTintColor,
+          borderRadius: BorderRadius.circular(100),
+          border: Border.all(
+            color: Colors.transparent,
+            width: DesignConstants.glassBorderWidth,
           ),
-          elevation: 0,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 18),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              label,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: callback,
+            borderRadius: BorderRadius.circular(100),
+            child: Container(
+              padding: DesignConstants.buttonPadding,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 20, color: Colors.white),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    label,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       );
     }

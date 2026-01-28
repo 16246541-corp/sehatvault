@@ -31,6 +31,19 @@ class DocumentExtraction extends HiveObject {
   @HiveField(7)
   final List<Citation>? citations;
 
+  @HiveField(20)
+  final DateTime? userVerifiedAt;
+
+  @HiveField(21)
+  final Map<String, dynamic>? userCorrections;
+
+  @HiveField(22)
+  final DateTime?
+      extractedDocumentDate; // From OCR text (e.g., "Report Date: Jan 28, 2026")
+
+  @HiveField(23)
+  final DateTime? userCorrectedDocumentDate; // Explicit user override
+
   DocumentExtraction({
     String? id,
     required this.originalImagePath,
@@ -40,6 +53,10 @@ class DocumentExtraction extends HiveObject {
     this.structuredData = const {},
     this.contentHash,
     this.citations,
+    this.userVerifiedAt,
+    this.userCorrections,
+    this.extractedDocumentDate,
+    this.userCorrectedDocumentDate,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now();
 
@@ -52,6 +69,10 @@ class DocumentExtraction extends HiveObject {
     Map<String, dynamic>? structuredData,
     String? contentHash,
     List<Citation>? citations,
+    DateTime? userVerifiedAt,
+    Map<String, dynamic>? userCorrections,
+    DateTime? extractedDocumentDate,
+    DateTime? userCorrectedDocumentDate,
   }) {
     return DocumentExtraction(
       id: id ?? this.id,
@@ -62,6 +83,12 @@ class DocumentExtraction extends HiveObject {
       structuredData: structuredData ?? this.structuredData,
       contentHash: contentHash ?? this.contentHash,
       citations: citations ?? this.citations,
+      userVerifiedAt: userVerifiedAt ?? this.userVerifiedAt,
+      userCorrections: userCorrections ?? this.userCorrections,
+      extractedDocumentDate:
+          extractedDocumentDate ?? this.extractedDocumentDate,
+      userCorrectedDocumentDate:
+          userCorrectedDocumentDate ?? this.userCorrectedDocumentDate,
     );
   }
 }

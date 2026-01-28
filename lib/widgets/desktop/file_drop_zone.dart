@@ -41,23 +41,29 @@ class _FileDropZoneState extends State<FileDropZone> {
         setState(() => _isDragging = false);
       },
       onDragDone: (details) async {
+        debugPrint('=== FILE DROP ZONE: onDragDone CALLED ===');
+        debugPrint('Files dropped: ${details.files.length}');
         setState(() => _isDragging = false);
         final files = details.files.map((xf) => File(xf.path)).toList();
 
+        debugPrint('=== PROCESSING FILES WITH CATEGORIZATION ===');
         // Use categorization for each file instead of direct processing
         for (final file in files) {
           try {
+            debugPrint('Processing file: ${file.path}');
             await _dropService.processFileWithCategorization(
               file,
               context: context,
               vaultService: widget.vaultService,
               settings: widget.settings,
             );
+            debugPrint('File processed successfully: ${file.path}');
           } catch (e) {
             debugPrint('Error processing file with categorization: $e');
             // Continue with other files even if one fails
           }
         }
+        debugPrint('=== ALL FILES PROCESSED ===');
 
         // Call the callback after processing is complete
         if (widget.onFilesProcessed != null) {
@@ -313,28 +319,34 @@ class _FileDropZoneState extends State<FileDropZone> {
   }
 
   Future<void> pickFiles() async {
+    debugPrint('=== FILE DROP ZONE: pickFiles CALLED ===');
     const typeGroup = XTypeGroup(
       label: 'Health Records',
       extensions: ['jpg', 'jpeg', 'png', 'pdf', 'txt'],
     );
     final files = await openFiles(acceptedTypeGroups: [typeGroup]);
+    debugPrint('=== PICKED FILES: ${files.length} files ===');
     if (files.isNotEmpty) {
       final fileList = files.map((xf) => File(xf.path)).toList();
 
+      debugPrint('=== PROCESSING PICKED FILES WITH CATEGORIZATION ===');
       // Use categorization for each file instead of direct processing
       for (final file in fileList) {
         try {
+          debugPrint('Processing picked file: ${file.path}');
           await _dropService.processFileWithCategorization(
             file,
             context: context,
             vaultService: widget.vaultService,
             settings: widget.settings,
           );
+          debugPrint('Picked file processed successfully: ${file.path}');
         } catch (e) {
-          debugPrint('Error processing file with categorization: $e');
+          debugPrint('Error processing picked file with categorization: $e');
           // Continue with other files even if one fails
         }
       }
+      debugPrint('=== ALL PICKED FILES PROCESSED ===');
     }
   }
 }

@@ -32,6 +32,7 @@ import 'package:sehatlocker/models/follow_up_item.dart' as _i16;
 import 'package:sehatlocker/models/health_pattern_insight.dart' as _i18;
 import 'package:sehatlocker/models/issue_report.dart' as _i26;
 import 'package:sehatlocker/models/local_audit_entry.dart' as _i19;
+import 'package:sehatlocker/models/metric_snapshot.dart' as _i28;
 import 'package:sehatlocker/models/recording_audit_entry.dart' as _i23;
 import 'package:sehatlocker/models/user_profile.dart' as _i5;
 import 'package:sehatlocker/services/local_storage_service.dart' as _i14;
@@ -804,6 +805,17 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
+  List<_i21.DocumentExtraction> getDocumentsWithVerifiedExtractions() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDocumentsWithVerifiedExtractions,
+          [],
+        ),
+        returnValue: <_i21.DocumentExtraction>[],
+        returnValueForMissingStub: <_i21.DocumentExtraction>[],
+      ) as List<_i21.DocumentExtraction>);
+
+  @override
   _i7.Future<void> saveDoctorConversation(
           _i22.DoctorConversation? conversation) =>
       (super.noSuchMethod(
@@ -1053,6 +1065,48 @@ class MockLocalStorageService extends _i1.Mock
         ),
         returnValueForMissingStub: null,
       ) as _i27.ConsentEntry?);
+
+  @override
+  _i7.Future<void> saveMetricSnapshot(_i28.MetricSnapshot? snapshot) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveMetricSnapshot,
+          [snapshot],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i28.MetricSnapshot? getMetricSnapshot(String? metricName) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getMetricSnapshot,
+          [metricName],
+        ),
+        returnValueForMissingStub: null,
+      ) as _i28.MetricSnapshot?);
+
+  @override
+  List<_i28.MetricSnapshot> getAllMetricSnapshots() => (super.noSuchMethod(
+        Invocation.method(
+          #getAllMetricSnapshots,
+          [],
+        ),
+        returnValue: <_i28.MetricSnapshot>[],
+        returnValueForMissingStub: <_i28.MetricSnapshot>[],
+      ) as List<_i28.MetricSnapshot>);
+
+  @override
+  _i7.Future<void> deleteMetricSnapshot(String? metricName) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteMetricSnapshot,
+          [metricName],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
   _i7.Future<void> clearAllData() => (super.noSuchMethod(

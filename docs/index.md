@@ -51,7 +51,7 @@ The application logic is modularized into specialized services, each handling a 
 - **[LocalStorageService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/local_storage_service.dart)**: Manages encrypted Hive boxes for health records, settings, and audits.
 - **[EncryptionService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/encryption_service.dart)**: Provides cryptographic primitives for data protection.
 - **[SearchService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/search_service.dart)**: Orchestrates the ObjectBox search index for fast, local full-text search.
-- **[VaultService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/vault_service.dart)**: High-level API for saving and retrieving complex health entities (conversations, extractions) from the secure vault.
+- **[VaultService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/vault_service.dart)**: High-level API for saving and retrieving complex health entities (conversations, extractions) from the secure vault. Includes getDocumentsByDateRange() for chronologically-aware document retrieval using extracted and user-corrected document dates.
 
 ### **AI & Extraction Services**
 - **[AIService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_service.dart)**: Core interface for interacting with local LLMs.
@@ -59,6 +59,7 @@ The application logic is modularized into specialized services, each handling a 
 - **[OCRService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ocr_service.dart)**: Extracts text from images (and rasterized PDFs) of medical documents, and supports plain-text inputs for ingestion/analysis.
 - **[DataExtractionService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/data_extraction_service.dart)**: High-level service that coordinates OCR and LLM-based extraction.
 - **[MedicalFieldExtractor](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/medical_field_extractor.dart)**: Specialized logic for identifying medical entities in unstructured text.
+- **[DateValidationService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/date_validation_service.dart)**: Validates document dates for chronological plausibility and prevents impossible dates from entering the vault.
 - **[OutputPipeline](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_middleware/output_pipeline.dart)**: Middleware pipeline for assistant output processing (safety, validation, citations, analytics).
 - **[SafetyFilterService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/safety_filter_service.dart)**: Validates outputs against medical safety and policy constraints.
 - **[HallucinationValidationService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/hallucination_validation_service.dart)**: Adds guardrails to reduce unsupported medical assertions.
@@ -111,7 +112,7 @@ The following models are persisted in Hive with the specified `typeId`:
 | [HealthRecord](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/health_record.dart) | 0 | Metadata for all medical records. |
 | [AppSettings](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/app_settings.dart) | 1 | Global application configuration (Theme, Font Scale, Privacy, AI). |
 | [ModelMetadata](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/model_metadata.dart) | 3 | Information about downloaded/available LLM models. |
-| [DocumentExtraction](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/document_extraction.dart) | 4 | Structured data extracted from medical documents. |
+| [DocumentExtraction](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/document_extraction.dart) | 4 | Structured data extracted from medical documents. Includes extracted document dates (Hive Field 22) and user-corrected dates (Hive Field 23) for chronology validation. |
 | [DoctorConversation](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/doctor_conversation.dart) | 5 | Transcripts and summaries of recorded doctor visits. |
 | [ConversationSegment](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/doctor_conversation.dart) | 6 | Timestamped conversation segments (speaker + text). |
 | [FollowUpItem](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/follow_up_item.dart) | 7 | Extracted tasks and reminders from medical visits. |
@@ -135,8 +136,23 @@ The following models are persisted in Hive with the specified `typeId`:
 | [UserProfile](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/user_profile.dart) | 40 | Local demographic data for health personalization. |
 | [QuantizationFormat](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/model_quantization_service.dart) | 41 | Quantization formats for local LLM models. |
 | [HealthPatternInsight](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/health_pattern_insight.dart) | 42 | Persisted on-device, non-diagnostic pattern insights with source attribution. |
+| [MetricSnapshot](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/metric_snapshot.dart) | 68 | Latest verified health metric values with source attribution for FDA compliance. |
+
+### **UI Components**
+
+#### **Shared Widgets**
+- **[MetricCard](file:///Users/fam/Documents/Projects/sehatlocker/lib/ui/shared/widgets/profile/metric_card.dart)**: Shared health metric card extending GlassCard with source attribution and reference range display.
+
+#### **Mobile Screens**
+- **[ProfileHealthDashboardMobile](file:///Users/fam/Documents/Projects/sehatlocker/lib/ui/mobile/screens/profile_health_dashboard_mobile.dart)**: Mobile health metrics dashboard with grid layout and pull-to-refresh.
+
+#### **Desktop Screens**  
+- **[ProfileHealthDashboardDesktop](file:///Users/fam/Documents/Projects/sehatlocker/lib/ui/desktop/screens/profile_health_dashboard_desktop.dart)**: Desktop health metrics dashboard with split-view sidebar navigation and detailed content area.
 
 Other data structures exist that are not persisted in Hive (e.g., [EducationContent](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/education_content.dart), [MedicalTestDefinition](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/medical_test.dart)).
+
+### **Exceptions**
+- **[UnverifiedDataException](file:///Users/fam/Documents/Projects/sehatlocker/lib/exceptions/unverified_data_exception.dart)**: FDA compliance exception thrown when attempting to access health metrics before Phase 1 completion.
 
 ### **ObjectBox Entities**
 - **[SearchEntry](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/search_entry.dart)**: The primary entity for the local search engine, containing searchable text and metadata links.
@@ -175,16 +191,20 @@ When a document is scanned, it passes through the following stages:
 2. **Classification**: AI identifies the type of document (Prescription, Lab Result, etc.) using deterministic pattern matching with confidence scoring.
 3. **Categorization Screen**: Users review OCR results and AI suggestions, then manually select the appropriate category before saving.
 4. **Field Extraction**: Specific extractors ([MedicationExtractor](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/extractors/medication_extractor.dart), [TestExtractor](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/extractors/test_extractor.dart), etc.) parse structured data.
-5. **Validation**: AI middleware stages (e.g. [SafetyFilterStage](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_middleware/stages/safety_filter_stage.dart), [HallucinationValidationStage](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_middleware/stages/hallucination_validation_stage.dart)) ensure outputs are safe and accurate.
-6. **Vault Storage**: The structured data is encrypted and saved to the local vault.
+5. **Date Extraction**: [MedicalFieldExtractor](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/medical_field_extractor.dart) extracts dates with context-aware confidence scoring, prioritizing header/footer dates as document creation dates.
+6. **Chronology Validation**: [DateValidationService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/date_validation_service.dart) prevents chronologically impossible dates from entering the vault.
+7. **Validation**: AI middleware stages (e.g. [SafetyFilterStage](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_middleware/stages/safety_filter_stage.dart), [HallucinationValidationStage](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ai_middleware/stages/hallucination_validation_stage.dart)) ensure outputs are safe and accurate.
+8. **Extraction Verification**: Users must explicitly verify/correct extracted fields (including setting a document date) before saving.
+9. **Vault Storage**: The structured data is encrypted and saved to the local vault.
 
 ### **Document Categorization Workflow**
 All document ingestion methods (camera scanner, file drop, batch processing) now follow a unified categorization flow:
 - **OCR Processing**: Documents are processed with on-device OCR to extract text
 - **AI Classification**: Deterministic pattern matching suggests document categories with confidence scores
-- **User Review**: Categorization screen shows OCR preview, suggestions, and manual category selection
+- **User Review**: Categorization screen shows OCR preview, suggestions, and manual category selection with a consistent, accessible UI.
+- **Extraction Verification**: Verification screen requires explicit user confirmation/corrections of extracted fields before persistence, including document date validation with chronology checks.
 - **Biometric Security**: Sensitive categories require biometric authentication before saving
-- **Audit Logging**: All categorization actions are logged for transparency
+- **Audit Logging**: Categorization and verification actions are logged for transparency, including document date corrections.
 
 The categorization system supports 14 health document types including Lab Results, Prescriptions, Imaging Reports, Genetic Tests, and more.
 ### **Exports & Auditing**
@@ -217,6 +237,7 @@ Sehat Locker uses a hybrid storage approach:
 ## **Programs & Utilities**
 
 - **[ReferenceRangeService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/reference_range_service.dart)**: Evaluates lab results against age and sex-specific medical reference ranges.
+- **[HealthMetricsAggregator](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/health_metrics_aggregator.dart)**: Computes latest values exclusively from user-verified documents with FDA compliance safeguards. Integrates with ReferenceRangeService but never computes diagnostic conclusions.
 - **[MedicalDictionaryService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/medical_dictionary_service.dart)**: Provides a local database of medical terms and definitions.
 - **[BatchProcessingService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/batch_processing_service.dart)**: Manages long-running tasks like OCR and model warming in the background.
 - **[BatteryMonitorService](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/battery_monitor_service.dart)**: Tracks battery state for long-running operations.

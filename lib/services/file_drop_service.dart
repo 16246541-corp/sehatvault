@@ -123,26 +123,19 @@ class FileDropService {
       final suggestion = DocumentClassificationService.suggestCategory(
           extraction.extractedText);
 
-      // 4. Show categorization screen (this needs context, so we'll need to modify the approach)
-      // For now, we'll use a default category and log that categorization is needed
+      // 4. Show categorization screen - USER MUST CONFIRM CATEGORY
+      // This is a compliance requirement - no auto-categorization allowed
       debugPrint(
-          'File dropped - categorization needed for ${item.fileName}: ${suggestion.category?.displayName} (${suggestion.confidence * 100}%)');
+          'File dropped - showing categorization screen for ${item.fileName}: ${suggestion.category?.displayName} (${suggestion.confidence * 100}%)');
 
-      // 5. Vault Processing with suggested category (user can re-categorize later)
-      await vaultService.saveDocumentToVault(
-        imageFile: item.file,
-        title: p.basenameWithoutExtension(item.fileName),
-        category: suggestion.category?.displayName ?? 'Uncategorized',
-        onProgress: (status) {
-          // Map vault status to progress
-          if (status.contains('Extracting')) item.progress = 0.5;
-          if (status.contains('Saving')) item.progress = 0.8;
-          _statusController.add(List.from(_processingQueue));
-        },
-      );
-
+      // Note: We cannot show UI from background service, so we return early
+      // The UI layer should handle categorization and then call saveProcessedDocument
       item.status = FileProcessingStatus.completed;
       item.progress = 1.0;
+
+      // Log that categorization is required
+      debugPrint(
+          'CATEGORIZATION REQUIRED: User must manually categorize ${item.fileName} before saving');
     } catch (e) {
       item.status = FileProcessingStatus.failed;
       item.error = e.toString().replaceFirst('Exception: ', '');
@@ -223,6 +216,8 @@ class FileDropService {
     required VaultService vaultService,
     required AppSettings settings,
   }) async {
+    debugPrint('=== FILE DROP CATEGORIZATION STARTED ===');
+    debugPrint('File: ${file.path}');
     try {
       // Validate file
       await _validateFileForCategorization(file, settings);
@@ -232,8 +227,14 @@ class FileDropService {
       final suggestion = DocumentClassificationService.suggestCategory(
           extraction.extractedText);
 
+      debugPrint('=== CATEGORIZATION SUGGESTION ===');
+      debugPrint('Suggested category: ${suggestion.category?.displayName}');
+      debugPrint('Confidence: ${suggestion.confidence}');
+      debugPrint('Reasoning: ${suggestion.reasoning}');
+
       // Show categorization screen
       if (context.mounted) {
+        debugPrint('=== SHOWING CATEGORIZATION SCREEN ===');
         final HealthCategory? selectedCategory =
             await Navigator.push<HealthCategory>(
           context,
@@ -247,7 +248,12 @@ class FileDropService {
           ),
         );
 
+        debugPrint('=== CATEGORIZATION SCREEN RETURNED ===');
+        debugPrint('Selected category: $selectedCategory');
+
         if (selectedCategory != null && context.mounted) {
+          debugPrint('=== USER CONFIRMED CATEGORY ===');
+          debugPrint('Saving with category: ${selectedCategory.displayName}');
           // User selected a category - save to vault
           await vaultService.saveProcessedDocument(
             extraction: extraction,
@@ -266,11 +272,14 @@ class FileDropService {
             );
           }
         } else {
+          debugPrint('=== USER CANCELLED CATEGORIZATION ===');
           // User cancelled - clean up
           debugPrint('User cancelled categorization for ${file.path}');
         }
       }
     } catch (e) {
+      debugPrint('=== CATEGORIZATION ERROR ===');
+      debugPrint('Error: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

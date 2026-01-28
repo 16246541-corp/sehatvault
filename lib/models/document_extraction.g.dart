@@ -25,13 +25,17 @@ class DocumentExtractionAdapter extends TypeAdapter<DocumentExtraction> {
       structuredData: (fields[5] as Map).cast<String, dynamic>(),
       contentHash: fields[6] as String?,
       citations: (fields[7] as List?)?.cast<Citation>(),
+      userVerifiedAt: fields[20] as DateTime?,
+      userCorrections: (fields[21] as Map?)?.cast<String, dynamic>(),
+      extractedDocumentDate: fields[22] as DateTime?,
+      userCorrectedDocumentDate: fields[23] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, DocumentExtraction obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +51,15 @@ class DocumentExtractionAdapter extends TypeAdapter<DocumentExtraction> {
       ..writeByte(6)
       ..write(obj.contentHash)
       ..writeByte(7)
-      ..write(obj.citations);
+      ..write(obj.citations)
+      ..writeByte(20)
+      ..write(obj.userVerifiedAt)
+      ..writeByte(21)
+      ..write(obj.userCorrections)
+      ..writeByte(22)
+      ..write(obj.extractedDocumentDate)
+      ..writeByte(23)
+      ..write(obj.userCorrectedDocumentDate);
   }
 
   @override

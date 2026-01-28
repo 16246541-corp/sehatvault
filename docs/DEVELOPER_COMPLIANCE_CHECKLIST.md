@@ -8,6 +8,9 @@ This document tracks compliance and validation requirements for new features.
   - [x] Document classification uses deterministic patterns only—no AI inference
   - [x] Suggestions are non-binding and require user confirmation
   - [x] Confidence thresholds (<40%) prevent low-quality suggestions
+  - [x] **FDA Compliance**: No auto-categorization without user confirmation
+  - [x] **VaultService Safety Checks**: Prevents saving documents with auto-assigned or uncategorized status
+  - [x] **FileDropService**: Removed auto-save functionality - user must manually categorize
 
 ## AI Model Transparency
 

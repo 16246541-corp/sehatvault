@@ -23,6 +23,7 @@ import '../models/ai_usage_metric.dart';
 import '../models/batch_task.dart';
 import '../models/user_profile.dart';
 import '../models/health_pattern_insight.dart';
+import '../models/metric_snapshot.dart';
 import 'platform_detector.dart';
 import 'model_quantization_service.dart';
 import '../models/generation_parameters.dart';
@@ -52,6 +53,7 @@ class LocalStorageService {
   static const String _autoDeleteOriginalKey = 'auto_delete_original';
   static const String _userProfileBox = 'user_profile';
   static const String _healthPatternInsightsBox = 'health_pattern_insights';
+  static const String _metricSnapshotsBox = 'metric_snapshots';
 
   // Singleton instance
   static final LocalStorageService _instance = LocalStorageService._internal();
@@ -148,6 +150,9 @@ class LocalStorageService {
     if (!Hive.isAdapterRegistered(42)) {
       Hive.registerAdapter(HealthPatternInsightAdapter());
     }
+    if (!Hive.isAdapterRegistered(68)) {
+      Hive.registerAdapter(MetricSnapshotAdapter());
+    }
 
     // Get or create encryption key
     final encryptionKey = await _getOrCreateEncryptionKey();
@@ -240,6 +245,11 @@ class LocalStorageService {
 
     await Hive.openBox<HealthPatternInsight>(
       _healthPatternInsightsBox,
+      encryptionCipher: HiveAesCipher(encryptionKey),
+    );
+
+    await Hive.openBox<MetricSnapshot>(
+      _metricSnapshotsBox,
       encryptionCipher: HiveAesCipher(encryptionKey),
     );
 
@@ -558,6 +568,18 @@ class LocalStorageService {
     }
   }
 
+  /// Get all document extractions that have been verified by the user
+  ///
+  /// Returns ONLY documents where extraction.userVerifiedAt != null
+  /// This is a critical FDA safeguard to ensure only user-verified data is used
+  List<DocumentExtraction> getDocumentsWithVerifiedExtractions() {
+    final box = Hive.box('health_records');
+    return box.values
+        .whereType<DocumentExtraction>()
+        .where((extraction) => extraction.userVerifiedAt != null)
+        .toList();
+  }
+
   // MARK: - Doctor Conversations
 
   /// Get doctor conversations box
@@ -745,6 +767,34 @@ class LocalStorageService {
     return _consentEntries.get(id);
   }
 
+  // MARK: - Metric Snapshots
+
+  /// Get metric snapshots box
+  Box<MetricSnapshot> get _metricSnapshots =>
+      Hive.box<MetricSnapshot>(_metricSnapshotsBox);
+
+  /// Save a metric snapshot
+  Future<void> saveMetricSnapshot(MetricSnapshot snapshot) async {
+    await _metricSnapshots.put(snapshot.metricName, snapshot);
+  }
+
+  /// Get a metric snapshot by metric name
+  MetricSnapshot? getMetricSnapshot(String metricName) {
+    if (!Hive.isBoxOpen(_metricSnapshotsBox)) return null;
+    return _metricSnapshots.get(metricName);
+  }
+
+  /// Get all metric snapshots
+  List<MetricSnapshot> getAllMetricSnapshots() {
+    if (!Hive.isBoxOpen(_metricSnapshotsBox)) return [];
+    return _metricSnapshots.values.toList();
+  }
+
+  /// Delete a metric snapshot
+  Future<void> deleteMetricSnapshot(String metricName) async {
+    await _metricSnapshots.delete(metricName);
+  }
+
   // MARK: - Cleanup
 
   /// Clear all data (for settings screen)
@@ -767,6 +817,7 @@ class LocalStorageService {
     await Hive.box<BatchTask>(_batchTasksBox).clear();
     await Hive.box<ModelMetadata>(_modelManifestsBox).clear();
     await Hive.box<UserProfile>(_userProfileBox).clear();
+    await Hive.box<MetricSnapshot>(_metricSnapshotsBox).clear();
 
     // Re-initialize app settings metadata
     await _initializeAppSettingsMetadata();

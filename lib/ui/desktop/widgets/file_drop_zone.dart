@@ -45,11 +45,17 @@ class _FileDropZoneState extends State<FileDropZone> {
       onDragDone: (details) async {
         setState(() => _isDragging = false);
         final files = details.files.map((xf) => File(xf.path)).toList();
-        await _dropService.processFiles(
-          files,
-          vaultService: widget.vaultService,
-          settings: widget.settings,
-        );
+
+        // Process each file with categorization flow
+        for (final file in files) {
+          if (!mounted) break;
+          await _dropService.processFileWithCategorization(
+            file,
+            context: context,
+            vaultService: widget.vaultService,
+            settings: widget.settings,
+          );
+        }
         widget.onFilesProcessed?.call();
       },
       child: Stack(
@@ -250,20 +256,25 @@ class _FileDropZoneState extends State<FileDropZone> {
     try {
       final files = await openFiles(
         acceptedTypeGroups: [
-          XTypeGroup(
+          const XTypeGroup(
             label: 'Medical Records',
-            extensions: const ['png', 'jpg', 'jpeg', 'pdf', 'txt'],
+            extensions: ['png', 'jpg', 'jpeg', 'pdf', 'txt'],
           ),
         ],
       );
 
       if (files.isEmpty) return;
 
-      await _dropService.processFiles(
-        files.map((f) => File(f.path)).toList(),
-        vaultService: widget.vaultService,
-        settings: widget.settings,
-      );
+      // Process each file with categorization flow
+      for (final file in files.map((f) => File(f.path))) {
+        if (!mounted) break;
+        await _dropService.processFileWithCategorization(
+          file,
+          context: context,
+          vaultService: widget.vaultService,
+          settings: widget.settings,
+        );
+      }
       widget.onFilesProcessed?.call();
     } catch (_) {}
   }

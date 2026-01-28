@@ -289,8 +289,11 @@ class MedicalFieldExtractor {
   ///   - 'value': The date string
   ///   - 'format': Detected format type
   ///   - 'rawText': Original matched text
+  ///   - 'confidence': Confidence level ('high', 'medium', 'low')
+  ///   - 'context': Context where date was found ('header', 'footer', 'body')
   /// - 'count': Total number of dates found
   /// - 'formats': Set of date formats detected
+  /// - 'documentDate': Most likely document creation date (highest confidence)
   static Map<String, dynamic> extractDates(String text) {
     if (text.isEmpty) {
       return {
@@ -303,6 +306,73 @@ class MedicalFieldExtractor {
     final normalizedText = text.replaceAll(RegExp(r'\s+'), ' ');
     final List<Map<String, String>> dates = [];
     final Set<String> formats = {};
+
+    // Define header/footer sections for priority extraction
+    final textLength = normalizedText.length;
+    final headerSection =
+        normalizedText.substring(0, (textLength * 0.2).round());
+    final footerSection = normalizedText.substring((textLength * 0.8).round());
+    final bodySection = normalizedText.substring(
+        (textLength * 0.2).round(), (textLength * 0.8).round());
+
+    // Date context indicators
+    final headerDateIndicators = [
+      'report date',
+      'date:',
+      'created:',
+      'issued:',
+      'prepared:',
+      'dated'
+    ];
+    final footerDateIndicators = ['dated', 'date'];
+    final documentDateIndicators = [
+      'document date',
+      'file date',
+      'report date'
+    ];
+
+    // Helper function to determine date confidence and context
+    Map<String, String> analyzeDateContext(
+        String dateText, String fullText, int matchStart) {
+      final lowerDate = dateText.toLowerCase();
+      final lowerText = fullText.toLowerCase();
+
+      // Determine context (header, footer, body)
+      String context;
+      if (matchStart < headerSection.length) {
+        context = 'header';
+      } else if (matchStart > (textLength * 0.8).round()) {
+        context = 'footer';
+      } else {
+        context = 'body';
+      }
+
+      // Determine confidence based on context indicators
+      String confidence;
+      if (context == 'header') {
+        // Check for header date indicators in surrounding context
+        final contextStart = (matchStart - 50).clamp(0, fullText.length);
+        final contextEnd =
+            (matchStart + dateText.length + 50).clamp(0, fullText.length);
+        final surroundingContext =
+            lowerText.substring(contextStart, contextEnd);
+
+        final hasHeaderIndicator = headerDateIndicators
+            .any((indicator) => surroundingContext.contains(indicator));
+        confidence = hasHeaderIndicator ? 'high' : 'medium';
+      } else if (context == 'footer') {
+        final hasFooterIndicator = footerDateIndicators
+            .any((indicator) => lowerText.contains(indicator));
+        confidence = hasFooterIndicator ? 'medium' : 'low';
+      } else {
+        // Body context - check for document date indicators
+        final hasDocumentIndicator = documentDateIndicators
+            .any((indicator) => lowerText.contains(indicator));
+        confidence = hasDocumentIndicator ? 'medium' : 'low';
+      }
+
+      return {'context': context, 'confidence': confidence};
+    }
 
     // Date patterns with format identifiers
     final datePatterns = [
@@ -343,27 +413,66 @@ class MedicalFieldExtractor {
 
       for (var match in pattern.allMatches(normalizedText)) {
         final dateValue = match.group(0)!;
+        final matchStart = match.start;
+
+        // Analyze context and confidence
+        final contextAnalysis =
+            analyzeDateContext(dateValue, normalizedText, matchStart);
 
         dates.add({
           'value': dateValue,
           'format': format,
           'rawText': dateValue,
+          'confidence': contextAnalysis['confidence']!,
+          'context': contextAnalysis['context']!,
         });
 
         formats.add(format);
       }
     }
 
-    // Remove duplicates while preserving order
+    // Remove duplicates while preserving order and selecting highest confidence
     final uniqueDates = <String, Map<String, String>>{};
     for (var date in dates) {
-      uniqueDates[date['value']!] = date;
+      final dateValue = date['value']!;
+      if (!uniqueDates.containsKey(dateValue)) {
+        uniqueDates[dateValue] = date;
+      } else {
+        // Keep the higher confidence version
+        final existingConfidence = uniqueDates[dateValue]!['confidence']!;
+        final newConfidence = date['confidence']!;
+
+        // Priority: high > medium > low
+        final confidencePriority = {'high': 3, 'medium': 2, 'low': 1};
+        if (confidencePriority[newConfidence]! >
+            confidencePriority[existingConfidence]!) {
+          uniqueDates[dateValue] = date;
+        }
+      }
+    }
+
+    // Find the most likely document date (highest confidence header/footer date)
+    Map<String, String>? documentDate;
+    final headerFooterDates = uniqueDates.values
+        .where((date) =>
+            date['context'] == 'header' || date['context'] == 'footer')
+        .toList();
+
+    if (headerFooterDates.isNotEmpty) {
+      // Sort by confidence (high first) and pick the first one
+      headerFooterDates.sort((a, b) {
+        final priority = {'high': 3, 'medium': 2, 'low': 1};
+        return priority[b['confidence']!]!
+            .compareTo(priority[a['confidence']!]!);
+      });
+      documentDate = headerFooterDates.first;
     }
 
     return {
       'dates': uniqueDates.values.toList(),
       'count': uniqueDates.length,
       'formats': formats.toList(),
+      'documentDate': documentDate,
     };
   }
 

@@ -50,6 +50,14 @@ class VaultService {
     void Function(String status)? onProgress,
   }) async {
     try {
+      // FDA COMPLIANCE CHECK: Ensure category is not auto-assigned
+      if (category == 'Uncategorized' ||
+          category.toLowerCase().contains('auto') ||
+          category.isEmpty) {
+        throw Exception(
+            'FDA Compliance Violation: Documents cannot be saved with auto-assigned or uncategorized status. User must manually categorize.');
+      }
+
       // Step 1: Run OCR processing
       onProgress?.call('Extracting text from document...');
       var extraction = await OCRService.processDocument(imageFile);
@@ -177,6 +185,14 @@ class VaultService {
     void Function(String status)? onProgress,
   }) async {
     try {
+      // FDA COMPLIANCE CHECK: Ensure category is not auto-assigned
+      if (category == 'Uncategorized' ||
+          category.toLowerCase().contains('auto') ||
+          category.isEmpty) {
+        throw Exception(
+            'FDA Compliance Violation: Documents cannot be saved with auto-assigned or uncategorized status. User must manually categorize.');
+      }
+
       // Step 1: Check for duplicates
       onProgress?.call('Verifying document...');
 
@@ -483,6 +499,55 @@ class VaultService {
     }
 
     return documents;
+  }
+
+  /// Get documents within a date range using extracted/corrected document dates
+  ///
+  /// Filters documents based on:
+  /// 1. userCorrectedDocumentDate (highest priority)
+  /// 2. extractedDocumentDate (if no user correction)
+  /// 3. Falls back to record.createdAt if no document dates available
+  Future<List<({HealthRecord record, DocumentExtraction? extraction})>>
+      getDocumentsByDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final allDocuments = await getAllDocuments();
+    final List<({HealthRecord record, DocumentExtraction? extraction})>
+        filteredDocuments = [];
+
+    for (final document in allDocuments) {
+      DateTime? documentDate;
+
+      // Determine the effective document date
+      if (document.extraction != null) {
+        // Use user corrected date first, then extracted date
+        documentDate = document.extraction!.userCorrectedDocumentDate ??
+            document.extraction!.extractedDocumentDate;
+      }
+
+      // Fallback to record creation date if no document date available
+      documentDate ??= document.record.createdAt;
+
+      // Check if document falls within the specified date range
+      if (documentDate.isAfter(startDate.subtract(const Duration(days: 1))) &&
+          documentDate.isBefore(endDate.add(const Duration(days: 1)))) {
+        filteredDocuments.add(document);
+      }
+    }
+
+    // Sort by document date (most recent first)
+    filteredDocuments.sort((a, b) {
+      DateTime? dateA = a.extraction?.userCorrectedDocumentDate ??
+          a.extraction?.extractedDocumentDate ??
+          a.record.createdAt;
+      DateTime? dateB = b.extraction?.userCorrectedDocumentDate ??
+          b.extraction?.extractedDocumentDate ??
+          b.record.createdAt;
+      return dateB.compareTo(dateA);
+    });
+
+    return filteredDocuments;
   }
 
   /// Delete a document and its associated extraction

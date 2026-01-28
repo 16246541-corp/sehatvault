@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../models/document_extraction.dart';
 import '../../../models/health_record.dart';
 import '../../../shared/widgets/document_categorization_content.dart';
+import '../../../screens/extraction_verification_screen.dart';
 
 class DocumentCategorizationScreenMobile extends StatelessWidget {
   final DocumentExtraction extraction;
@@ -31,7 +32,17 @@ class DocumentCategorizationScreenMobile extends StatelessWidget {
           suggestedCategory: suggestedCategory,
           confidence: confidence,
           reasoning: reasoning,
-          onSave: (category) => Navigator.pop(context, category),
+          onSave: (category) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ExtractionVerificationScreen(
+                  extraction: extraction,
+                  category: category,
+                ),
+              ),
+            );
+          },
           onCancel: () => Navigator.pop(context, null),
         ),
       ),

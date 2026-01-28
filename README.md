@@ -21,7 +21,8 @@ Sehat Locker is designed around three principles:
 ### 📄 Document Vault
 *   **Scan & OCR**: Capture medical documents with your camera. On-device Tesseract OCR extracts text with image preprocessing for rotation correction and low-light enhancement.
 *   **Automatic Data Extraction**: Regex-based extraction pipeline identifies lab values, medications, and dates from scanned text.
-*   **Auto-Categorization**: Documents are automatically classified as Lab Results, Prescriptions, Medical Records, etc.
+*   **AI-Powered Categorization**: Documents are analyzed and AI suggests categories (Lab Results, Prescriptions, Medical Records, etc.) with confidence scores.
+*   **User Confirmation Required**: FDA-compliant workflow requires users to review AI suggestions and manually confirm the category before saving - no auto-categorization without consent.
 *   **Duplicate Detection**: SHA-256 content hashing prevents saving the same document twice.
 *   **AES-256 Encrypted Storage**: All records are stored in encrypted Hive boxes.
 

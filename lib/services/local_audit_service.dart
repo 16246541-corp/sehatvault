@@ -178,6 +178,25 @@ class LocalAuditService {
     return keysToDelete.length;
   }
 
+  Future<void> logVerificationEvent(
+      String extractionId, Map<String, dynamic> corrections) async {
+    // Store verification history in existing LocalAuditEntry box (TypeId 17)
+    // Include: original values, corrected values, timestamp, document ID
+    final redactedCorrections = _redactSensitiveData(
+        corrections.map((key, value) => MapEntry(key, value.toString())));
+
+    await log(
+      action: 'verification',
+      details: {
+        'extraction_id': extractionId,
+        'original_values': redactedCorrections['original_values'] ?? '{}',
+        'corrected_values': redactedCorrections['corrected_values'] ?? '{}',
+        'verification_timestamp': DateTime.now().toIso8601String(),
+      },
+      sensitivity: 'info',
+    );
+  }
+
   Map<String, String> _redactSensitiveData(Map<String, String> details) {
     final redacted = Map<String, String>.from(details);
     const sensitiveKeys = {
