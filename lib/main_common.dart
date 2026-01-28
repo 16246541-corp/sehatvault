@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'app.dart';
 import 'utils/theme.dart';
 import 'services/local_storage_service.dart';
@@ -221,22 +222,65 @@ class _MyAppState extends State<MyApp> {
     }
 
     return SessionGuard(
-      child: MaterialApp(
-        navigatorKey: SessionManager().navigatorKey,
-        title: 'Sehat Locker',
-        debugShowCheckedModeBanner: false,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('en'),
-        ],
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        home: _getScreenForStep(),
+      child: ValueListenableBuilder<Box>(
+        valueListenable: storageService.settingsListenable,
+        builder: (context, box, _) {
+          final settings = storageService.getAppSettings();
+          
+          ThemeMode themeMode;
+          // Robustly handle potentially null or invalid theme modes
+          try {
+            switch (settings.themeMode) {
+              case 'light':
+                themeMode = ThemeMode.light;
+                break;
+              case 'dark':
+                themeMode = ThemeMode.dark;
+                break;
+              case 'system':
+              default:
+                themeMode = ThemeMode.system;
+            }
+          } catch (e) {
+            // Fallback for safety
+            themeMode = ThemeMode.system;
+          }
+
+          double fontScale = 1.0;
+          try {
+            // Clamp font scale to reasonable limits to prevent layout crashes
+            fontScale = settings.fontScale.clamp(0.8, 1.4);
+          } catch (e) {
+            fontScale = 1.0;
+          }
+
+          return MaterialApp(
+            navigatorKey: SessionManager().navigatorKey,
+            title: 'Sehat Locker',
+            debugShowCheckedModeBanner: false,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+            ],
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            builder: (context, child) {
+              final mediaQuery = MediaQuery.of(context);
+              return MediaQuery(
+                data: mediaQuery.copyWith(
+                  textScaleFactor: fontScale,
+                ),
+                child: child!,
+              );
+            },
+            home: _getScreenForStep(),
+          );
+        },
       ),
     );
   }

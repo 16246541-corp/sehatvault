@@ -11,6 +11,7 @@ class GlassTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
+  final int? maxLines;
 
   const GlassTextField({
     super.key,
@@ -22,6 +23,7 @@ class GlassTextField extends StatelessWidget {
     this.validator,
     this.keyboardType,
     this.textCapitalization = TextCapitalization.none,
+    this.maxLines = 1,
   });
 
   @override
@@ -48,6 +50,7 @@ class GlassTextField extends StatelessWidget {
             validator: validator,
             keyboardType: keyboardType,
             textCapitalization: textCapitalization,
+            maxLines: maxLines,
             style: TextStyle(
               color: theme.colorScheme.onSurface,
             ),

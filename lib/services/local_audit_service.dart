@@ -20,6 +20,24 @@ class LocalAuditService {
 
   LocalAuditService(this._storageService, this._sessionManager);
 
+  Future<void> logDocumentCategorization({
+    required String category,
+    required double confidence,
+    required bool isSensitive,
+    required String action, // 'save' or 'cancel'
+  }) async {
+    await log(
+      action: 'document_categorization',
+      details: {
+        'category': category,
+        'confidence': confidence.toStringAsFixed(2),
+        'is_sensitive': isSensitive.toString(),
+        'user_action': action,
+      },
+      sensitivity: isSensitive ? 'high' : 'info',
+    );
+  }
+
   Future<void> log({
     required String action,
     required Map<String, String> details,

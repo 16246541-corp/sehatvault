@@ -85,6 +85,14 @@ enum HealthCategory {
   prescriptions,
   vaccinations,
   insurance,
+  geneticTestResults,
+  imagingReports,
+  remoteMonitoring,
+  pathologyReports,
+  clinicalNotes,
+  allergyDocumentation,
+  surgicalReports,
+  doctorVisitReport,
   other,
 }
 
@@ -101,6 +109,22 @@ extension HealthCategoryExtension on HealthCategory {
         return 'Vaccinations';
       case HealthCategory.insurance:
         return 'Insurance';
+      case HealthCategory.geneticTestResults:
+        return 'Genetic Test Results';
+      case HealthCategory.imagingReports:
+        return 'Imaging Reports';
+      case HealthCategory.remoteMonitoring:
+        return 'Remote Monitoring';
+      case HealthCategory.pathologyReports:
+        return 'Pathology Reports';
+      case HealthCategory.clinicalNotes:
+        return 'Clinical Notes';
+      case HealthCategory.allergyDocumentation:
+        return 'Allergy Documentation';
+      case HealthCategory.surgicalReports:
+        return 'Surgical Reports';
+      case HealthCategory.doctorVisitReport:
+        return 'Doctor Visit Report';
       case HealthCategory.other:
         return 'Other';
     }

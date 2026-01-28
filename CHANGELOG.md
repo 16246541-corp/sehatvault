@@ -1,5 +1,65 @@
 # Changelog - Sehat Locker
 
+## [1.9.14] - 2026-01-28
+
+### Added
+- **Document Classification**: Enhanced `DocumentClassificationService` to return `CategorySuggestion` with confidence scores and reasoning.
+- **Document Classification**: Added pattern matching for all 14 `HealthCategory` types.
+- **Document Classification**: Implemented deterministic confidence scoring using keyword density, structured field extraction (Labs/Meds), and Reference Range validation.
+- **Document Classification**: Updated keyword dictionaries with expanded terms for Genetic Tests, Doctor Visits, and more.
+- **Compliance**: Updated `DEVELOPER_COMPLIANCE_CHECKLIST.md` to reflect deterministic classification logic.
+
+### Improved
+- **Document Classification**: Integration with `MedicalFieldExtractor` and `ReferenceRangeService` to boost confidence for Lab Results and Prescriptions.
+
+## [1.9.13] - 2026-01-28
+
+### Improved
+- **UI (Desktop Documents)**: Show document preview thumbnails (PDF/image) in the grid with OCR snippet fallback (replaces the generic icon when no image is available).
+
+## [1.9.12] - 2026-01-28
+
+### Added
+- **Document Categorization**: Implemented a post-OCR categorization popup screen to allow users to verify and correct document categories before saving.
+- **Categorization**: Expanded document categories to 14 types (e.g., Genetic Tests, Imaging Reports, Clinical Notes) in `HealthRecord` and `DocumentClassificationService`.
+- **UI (Mobile)**: Added `DocumentCategorizationScreenMobile` for reviewing OCR results and suggestions on mobile devices.
+- **UI (Desktop)**: Added `DocumentCategorizationScreenDesktop` for reviewing OCR results and suggestions on desktop platforms.
+- **OCR Workflow**: Optimized the scanning flow to run OCR immediately after capture to provide AI-powered category suggestions.
+
+### Changed
+- **VaultService**: Added `saveProcessedDocument` to support saving documents that have already been processed by OCR in the UI layer.
+- **DocumentScannerScreen**: Integrated the new categorization flow, replacing the simple `SaveToVaultDialog` with the full categorization screen.
+
+## [1.9.11] - 2026-01-28
+
+### Added
+- **Display Settings**: Implemented user-configurable display settings for both Mobile and Desktop platforms.
+  - **Font Scale**: Added a slider to adjust the global text scale factor (0.8x to 1.4x).
+  - **Theme Mode**: Added a toggle to switch between System, Light, and Dark themes explicitly.
+  - **Persistence**: Saved preferences to `AppSettings` (Hive) and applied them reactively via `ValueListenableBuilder` in `main_common.dart`.
+- **UI (Mobile Settings)**: Added "Display & Appearance" category to `SettingsScreen`.
+- **UI (Desktop Settings)**: Added "Display & Appearance" category to `DesktopSettingsScreen`.
+
+### Changed
+- **AppSettings**: Added `fontScale` (double) and `themeMode` (String) fields to the Hive model (TypeId 1).
+- **Architecture**: Wrapped `MaterialApp` with a settings listener to enable real-time theme and font scaling updates without app restart.
+
+### Fixed
+- **Startup Stability**: Recovered gracefully if legacy/corrupted `AppSettings` values fail to deserialize, preventing a black-screen startup on some devices.
+- **Startup Stability**: Added Hive default values to `EnhancedPrivacySettings` fields to prevent crashes when loading legacy settings data.
+- **Startup Stability**: Added Hive default values to `GenerationParameters` fields to prevent crashes when loading legacy settings data.
+
+## [1.9.10] - 2026-01-28
+
+### Added
+- **UI (Desktop Document Details)**: Implemented a dedicated desktop view for document details (`DesktopDocumentDetailScreen`) to better utilize screen real estate.
+- **UI (Desktop Document Details)**: Added a document image snippet preview at the top of the detail screen.
+- **UI (Desktop Document Details)**: Added PDF thumbnail rendering support for document previews.
+
+### Improved
+- **UI (Desktop Document Details)**: Enhanced the OCR extracted text display to fill the remaining vertical screen space.
+- **UI (Desktop Document Details)**: Fixed an issue where PDF documents displayed a generic icon instead of a preview thumbnail.
+
 ## [1.9.9] - 2026-01-28
 
 ### Improved

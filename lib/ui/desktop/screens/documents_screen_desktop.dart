@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/document_extraction.dart';
 import '../../../models/health_record.dart';
 import '../../../services/local_storage_service.dart';
 import '../../../services/storage_usage_service.dart';
 import '../../../services/vault_service.dart';
 import '../../../ui/desktop/widgets/file_drop_zone.dart';
 import '../../../ui/desktop/widgets/health_insights_sidebar.dart';
+import '../../../ui/desktop/widgets/desktop_document_grid_card.dart';
 import '../../../utils/design_constants.dart';
-import '../../../widgets/cards/document_grid_card.dart';
 import '../../../widgets/design/glass_card.dart';
 import '../../../widgets/design/glass_text_field.dart';
 import '../../../widgets/design/liquid_glass_background.dart';
 import '../../../widgets/design/responsive_center.dart';
-import '../../../screens/document_detail_screen.dart';
+import 'document_detail_screen_desktop.dart';
+
+typedef DocumentWithExtraction = ({
+  HealthRecord record,
+  DocumentExtraction? extraction
+});
 
 class DesktopDocumentsScreen extends StatefulWidget {
   final VoidCallback? onRecordTap;
@@ -34,8 +40,8 @@ class _DesktopDocumentsScreenState extends State<DesktopDocumentsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  List<HealthRecord> _documents = [];
-  List<HealthRecord> _filteredDocuments = [];
+  List<DocumentWithExtraction> _documents = [];
+  List<DocumentWithExtraction> _filteredDocuments = [];
   StorageUsage? _storageUsage;
   bool _isLoading = true;
 
@@ -70,8 +76,8 @@ class _DesktopDocumentsScreenState extends State<DesktopDocumentsScreen> {
     try {
       final results = await _vaultService.getAllDocuments();
       setState(() {
-        _documents = results.map((e) => e.record).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        _documents = results
+          ..sort((a, b) => b.record.createdAt.compareTo(a.record.createdAt));
         _filteredDocuments = List.from(_documents);
         _isLoading = false;
       });
@@ -92,9 +98,10 @@ class _DesktopDocumentsScreenState extends State<DesktopDocumentsScreen> {
 
     setState(() {
       _filteredDocuments = _documents.where((doc) {
-        final titleMatch = doc.title.toLowerCase().contains(query);
-        final categoryMatch = doc.category.toLowerCase().contains(query);
-        final notesMatch = doc.notes?.toLowerCase().contains(query) ?? false;
+        final titleMatch = doc.record.title.toLowerCase().contains(query);
+        final categoryMatch = doc.record.category.toLowerCase().contains(query);
+        final notesMatch =
+            doc.record.notes?.toLowerCase().contains(query) ?? false;
         return titleMatch || categoryMatch || notesMatch;
       }).toList();
     });
@@ -111,7 +118,8 @@ class _DesktopDocumentsScreenState extends State<DesktopDocumentsScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DocumentDetailScreen(healthRecordId: doc.id),
+        builder: (context) =>
+            DesktopDocumentDetailScreen(healthRecordId: doc.id),
       ),
     );
     _loadDocuments();
@@ -179,12 +187,14 @@ class _DesktopDocumentsScreenState extends State<DesktopDocumentsScreen> {
           maxContentWidth: 1600,
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
+              padding:
+                  const EdgeInsets.all(DesignConstants.pageHorizontalPadding),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final sidebarWidth = constraints.maxWidth >= 1100 ? 420.0 : 360.0;
-                  final columnCount =
-                      _calculateColumnCount(constraints.maxWidth - sidebarWidth);
+                  final sidebarWidth =
+                      constraints.maxWidth >= 1100 ? 420.0 : 360.0;
+                  final columnCount = _calculateColumnCount(
+                      constraints.maxWidth - sidebarWidth);
 
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +203,8 @@ class _DesktopDocumentsScreenState extends State<DesktopDocumentsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: DesignConstants.titleTopPadding),
+                            const SizedBox(
+                                height: DesignConstants.titleTopPadding),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -251,7 +262,8 @@ class _DesktopDocumentsScreenState extends State<DesktopDocumentsScreen> {
                               hintText: 'Search documents...',
                               prefixIcon: Icons.search,
                             ),
-                            const SizedBox(height: DesignConstants.sectionSpacing),
+                            const SizedBox(
+                                height: DesignConstants.sectionSpacing),
                             Expanded(
                               child: _isLoading
                                   ? const Center(
@@ -302,12 +314,14 @@ class _DesktopDocumentsScreenState extends State<DesktopDocumentsScreen> {
       itemCount: _filteredDocuments.length,
       itemBuilder: (context, index) {
         final doc = _filteredDocuments[index];
+        final record = doc.record;
         return Stack(
           children: [
             Positioned.fill(
-              child: DocumentGridCard(
-                record: doc,
-                onTap: () => _openDocument(doc),
+              child: DesktopDocumentGridCard(
+                record: record,
+                extraction: doc.extraction,
+                onTap: () => _openDocument(record),
               ),
             ),
             Positioned(
@@ -318,14 +332,15 @@ class _DesktopDocumentsScreenState extends State<DesktopDocumentsScreen> {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => _confirmDelete(doc),
+                    onTap: () => _confirmDelete(record),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       width: 44,
                       height: 44,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surface.withValues(alpha: 0.45),
+                        color:
+                            theme.colorScheme.surface.withValues(alpha: 0.45),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: theme.colorScheme.outlineVariant

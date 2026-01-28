@@ -22,8 +22,9 @@ Sehat Locker maintains **two UI targets**:
 - **Desktop**: iPad, macOS, Windows
 
 Target selection is handled by **[UiTargetResolver](file:///Users/fam/Documents/Projects/sehatlocker/lib/services/ui_target_resolver.dart)**, and each target has its own UI implementation:
-- Mobile UI: `lib/ui/mobile/`
-- Desktop UI: `lib/ui/desktop/`
+- Mobile UI: `lib/ui/mobile/` (containing mobile-optimized screens like `MobileDocumentsScreen`, `SettingsScreen`)
+- Desktop UI: `lib/ui/desktop/` (containing desktop-optimized screens like `DesktopDocumentsScreen`, `DesktopSettingsScreen`)
+- Desktop UI widgets: `lib/ui/desktop/widgets/` (e.g. `DesktopDocumentGridCard` for document preview/snippet cards)
 - Shared, layout-agnostic widgets: `lib/shared/widgets/`
 
 ### **Entrypoints & Boot Sequence**
@@ -108,7 +109,7 @@ The following models are persisted in Hive with the specified `typeId`:
 | Model | Type ID | Description |
 | :--- | :---: | :--- |
 | [HealthRecord](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/health_record.dart) | 0 | Metadata for all medical records. |
-| [AppSettings](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/app_settings.dart) | 1 | Global application configuration and state. |
+| [AppSettings](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/app_settings.dart) | 1 | Global application configuration (Theme, Font Scale, Privacy, AI). |
 | [ModelMetadata](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/model_metadata.dart) | 3 | Information about downloaded/available LLM models. |
 | [DocumentExtraction](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/document_extraction.dart) | 4 | Structured data extracted from medical documents. |
 | [DoctorConversation](file:///Users/fam/Documents/Projects/sehatlocker/lib/models/doctor_conversation.dart) | 5 | Transcripts and summaries of recorded doctor visits. |

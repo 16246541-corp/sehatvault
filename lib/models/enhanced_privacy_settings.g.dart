@@ -18,14 +18,17 @@ class EnhancedPrivacySettingsAdapter
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return EnhancedPrivacySettings(
-      requireBiometricsForSensitiveData: fields[0] as bool,
-      requireBiometricsForExport: fields[1] as bool,
-      requireBiometricsForModelChange: fields[2] as bool,
-      requireBiometricsForSettings: fields[3] as bool,
-      tempFileRetentionMinutes: fields[4] as int,
-      maskNotifications: fields[5] as bool,
-      showHealthInsights: fields[6] as bool? ?? false,
-      userPrivacyThreshold: fields[7] as int? ?? 0,
+      requireBiometricsForSensitiveData:
+          fields[0] == null ? true : fields[0] as bool,
+      requireBiometricsForExport: fields[1] == null ? true : fields[1] as bool,
+      requireBiometricsForModelChange:
+          fields[2] == null ? false : fields[2] as bool,
+      requireBiometricsForSettings:
+          fields[3] == null ? false : fields[3] as bool,
+      tempFileRetentionMinutes: fields[4] == null ? 0 : fields[4] as int,
+      maskNotifications: fields[5] == null ? false : fields[5] as bool,
+      showHealthInsights: fields[6] == null ? false : fields[6] as bool,
+      userPrivacyThreshold: fields[7] == null ? 0 : fields[7] as int,
     );
   }
 

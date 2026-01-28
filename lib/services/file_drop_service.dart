@@ -61,6 +61,8 @@ class FileDropService {
   Future<void> processFiles(List<File> files,
       {required VaultService vaultService,
       required AppSettings settings}) async {
+    final List<Future<void>> processingTasks = [];
+
     for (final file in files) {
       // Check if it's a directory (for export destination handling)
       if (FileSystemEntity.isDirectorySync(file.path)) {
@@ -80,8 +82,11 @@ class FileDropService {
       _statusController.add(List.from(_processingQueue));
 
       // Process in background
-      _processItem(item, vaultService, settings);
+      processingTasks.add(_processItem(item, vaultService, settings));
     }
+
+    // Wait for all files to be processed
+    await Future.wait(processingTasks);
   }
 
   Future<void> _processItem(FileDropItem item, VaultService vaultService,

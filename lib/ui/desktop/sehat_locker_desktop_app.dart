@@ -4,7 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../managers/shortcut_manager.dart';
 import '../../models/health_record.dart';
 import '../../screens/ai_screen.dart';
-import '../../screens/document_detail_screen.dart';
+import 'screens/document_detail_screen_desktop.dart';
 import '../../screens/document_scanner_screen.dart';
 import 'screens/documents_screen_desktop.dart';
 import '../../screens/home_screen.dart';
@@ -301,7 +301,8 @@ class _SehatLockerDesktopAppState extends State<SehatLockerDesktopApp>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => DocumentDetailScreen(healthRecordId: record.id),
+          builder: (context) =>
+              DesktopDocumentDetailScreen(healthRecordId: record.id),
         ),
       );
     }

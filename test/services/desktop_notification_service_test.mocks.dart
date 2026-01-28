@@ -20,18 +20,19 @@ import 'package:flutter_local_notifications_platform_interface/flutter_local_not
 import 'package:hive_flutter/hive_flutter.dart' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:sehatlocker/models/app_settings.dart' as _i4;
-import 'package:sehatlocker/models/auth_audit_entry.dart' as _i24;
+import 'package:sehatlocker/models/auth_audit_entry.dart' as _i25;
 import 'package:sehatlocker/models/batch_task.dart' as _i15;
 import 'package:sehatlocker/models/citation.dart' as _i17;
-import 'package:sehatlocker/models/consent_entry.dart' as _i26;
-import 'package:sehatlocker/models/conversation_memory.dart' as _i19;
-import 'package:sehatlocker/models/doctor_conversation.dart' as _i21;
-import 'package:sehatlocker/models/document_extraction.dart' as _i20;
-import 'package:sehatlocker/models/export_audit_entry.dart' as _i23;
+import 'package:sehatlocker/models/consent_entry.dart' as _i27;
+import 'package:sehatlocker/models/conversation_memory.dart' as _i20;
+import 'package:sehatlocker/models/doctor_conversation.dart' as _i22;
+import 'package:sehatlocker/models/document_extraction.dart' as _i21;
+import 'package:sehatlocker/models/export_audit_entry.dart' as _i24;
 import 'package:sehatlocker/models/follow_up_item.dart' as _i16;
-import 'package:sehatlocker/models/issue_report.dart' as _i25;
-import 'package:sehatlocker/models/local_audit_entry.dart' as _i18;
-import 'package:sehatlocker/models/recording_audit_entry.dart' as _i22;
+import 'package:sehatlocker/models/health_pattern_insight.dart' as _i18;
+import 'package:sehatlocker/models/issue_report.dart' as _i26;
+import 'package:sehatlocker/models/local_audit_entry.dart' as _i19;
+import 'package:sehatlocker/models/recording_audit_entry.dart' as _i23;
 import 'package:sehatlocker/models/user_profile.dart' as _i5;
 import 'package:sehatlocker/services/local_storage_service.dart' as _i14;
 import 'package:timezone/timezone.dart' as _i11;
@@ -348,6 +349,20 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i2.ValueListenable<_i3.Box<_i15.BatchTask>>);
 
   @override
+  _i2.ValueListenable<_i3.Box<dynamic>> get settingsListenable =>
+      (super.noSuchMethod(
+        Invocation.getter(#settingsListenable),
+        returnValue: _FakeValueListenable_0<_i3.Box<dynamic>>(
+          this,
+          Invocation.getter(#settingsListenable),
+        ),
+        returnValueForMissingStub: _FakeValueListenable_0<_i3.Box<dynamic>>(
+          this,
+          Invocation.getter(#settingsListenable),
+        ),
+      ) as _i2.ValueListenable<_i3.Box<dynamic>>);
+
+  @override
   bool get autoDeleteOriginal => (super.noSuchMethod(
         Invocation.getter(#autoDeleteOriginal),
         returnValue: false,
@@ -396,6 +411,20 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i3.Box<_i17.Citation>);
 
   @override
+  _i3.Box<_i18.HealthPatternInsight> get healthPatternInsightsBox =>
+      (super.noSuchMethod(
+        Invocation.getter(#healthPatternInsightsBox),
+        returnValue: _FakeBox_1<_i18.HealthPatternInsight>(
+          this,
+          Invocation.getter(#healthPatternInsightsBox),
+        ),
+        returnValueForMissingStub: _FakeBox_1<_i18.HealthPatternInsight>(
+          this,
+          Invocation.getter(#healthPatternInsightsBox),
+        ),
+      ) as _i3.Box<_i18.HealthPatternInsight>);
+
+  @override
   _i7.Future<void> initialize() => (super.noSuchMethod(
         Invocation.method(
           #initialize,
@@ -406,7 +435,7 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  _i7.Future<void> saveLocalAuditEntry(_i18.LocalAuditEntry? entry) =>
+  _i7.Future<void> saveLocalAuditEntry(_i19.LocalAuditEntry? entry) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveLocalAuditEntry,
@@ -417,14 +446,14 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  List<_i18.LocalAuditEntry> getAllLocalAuditEntries() => (super.noSuchMethod(
+  List<_i19.LocalAuditEntry> getAllLocalAuditEntries() => (super.noSuchMethod(
         Invocation.method(
           #getAllLocalAuditEntries,
           [],
         ),
-        returnValue: <_i18.LocalAuditEntry>[],
-        returnValueForMissingStub: <_i18.LocalAuditEntry>[],
-      ) as List<_i18.LocalAuditEntry>);
+        returnValue: <_i19.LocalAuditEntry>[],
+        returnValueForMissingStub: <_i19.LocalAuditEntry>[],
+      ) as List<_i19.LocalAuditEntry>);
 
   @override
   _i7.Future<void> deleteLocalAuditEntries(List<dynamic>? keys) =>
@@ -495,17 +524,17 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  _i19.ConversationMemory? getConversationMemory(String? conversationId) =>
+  _i20.ConversationMemory? getConversationMemory(String? conversationId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getConversationMemory,
           [conversationId],
         ),
         returnValueForMissingStub: null,
-      ) as _i19.ConversationMemory?);
+      ) as _i20.ConversationMemory?);
 
   @override
-  _i7.Future<void> saveConversationMemory(_i19.ConversationMemory? memory) =>
+  _i7.Future<void> saveConversationMemory(_i20.ConversationMemory? memory) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveConversationMemory,
@@ -527,15 +556,15 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  List<_i19.ConversationMemory> getAllConversationMemories() =>
+  List<_i20.ConversationMemory> getAllConversationMemories() =>
       (super.noSuchMethod(
         Invocation.method(
           #getAllConversationMemories,
           [],
         ),
-        returnValue: <_i19.ConversationMemory>[],
-        returnValueForMissingStub: <_i19.ConversationMemory>[],
-      ) as List<_i19.ConversationMemory>);
+        returnValue: <_i20.ConversationMemory>[],
+        returnValueForMissingStub: <_i20.ConversationMemory>[],
+      ) as List<_i20.ConversationMemory>);
 
   @override
   _i7.Future<void> saveBatchTask(_i15.BatchTask? task) => (super.noSuchMethod(
@@ -723,7 +752,7 @@ class MockLocalStorageService extends _i1.Mock
 
   @override
   _i7.Future<void> saveDocumentExtraction(
-          _i20.DocumentExtraction? extraction) =>
+          _i21.DocumentExtraction? extraction) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveDocumentExtraction,
@@ -734,35 +763,35 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  _i20.DocumentExtraction? getDocumentExtraction(String? id) =>
+  _i21.DocumentExtraction? getDocumentExtraction(String? id) =>
       (super.noSuchMethod(
         Invocation.method(
           #getDocumentExtraction,
           [id],
         ),
         returnValueForMissingStub: null,
-      ) as _i20.DocumentExtraction?);
+      ) as _i21.DocumentExtraction?);
 
   @override
-  List<_i20.DocumentExtraction> getAllDocumentExtractions() =>
+  List<_i21.DocumentExtraction> getAllDocumentExtractions() =>
       (super.noSuchMethod(
         Invocation.method(
           #getAllDocumentExtractions,
           [],
         ),
-        returnValue: <_i20.DocumentExtraction>[],
-        returnValueForMissingStub: <_i20.DocumentExtraction>[],
-      ) as List<_i20.DocumentExtraction>);
+        returnValue: <_i21.DocumentExtraction>[],
+        returnValueForMissingStub: <_i21.DocumentExtraction>[],
+      ) as List<_i21.DocumentExtraction>);
 
   @override
-  _i20.DocumentExtraction? findDocumentExtractionByHash(String? hash) =>
+  _i21.DocumentExtraction? findDocumentExtractionByHash(String? hash) =>
       (super.noSuchMethod(
         Invocation.method(
           #findDocumentExtractionByHash,
           [hash],
         ),
         returnValueForMissingStub: null,
-      ) as _i20.DocumentExtraction?);
+      ) as _i21.DocumentExtraction?);
 
   @override
   _i7.Future<void> deleteDocumentExtraction(String? id) => (super.noSuchMethod(
@@ -776,7 +805,7 @@ class MockLocalStorageService extends _i1.Mock
 
   @override
   _i7.Future<void> saveDoctorConversation(
-          _i21.DoctorConversation? conversation) =>
+          _i22.DoctorConversation? conversation) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveDoctorConversation,
@@ -787,25 +816,25 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  List<_i21.DoctorConversation> getAllDoctorConversations() =>
+  List<_i22.DoctorConversation> getAllDoctorConversations() =>
       (super.noSuchMethod(
         Invocation.method(
           #getAllDoctorConversations,
           [],
         ),
-        returnValue: <_i21.DoctorConversation>[],
-        returnValueForMissingStub: <_i21.DoctorConversation>[],
-      ) as List<_i21.DoctorConversation>);
+        returnValue: <_i22.DoctorConversation>[],
+        returnValueForMissingStub: <_i22.DoctorConversation>[],
+      ) as List<_i22.DoctorConversation>);
 
   @override
-  _i21.DoctorConversation? getDoctorConversation(String? id) =>
+  _i22.DoctorConversation? getDoctorConversation(String? id) =>
       (super.noSuchMethod(
         Invocation.method(
           #getDoctorConversation,
           [id],
         ),
         returnValueForMissingStub: null,
-      ) as _i21.DoctorConversation?);
+      ) as _i22.DoctorConversation?);
 
   @override
   _i7.Future<void> deleteDoctorConversation(String? id) => (super.noSuchMethod(
@@ -868,7 +897,40 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  _i7.Future<void> saveRecordingAuditEntry(_i22.RecordingAuditEntry? entry) =>
+  _i7.Future<void> saveHealthPatternInsight(
+          _i18.HealthPatternInsight? insight) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveHealthPatternInsight,
+          [insight],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  List<_i18.HealthPatternInsight> getAllHealthPatternInsights() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAllHealthPatternInsights,
+          [],
+        ),
+        returnValue: <_i18.HealthPatternInsight>[],
+        returnValueForMissingStub: <_i18.HealthPatternInsight>[],
+      ) as List<_i18.HealthPatternInsight>);
+
+  @override
+  _i7.Future<void> clearHealthPatternInsights() => (super.noSuchMethod(
+        Invocation.method(
+          #clearHealthPatternInsights,
+          [],
+        ),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
+
+  @override
+  _i7.Future<void> saveRecordingAuditEntry(_i23.RecordingAuditEntry? entry) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveRecordingAuditEntry,
@@ -879,18 +941,18 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  List<_i22.RecordingAuditEntry> getAllRecordingAuditEntries() =>
+  List<_i23.RecordingAuditEntry> getAllRecordingAuditEntries() =>
       (super.noSuchMethod(
         Invocation.method(
           #getAllRecordingAuditEntries,
           [],
         ),
-        returnValue: <_i22.RecordingAuditEntry>[],
-        returnValueForMissingStub: <_i22.RecordingAuditEntry>[],
-      ) as List<_i22.RecordingAuditEntry>);
+        returnValue: <_i23.RecordingAuditEntry>[],
+        returnValueForMissingStub: <_i23.RecordingAuditEntry>[],
+      ) as List<_i23.RecordingAuditEntry>);
 
   @override
-  _i7.Future<void> saveExportAuditEntry(_i23.ExportAuditEntry? entry) =>
+  _i7.Future<void> saveExportAuditEntry(_i24.ExportAuditEntry? entry) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveExportAuditEntry,
@@ -901,17 +963,17 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  List<_i23.ExportAuditEntry> getAllExportAuditEntries() => (super.noSuchMethod(
+  List<_i24.ExportAuditEntry> getAllExportAuditEntries() => (super.noSuchMethod(
         Invocation.method(
           #getAllExportAuditEntries,
           [],
         ),
-        returnValue: <_i23.ExportAuditEntry>[],
-        returnValueForMissingStub: <_i23.ExportAuditEntry>[],
-      ) as List<_i23.ExportAuditEntry>);
+        returnValue: <_i24.ExportAuditEntry>[],
+        returnValueForMissingStub: <_i24.ExportAuditEntry>[],
+      ) as List<_i24.ExportAuditEntry>);
 
   @override
-  _i7.Future<void> saveAuthAuditEntry(_i24.AuthAuditEntry? entry) =>
+  _i7.Future<void> saveAuthAuditEntry(_i25.AuthAuditEntry? entry) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveAuthAuditEntry,
@@ -922,17 +984,17 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  List<_i24.AuthAuditEntry> getAllAuthAuditEntries() => (super.noSuchMethod(
+  List<_i25.AuthAuditEntry> getAllAuthAuditEntries() => (super.noSuchMethod(
         Invocation.method(
           #getAllAuthAuditEntries,
           [],
         ),
-        returnValue: <_i24.AuthAuditEntry>[],
-        returnValueForMissingStub: <_i24.AuthAuditEntry>[],
-      ) as List<_i24.AuthAuditEntry>);
+        returnValue: <_i25.AuthAuditEntry>[],
+        returnValueForMissingStub: <_i25.AuthAuditEntry>[],
+      ) as List<_i25.AuthAuditEntry>);
 
   @override
-  _i7.Future<void> saveIssueReport(_i25.IssueReport? report) =>
+  _i7.Future<void> saveIssueReport(_i26.IssueReport? report) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveIssueReport,
@@ -943,14 +1005,14 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  List<_i25.IssueReport> getAllIssueReports() => (super.noSuchMethod(
+  List<_i26.IssueReport> getAllIssueReports() => (super.noSuchMethod(
         Invocation.method(
           #getAllIssueReports,
           [],
         ),
-        returnValue: <_i25.IssueReport>[],
-        returnValueForMissingStub: <_i25.IssueReport>[],
-      ) as List<_i25.IssueReport>);
+        returnValue: <_i26.IssueReport>[],
+        returnValueForMissingStub: <_i26.IssueReport>[],
+      ) as List<_i26.IssueReport>);
 
   @override
   _i7.Future<void> deleteIssueReport(String? id) => (super.noSuchMethod(
@@ -963,7 +1025,7 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  _i7.Future<void> saveConsentEntry(_i26.ConsentEntry? entry) =>
+  _i7.Future<void> saveConsentEntry(_i27.ConsentEntry? entry) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveConsentEntry,
@@ -974,23 +1036,23 @@ class MockLocalStorageService extends _i1.Mock
       ) as _i7.Future<void>);
 
   @override
-  List<_i26.ConsentEntry> getAllConsentEntries() => (super.noSuchMethod(
+  List<_i27.ConsentEntry> getAllConsentEntries() => (super.noSuchMethod(
         Invocation.method(
           #getAllConsentEntries,
           [],
         ),
-        returnValue: <_i26.ConsentEntry>[],
-        returnValueForMissingStub: <_i26.ConsentEntry>[],
-      ) as List<_i26.ConsentEntry>);
+        returnValue: <_i27.ConsentEntry>[],
+        returnValueForMissingStub: <_i27.ConsentEntry>[],
+      ) as List<_i27.ConsentEntry>);
 
   @override
-  _i26.ConsentEntry? getConsentEntry(String? id) => (super.noSuchMethod(
+  _i27.ConsentEntry? getConsentEntry(String? id) => (super.noSuchMethod(
         Invocation.method(
           #getConsentEntry,
           [id],
         ),
         returnValueForMissingStub: null,
-      ) as _i26.ConsentEntry?);
+      ) as _i27.ConsentEntry?);
 
   @override
   _i7.Future<void> clearAllData() => (super.noSuchMethod(

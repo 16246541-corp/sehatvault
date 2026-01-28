@@ -400,6 +400,11 @@ class LocalStorageService {
   /// Get settings box
   Box get _settings => Hive.box(_settingsBox);
 
+  /// Get listenable for settings box
+  /// Listens to changes in the app settings object specifically
+  ValueListenable<Box> get settingsListenable =>
+      _settings.listenable(keys: [_appSettingsKey]);
+
   /// Save a setting
   Future<void> saveSetting(String key, dynamic value) async {
     await _settings.put(key, value);
@@ -412,7 +417,17 @@ class LocalStorageService {
 
   /// Get App Settings
   AppSettings getAppSettings() {
-    return _settings.get(_appSettingsKey) ?? AppSettings.defaultSettings();
+    try {
+      final settings = _settings.get(_appSettingsKey);
+      if (settings is AppSettings) return settings;
+      return AppSettings.defaultSettings();
+    } catch (e) {
+      debugPrint('Failed to read AppSettings (recovering): $e');
+      try {
+        _settings.delete(_appSettingsKey);
+      } catch (_) {}
+      return AppSettings.defaultSettings();
+    }
   }
 
   /// Save App Settings

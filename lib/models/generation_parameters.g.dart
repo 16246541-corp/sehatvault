@@ -17,14 +17,14 @@ class GenerationParametersAdapter extends TypeAdapter<GenerationParameters> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return GenerationParameters(
-      temperature: fields[0] as double,
-      topP: fields[1] as double,
-      topK: fields[2] as int,
-      maxTokens: fields[3] as int,
-      presencePenalty: fields[4] as double,
-      frequencyPenalty: fields[5] as double,
-      seed: fields[6] as int,
-      enablePatternContext: fields[7] as bool? ?? false,
+      temperature: fields[0] == null ? 0.7 : fields[0] as double,
+      topP: fields[1] == null ? 0.9 : fields[1] as double,
+      topK: fields[2] == null ? 40 : fields[2] as int,
+      maxTokens: fields[3] == null ? 1024 : fields[3] as int,
+      presencePenalty: fields[4] == null ? 0.0 : fields[4] as double,
+      frequencyPenalty: fields[5] == null ? 0.0 : fields[5] as double,
+      seed: fields[6] == null ? -1 : fields[6] as int,
+      enablePatternContext: fields[7] == null ? false : fields[7] as bool,
     );
   }
 

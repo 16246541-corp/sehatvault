@@ -2,6 +2,13 @@
 
 This document tracks compliance and validation requirements for new features.
 
+## Document Processing
+
+- [x] **Classification Compliance**
+  - [x] Document classification uses deterministic patterns only—no AI inference
+  - [x] Suggestions are non-binding and require user confirmation
+  - [x] Confidence thresholds (<40%) prevent low-quality suggestions
+
 ## AI Model Transparency
 
 - [x] **Model Info Panel Implementation**

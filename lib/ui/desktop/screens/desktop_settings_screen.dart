@@ -64,6 +64,15 @@ final List<DesktopSettingsCategory> desktopSettingsCategories = [
     color: Colors.orangeAccent,
   ),
   const DesktopSettingsCategory(
+    id: 'display',
+    label: 'Display & Appearance',
+    subtitle: 'Theme, scale',
+    description:
+        'Customize the visual appearance, theme mode, and text scaling.',
+    icon: Icons.brightness_6,
+    color: Colors.amberAccent,
+  ),
+  const DesktopSettingsCategory(
     id: 'ai',
     label: 'AI Model',
     subtitle: 'Local LLM, memory',
@@ -281,6 +290,8 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
         return _buildRecordingContent(settings);
       case 'notifications':
         return _buildNotificationsContent(settings);
+      case 'display':
+        return _buildDisplayContent(settings);
       case 'ai':
         return _buildAIContent(settings);
       case 'accessibility':
@@ -561,6 +572,94 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
     );
   }
 
+  Widget _buildDisplayContent(AppSettings settings) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(title: 'THEME'),
+        Row(
+          children: [
+            Expanded(
+              child: _ThemeOptionCard(
+                title: 'System',
+                icon: Icons.brightness_auto,
+                isSelected: settings.themeMode == 'system',
+                onTap: () async {
+                  settings.themeMode = 'system';
+                  await LocalStorageService().saveAppSettings(settings);
+                  setState(() {});
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _ThemeOptionCard(
+                title: 'Light',
+                icon: Icons.light_mode,
+                isSelected: settings.themeMode == 'light',
+                onTap: () async {
+                  settings.themeMode = 'light';
+                  await LocalStorageService().saveAppSettings(settings);
+                  setState(() {});
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _ThemeOptionCard(
+                title: 'Dark',
+                icon: Icons.dark_mode,
+                isSelected: settings.themeMode == 'dark',
+                onTap: () async {
+                  settings.themeMode = 'dark';
+                  await LocalStorageService().saveAppSettings(settings);
+                  setState(() {});
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        const _SectionHeader(title: 'SCALING'),
+        _SettingsCard(
+          icon: Icons.text_fields,
+          iconColor: Colors.amberAccent,
+          title: 'Text Scale',
+          description: 'Adjust the base font size for better readability.',
+          trailing: SizedBox(
+            width: 200,
+            child: Row(
+              children: [
+                const Text('A',
+                    style: TextStyle(fontSize: 12, color: Colors.white70)),
+                Expanded(
+                  child: Slider(
+                    value: settings.fontScale,
+                    min: 0.8,
+                    max: 1.4,
+                    divisions: 6,
+                    onChanged: (v) async {
+                      settings.fontScale = v;
+                      await LocalStorageService().saveAppSettings(settings);
+                      setState(() {});
+                    },
+                    activeColor: Colors.amberAccent,
+                    inactiveColor: Colors.white10,
+                  ),
+                ),
+                const Text('A',
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAIContent(AppSettings settings) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -775,6 +874,61 @@ class _DesktopSettingsScreenState extends State<DesktopSettingsScreen> {
         (route) => false,
       );
     }
+  }
+}
+
+class _ThemeOptionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ThemeOptionCard({
+    required this.title,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.amberAccent.withValues(alpha: 0.15)
+              : const Color(0xFF0F172A).withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? Colors.amberAccent
+                : Colors.white.withValues(alpha: 0.05),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.amberAccent : Colors.white70,
+              size: 28,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? Colors.amberAccent : Colors.white70,
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

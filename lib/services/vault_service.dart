@@ -8,6 +8,7 @@ import 'dart:convert';
 import '../models/document_extraction.dart';
 import '../models/health_record.dart';
 import '../models/doctor_conversation.dart';
+import '../models/health_pattern_insight.dart'; // Add import
 import 'ocr_service.dart';
 import 'local_storage_service.dart';
 import 'search_service.dart';
@@ -150,12 +151,142 @@ class VaultService {
           referenceRanges: ReferenceRangeService(),
           safetyFilter: SafetyFilterService(),
           auditLogger: LocalAuditService(_storageService, SessionManager()),
-        ).detectAndPersistInsights().catchError((_) {}),
+        )
+            .detectAndPersistInsights()
+            .catchError((_) => <HealthPatternInsight>[]),
       );
 
       return healthRecord;
     } catch (e, stackTrace) {
       debugPrint('Error saving document to vault: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Save a document that has already been processed (OCR completed)
+  ///
+  /// This is used when the UI has already run OCR for categorization/preview
+  /// and we just need to save the result.
+  Future<HealthRecord> saveProcessedDocument({
+    required DocumentExtraction extraction,
+    required String title,
+    required String category,
+    String? notes,
+    Map<String, dynamic>? additionalMetadata,
+    void Function(String status)? onProgress,
+  }) async {
+    try {
+      // Step 1: Check for duplicates
+      onProgress?.call('Verifying document...');
+
+      // If content hash is missing (shouldn't happen if properly processed), generate it
+      var finalExtraction = extraction;
+      if (finalExtraction.contentHash == null ||
+          finalExtraction.contentHash!.isEmpty) {
+        final contentHash = _generateContentHash(finalExtraction.extractedText);
+        finalExtraction = finalExtraction.copyWith(contentHash: contentHash);
+      }
+
+      final existingExtraction = _storageService
+          .findDocumentExtractionByHash(finalExtraction.contentHash!);
+
+      if (existingExtraction != null) {
+        throw DuplicateDocumentException(existingExtraction.id);
+      }
+
+      // Step 1.5: Inject Citations (if not present)
+      if (finalExtraction.citations == null ||
+          finalExtraction.citations!.isEmpty) {
+        if (finalExtraction.structuredData.containsKey('lab_values')) {
+          onProgress?.call('Generating citations...');
+          final labValues =
+              finalExtraction.structuredData['lab_values'] as List;
+          final citations =
+              _citationService.generateCitationsForLabValues(labValues);
+
+          if (citations.isNotEmpty) {
+            // Save citations to Hive
+            for (final citation in citations) {
+              await _citationService.addCitation(citation);
+            }
+            // Link to extraction
+            finalExtraction = finalExtraction.copyWith(citations: citations);
+            debugPrint('Generated ${citations.length} citations');
+          }
+        }
+      }
+
+      // Step 2: Save DocumentExtraction to Hive
+      onProgress?.call('Saving extraction data...');
+      await _storageService.saveDocumentExtraction(finalExtraction);
+      debugPrint('DocumentExtraction saved with ID: ${finalExtraction.id}');
+
+      // Step 3: Create HealthRecord linked to the extraction
+      onProgress?.call('Creating health record...');
+
+      final bool autoDelete = _storageService.autoDeleteOriginal;
+      final ext = p.extension(finalExtraction.originalImagePath).toLowerCase();
+      final isPreviewableImage = ['.jpg', '.jpeg', '.png'].contains(ext);
+
+      final healthRecord = HealthRecord(
+        id: const Uuid().v4(),
+        title: title,
+        category: category,
+        createdAt: DateTime.now(),
+        filePath: autoDelete
+            ? null
+            : (isPreviewableImage ? finalExtraction.originalImagePath : null),
+        notes: notes,
+        recordType: HealthRecord.typeDocumentExtraction,
+        extractionId: finalExtraction.id,
+        metadata: {
+          'confidenceScore': finalExtraction.confidenceScore,
+          'textLength': finalExtraction.extractedText.length,
+          'structuredFieldCount': finalExtraction.structuredData.length,
+          ...?additionalMetadata,
+        },
+      );
+
+      // Step 4: Save HealthRecord to Hive
+      onProgress?.call('Saving to encrypted vault...');
+      await _storageService.saveRecord(
+        healthRecord.id,
+        _healthRecordToMap(healthRecord),
+      );
+
+      // Step 5: Auto-delete original image if enabled
+      if (autoDelete) {
+        try {
+          final file = File(finalExtraction.originalImagePath);
+          if (await file.exists()) {
+            await file.delete();
+            debugPrint(
+                'Auto-deleted original image: ${finalExtraction.originalImagePath}');
+          }
+        } catch (e) {
+          debugPrint('Failed to auto-delete image: $e');
+        }
+      }
+
+      debugPrint('HealthRecord saved with ID: ${healthRecord.id}');
+      onProgress?.call('Document saved successfully!');
+
+      unawaited(
+        HealthIntelligenceEngine(
+          storage: _storageService,
+          fieldExtractor: MedicalFieldExtractor(),
+          referenceRanges: ReferenceRangeService(),
+          safetyFilter: SafetyFilterService(),
+          auditLogger: LocalAuditService(_storageService, SessionManager()),
+        )
+            .detectAndPersistInsights()
+            .catchError((_) => <HealthPatternInsight>[]),
+      );
+
+      return healthRecord;
+    } catch (e, stackTrace) {
+      debugPrint('Error saving processed document to vault: $e');
       debugPrint('Stack trace: $stackTrace');
       rethrow;
     }
@@ -253,7 +384,7 @@ class VaultService {
         referenceRanges: ReferenceRangeService(),
         safetyFilter: SafetyFilterService(),
         auditLogger: LocalAuditService(_storageService, SessionManager()),
-      ).detectAndPersistInsights().catchError((_) {}),
+      ).detectAndPersistInsights().catchError((_) => <HealthPatternInsight>[]),
     );
 
     return healthRecord;

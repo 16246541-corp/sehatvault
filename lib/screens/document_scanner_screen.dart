@@ -18,6 +18,16 @@ import '../widgets/onboarding/coach_mark.dart';
 import '../widgets/onboarding/tooltip_overlay.dart';
 import 'batch_processing_screen.dart';
 
+import '../services/ocr_service.dart';
+import '../services/document_classification_service.dart';
+import '../services/ui_target_resolver.dart';
+import '../screens/document_categorization_screen.dart';
+import '../models/health_record.dart';
+import '../services/biometric_service.dart';
+import '../services/local_audit_service.dart';
+import '../services/session_manager.dart';
+import '../utils/category_utils.dart'; // For isSensitive extension
+
 import '../widgets/design/glass_button.dart';
 import '../widgets/design/liquid_glass_background.dart';
 import '../widgets/desktop/file_drop_zone.dart';
@@ -27,7 +37,6 @@ import '../utils/theme.dart';
 class DocumentScannerScreen extends StatefulWidget {
   final bool showOnboardingTips;
   const DocumentScannerScreen({super.key, this.showOnboardingTips = false});
-
 
   @override
   State<DocumentScannerScreen> createState() => _DocumentScannerScreenState();
@@ -79,7 +88,6 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
     _coachMarkEntry?.remove();
     _coachMarkEntry = null;
   }
-
 
   Future<void> _checkConsent() async {
     final service = ConsentService();
@@ -140,7 +148,6 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
     _cleanupTempFiles();
     super.dispose();
   }
-
 
   Future<void> _cleanupTempFiles() async {
     // Release all captured images so they can be purged
@@ -338,7 +345,6 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
         await _controller!.setFlashMode(FlashMode.off);
       }
     } catch (e) {
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error taking picture: $e')),
@@ -443,88 +449,143 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen>
 
       if (!mounted) return;
 
+      // Step 2: Run OCR on the first image for categorization
+      final firstImageFile = File(compressedPaths.first);
+      final extraction = await OCRService.processDocument(firstImageFile);
+
+      // Step 3: Get AI Suggestion
+      final suggestion = DocumentClassificationService.suggestCategory(
+          extraction.extractedText);
+
+      if (!mounted) return;
+
       setState(() {
         _isCompressing = false;
       });
 
-      final progressNotifier = ValueNotifier<String>('Initializing...');
-
-      // Step 2: Show save to vault dialog
-      final shouldSave = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => SaveToVaultDialog(
-          imagePaths: compressedPaths,
-          progressNotifier: progressNotifier,
-          onSave: (title, category, notes) async {
-            // Initialize services
-            final storageService = LocalStorageService();
-            await storageService.initialize();
-            final vaultService = VaultService(storageService);
-
-            // Save all documents
-            for (int i = 0; i < compressedPaths.length; i++) {
-              final path = compressedPaths[i];
-              // If multiple images, append index to title
-              final docTitle =
-                  compressedPaths.length > 1 ? '$title ${i + 1}' : title;
-
-              // Update notifier
-              progressNotifier.value =
-                  'Processing ${i + 1} of ${compressedPaths.length}...';
-
-              await vaultService.saveDocumentToVault(
-                imageFile: File(path),
-                title: docTitle,
-                category: category,
-                notes: notes,
-                onProgress: (status) {
-                  progressNotifier.value =
-                      'Document ${i + 1}/${compressedPaths.length}: $status';
-                },
-              );
-            }
-          },
+      // Step 4: Show Categorization Screen
+      final HealthCategory? selectedCategory =
+          await Navigator.push<HealthCategory>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DocumentCategorizationScreen(
+            extraction: extraction,
+            suggestedCategory: suggestion.category,
+            confidence: suggestion.confidence,
+            reasoning: suggestion.reasoning,
+          ),
         ),
       );
 
-      if (mounted) {
-        if (shouldSave == true) {
-          // Success - show feedback and close scanner
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Text('${compressedPaths.length} document(s) saved to vault!'),
-                ],
-              ),
-              backgroundColor: AppTheme.accentTeal,
-              duration: const Duration(seconds: 3),
+      if (selectedCategory != null && mounted) {
+        // User confirmed selection - proceed to save
+
+        // Security: Biometric gate for sensitive categories
+        if (selectedCategory.isSensitive) {
+          final bioService = BiometricService();
+          if (await bioService.isBiometricsAvailable) {
+            final authenticated = await bioService.authenticate(
+              reason:
+                  'Authenticate to save sensitive ${selectedCategory.displayName}',
+            );
+
+            if (!authenticated) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        'Authentication required to save sensitive document'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              // Clean up if auth failed
+              for (var path in compressedPaths) {
+                TempFileManager().releaseFile(path);
+              }
+              if (mounted) {
+                setState(() {
+                  _isCompressing = false;
+                });
+              }
+              return;
+            }
+          }
+        }
+
+        final categoryName = selectedCategory.displayName;
+
+        // Initialize services
+        final storageService = LocalStorageService();
+        await storageService.initialize();
+        final vaultService = VaultService(storageService);
+
+        // Audit Logging
+        final auditService =
+            LocalAuditService(storageService, SessionManager());
+        await auditService.logDocumentCategorization(
+          category: categoryName,
+          confidence: suggestion.confidence,
+          isSensitive: selectedCategory.isSensitive,
+          action: 'save',
+        );
+
+        // Save the first document (processed)
+        await vaultService.saveProcessedDocument(
+          extraction: extraction,
+          title: compressedPaths.length > 1 ? 'Scan 1' : 'Scanned Document',
+          category: categoryName,
+        );
+
+        // Save remaining documents (if any)
+        if (compressedPaths.length > 1) {
+          for (int i = 1; i < compressedPaths.length; i++) {
+            final path = compressedPaths[i];
+            final docTitle = 'Scan ${i + 1}';
+
+            await vaultService.saveDocumentToVault(
+              imageFile: File(path),
+              title: docTitle,
+              category: categoryName,
+            );
+          }
+        }
+
+        // Success - show feedback and close scanner
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Text('✅ $categoryName added to vault'),
+              ],
             ),
-          );
+            backgroundColor: AppTheme.accentTeal,
+            duration: const Duration(seconds: 3),
+          ),
+        );
 
-          // Cleanup all temp files (original + compressed)
-          // Since they are now in vault
-          for (var path in compressedPaths) {
-            TempFileManager().releaseFile(path);
-          }
-          for (var img in _capturedImages) {
-            TempFileManager().releaseFile(img.path);
-          }
-          await TempFileManager().purgeAll(reason: 'saved_to_vault');
+        // Cleanup all temp files (original + compressed)
+        for (var path in compressedPaths) {
+          TempFileManager().releaseFile(path);
+        }
+        for (var img in _capturedImages) {
+          TempFileManager().releaseFile(img.path);
+        }
+        await TempFileManager().purgeAll(reason: 'saved_to_vault');
 
-          Navigator.pop(context, compressedPaths.first);
-        } else {
-          // User cancelled - stay on preview
-          // Clean up compressed files as they are no longer needed for preview (we show originals)
-          for (var path in compressedPaths) {
-            TempFileManager().releaseFile(path);
-            TempFileManager().secureDelete(File(path));
-            TempFileManager().unregisterFile(path);
-          }
+        Navigator.pop(context, compressedPaths.first);
+      } else {
+        // User cancelled - clean up compressed files
+        for (var path in compressedPaths) {
+          TempFileManager().releaseFile(path);
+          TempFileManager().secureDelete(File(path));
+          TempFileManager().unregisterFile(path);
+        }
 
+        if (mounted) {
           setState(() {
             _isCompressing = false;
           });

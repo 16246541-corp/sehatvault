@@ -4,28 +4,28 @@ part 'generation_parameters.g.dart';
 
 @HiveType(typeId: 31)
 class GenerationParameters extends HiveObject {
-  @HiveField(0)
+  @HiveField(0, defaultValue: 0.7)
   double temperature;
 
-  @HiveField(1)
+  @HiveField(1, defaultValue: 0.9)
   double topP;
 
-  @HiveField(2)
+  @HiveField(2, defaultValue: 40)
   int topK;
 
-  @HiveField(3)
+  @HiveField(3, defaultValue: 1024)
   int maxTokens;
 
-  @HiveField(4)
+  @HiveField(4, defaultValue: 0.0)
   double presencePenalty;
 
-  @HiveField(5)
+  @HiveField(5, defaultValue: 0.0)
   double frequencyPenalty;
 
-  @HiveField(6)
+  @HiveField(6, defaultValue: -1)
   int seed;
 
-  @HiveField(7)
+  @HiveField(7, defaultValue: false)
   bool enablePatternContext;
 
   GenerationParameters({

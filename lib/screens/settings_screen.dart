@@ -37,6 +37,7 @@ enum SettingCategory {
   storage,
   recording,
   notifications,
+  display,
   aiModel,
   accessibility,
   desktop,
@@ -901,6 +902,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
 
+                  // Display Section (Category Only)
+                  if (_selectedCategory == SettingCategory.display) ...[
+                    _buildSectionHeader(context, 'Theme'),
+                    GlassCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildThemeOption(
+                                context,
+                                'System',
+                                Icons.brightness_auto,
+                                'system',
+                              ),
+                              _buildThemeOption(
+                                context,
+                                'Light',
+                                Icons.light_mode,
+                                'light',
+                              ),
+                              _buildThemeOption(
+                                context,
+                                'Dark',
+                                Icons.dark_mode,
+                                'dark',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(context, 'Text Size'),
+                    GlassCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('A', style: theme.textTheme.bodySmall),
+                              Text(
+                                'A',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Slider(
+                            value: storageService.getAppSettings().fontScale,
+                            min: 0.8,
+                            max: 1.4,
+                            divisions: 6,
+                            onChanged: (value) async {
+                              final settings = storageService.getAppSettings();
+                              settings.fontScale = value;
+                              await storageService.saveAppSettings(settings);
+                              setState(() {});
+                            },
+                          ),
+                          Center(
+                            child: Text(
+                              'Scale: ${(storageService.getAppSettings().fontScale * 100).toInt()}%',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
                   // AI Model Section (Category Only)
                   if (_selectedCategory == SettingCategory.aiModel) ...[
                     _buildSectionHeader(context, 'AI Model'),
@@ -1324,6 +1401,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         subtitle: 'Alerts, masking, accessibility'
       ),
       (
+        category: SettingCategory.display,
+        title: 'Display & Appearance',
+        icon: Icons.brightness_6,
+        subtitle: 'Theme, font size, layout'
+      ),
+      (
         category: SettingCategory.aiModel,
         title: 'AI Model',
         icon: Icons.psychology,
@@ -1397,6 +1480,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return 'Recording';
       case SettingCategory.notifications:
         return 'Desktop Notifications';
+      case SettingCategory.display:
+        return 'Display & Appearance';
       case SettingCategory.aiModel:
         return 'AI Model';
       case SettingCategory.accessibility:
@@ -1418,6 +1503,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return 'Configure audio recording behavior';
       case SettingCategory.notifications:
         return 'Customize desktop alerts and privacy';
+      case SettingCategory.display:
+        return 'Theme, font size, and layout';
       case SettingCategory.aiModel:
         return 'Fine-tune your local AI experience';
       case SettingCategory.accessibility:
@@ -1870,6 +1957,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Save'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildThemeOption(
+    BuildContext context,
+    String label,
+    IconData icon,
+    String value,
+  ) {
+    final theme = Theme.of(context);
+    final isSelected = storageService.getAppSettings().themeMode == value;
+
+    return InkWell(
+      onTap: () async {
+        final settings = storageService.getAppSettings();
+        settings.themeMode = value;
+        await storageService.saveAppSettings(settings);
+        setState(() {});
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primaryContainer
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outline.withValues(alpha: 0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

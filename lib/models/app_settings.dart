@@ -206,6 +206,12 @@ class AppSettings extends HiveObject {
   @HiveField(60)
   String? iceContactPhone;
 
+  @HiveField(61, defaultValue: 1.0)
+  double fontScale;
+
+  @HiveField(62, defaultValue: 'system')
+  String themeMode;
+
   AppSettings({
     this.darkMode = false,
     this.notificationsEnabled = true,
@@ -268,6 +274,8 @@ class AppSettings extends HiveObject {
     this.showIceOnLockScreen = false,
     this.iceContactName,
     this.iceContactPhone,
+    this.fontScale = 1.0,
+    this.themeMode = 'system',
   })  : keepAudioIds = keepAudioIds ?? [],
         enhancedPrivacySettings =
             enhancedPrivacySettings ?? EnhancedPrivacySettings(),

@@ -78,13 +78,15 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       showIceOnLockScreen: fields[58] as bool,
       iceContactName: fields[59] as String?,
       iceContactPhone: fields[60] as String?,
+      fontScale: fields[61] == null ? 1.0 : fields[61] as double,
+      themeMode: fields[62] == null ? 'system' : fields[62] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(61)
+      ..writeByte(63)
       ..writeByte(0)
       ..write(obj.darkMode)
       ..writeByte(1)
@@ -206,7 +208,11 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(59)
       ..write(obj.iceContactName)
       ..writeByte(60)
-      ..write(obj.iceContactPhone);
+      ..write(obj.iceContactPhone)
+      ..writeByte(61)
+      ..write(obj.fontScale)
+      ..writeByte(62)
+      ..write(obj.themeMode);
   }
 
   @override
