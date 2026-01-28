@@ -116,6 +116,47 @@ class _MobileDocumentsScreenState extends State<MobileDocumentsScreen> {
     _checkStorage();
   }
 
+  Future<void> _confirmDelete(HealthRecord doc) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Document'),
+        content: const Text(
+          'Are you sure you want to delete this document? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _vaultService.deleteDocument(doc.id);
+      if (!mounted) return;
+      await _loadDocuments();
+      await _checkStorage();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document deleted')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting document: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -309,6 +350,8 @@ class _MobileDocumentsScreenState extends State<MobileDocumentsScreen> {
   }
 
   Widget _buildDocumentsGrid(int columnCount) {
+    final theme = Theme.of(context);
+
     return GridView.builder(
       controller: _scrollController,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -325,9 +368,48 @@ class _MobileDocumentsScreenState extends State<MobileDocumentsScreen> {
         return FractionallySizedBox(
           heightFactor: heightFactor,
           alignment: Alignment.topCenter,
-          child: DocumentGridCard(
-            record: doc,
-            onTap: () => _openDocument(doc),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: DocumentGridCard(
+                  record: doc,
+                  onTap: () => _openDocument(doc),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Tooltip(
+                  message: 'Delete',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _confirmDelete(doc),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.surface.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: theme.colorScheme.outlineVariant
+                                .withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.delete_outline,
+                          size: 20,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },

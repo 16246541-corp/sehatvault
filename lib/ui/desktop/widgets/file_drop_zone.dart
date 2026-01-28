@@ -15,12 +15,14 @@ class FileDropZone extends StatefulWidget {
   final Widget child;
   final VaultService vaultService;
   final AppSettings settings;
+  final VoidCallback? onFilesProcessed;
 
   const FileDropZone({
     super.key,
     required this.child,
     required this.vaultService,
     required this.settings,
+    this.onFilesProcessed,
   });
 
   @override
@@ -48,6 +50,7 @@ class _FileDropZoneState extends State<FileDropZone> {
           vaultService: widget.vaultService,
           settings: widget.settings,
         );
+        widget.onFilesProcessed?.call();
       },
       child: Stack(
         children: [
@@ -261,6 +264,7 @@ class _FileDropZoneState extends State<FileDropZone> {
         vaultService: widget.vaultService,
         settings: widget.settings,
       );
+      widget.onFilesProcessed?.call();
     } catch (_) {}
   }
 

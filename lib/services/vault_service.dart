@@ -470,20 +470,7 @@ class VaultService {
 
   /// Convert Map to HealthRecord
   HealthRecord _mapToHealthRecord(Map<String, dynamic> map) {
-    return HealthRecord(
-      id: map['id'] as String,
-      title: map['title'] as String,
-      category: map['category'] as String,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.parse(map['updatedAt'] as String)
-          : null,
-      filePath: map['filePath'] as String?,
-      notes: map['notes'] as String?,
-      metadata: map['metadata'] as Map<String, dynamic>?,
-      recordType: map['recordType'] as String?,
-      extractionId: map['extractionId'] as String?,
-    );
+    return healthRecordFromStorageMap(map);
   }
 
   /// Generate SHA-256 hash for content
@@ -512,4 +499,30 @@ class DuplicateDocumentException implements Exception {
   @override
   String toString() =>
       'DuplicateDocumentException: $message (Existing ID: $existingRecordId)';
+}
+
+@visibleForTesting
+HealthRecord healthRecordFromStorageMap(Map<String, dynamic> map) {
+  final rawMetadata = map['metadata'];
+  final Map<String, dynamic>? metadata = switch (rawMetadata) {
+    null => null,
+    Map<String, dynamic> v => v,
+    Map v => v.map((k, v) => MapEntry(k.toString(), v)),
+    _ => null,
+  };
+
+  return HealthRecord(
+    id: map['id'] as String,
+    title: map['title'] as String,
+    category: map['category'] as String,
+    createdAt: DateTime.parse(map['createdAt'] as String),
+    updatedAt: map['updatedAt'] != null
+        ? DateTime.parse(map['updatedAt'] as String)
+        : null,
+    filePath: map['filePath'] as String?,
+    notes: map['notes'] as String?,
+    metadata: metadata,
+    recordType: map['recordType'] as String?,
+    extractionId: map['extractionId'] as String?,
+  );
 }

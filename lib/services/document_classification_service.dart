@@ -69,6 +69,7 @@ class DocumentClassificationService {
     'specimen',
     'collection date',
     'pathology',
+    'pathology lab',
     'hematology',
     'chemistry',
     'urinalysis',
@@ -87,7 +88,15 @@ class DocumentClassificationService {
     'metabolic panel',
     'liver function',
     'culture',
-    'sensitivity'
+    'sensitivity',
+    'patient information',
+    'ref. id',
+    'ref by',
+    'passport no',
+    'sexage',
+    'accutis',
+    'sterling',
+    'mc-2202'
   ];
 
   static const _prescriptionKeywords = [

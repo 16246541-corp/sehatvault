@@ -1,10 +1,30 @@
 # Changelog - Sehat Locker
 
+## [1.9.9] - 2026-01-28
+
+### Improved
+- **UI (Document Details)**: Enhanced OCR result display to show structured data sections (Lab Values, Medications, Vitals, Dates) with clear labels.
+- **UI (Document Details)**: Added reference range evaluation for lab values using `ReferenceRangeService`, displaying visual indicators for Normal, High, and Low results.
+- **UI (Document Details)**: Added confidence score display and improved raw text visibility by making the section scrollable without line limits.
+- **UI (Document Details)**: Improved image display logic to fall back to the extraction's original image path if the main record path is missing.
+
+### Fixed
+- **UI (Document Details)**: Fixed "Invalid image data" crash by adding file type validation and error handling for the document preview image.
+
 ## [1.9.8] - 2026-01-27
+
+### Added
+- **Documents (Mobile/Desktop)**: Added an in-grid delete button to remove a document directly from the Documents list.
 
 ### Fixed
 - **OCR (macOS/iOS)**: Fixed empty OCR output on Apple platforms by switching to a dedicated native Apple Vision method-channel implementation (avoids plugin event timing issues).
+- **OCR (Testing)**: Ensured `OCRService` honors the injected Tesseract override before attempting Apple Vision so unit tests can run without platform channels.
+- **OCR (Cleaning)**: Preserved non‑Latin scripts and single-character numeric lines in extracted text; removed the overly restrictive Tesseract character whitelist that could collapse OCR output to empty.
+- **OCR (macOS)**: Disabled Tesseract fallback on macOS to prevent `MissingPluginException` (since `flutter_tesseract_ocr` is mobile-only).
+- **OCR (Pipeline)**: Optimized OCR pipeline for Apple Vision by skipping destructive image preprocessing (downscaling/grayscaling) and boosting PDF rasterization to 300 DPI, significantly improving extraction accuracy on macOS/iOS.
+- **OCR (macOS)**: Ran Apple Vision OCR off the UI thread and enabled security-scoped file access so OCR works reliably for user-selected files.
 - **Health Insights**: Triggered a background Health Insights refresh after saving a document to the vault so Insights update immediately after OCR completes.
+- **Health Insights**: Fixed a runtime type-cast crash when loading records/metadata stored as `_Map<dynamic, dynamic>` from Hive.
 
 ## [1.9.7] - 2026-01-27
 

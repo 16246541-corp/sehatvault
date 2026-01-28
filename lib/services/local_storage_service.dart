@@ -304,14 +304,23 @@ class LocalStorageService {
 
   /// Get a health record by ID
   Map<String, dynamic>? getRecord(String id) {
-    return _recordsBox.get(id);
+    final value = _recordsBox.get(id);
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((k, v) => MapEntry(k.toString(), v));
+    }
+    return null;
   }
 
   /// Get all health records
   List<Map<String, dynamic>> getAllRecords() {
     return _recordsBox.values
         .whereType<Map>()
-        .map((v) => v.cast<String, dynamic>())
+        .map((v) => v is Map<String, dynamic>
+            ? v
+            : v.map((k, v) => MapEntry(k.toString(), v)))
         .toList();
   }
 

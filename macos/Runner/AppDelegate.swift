@@ -61,37 +61,39 @@ class AppDelegate: FlutterAppDelegate {
           result(FlutterError(code: "not_found", message: "Image not found", details: imagePath))
           return
         }
-
-        let semaphore = DispatchSemaphore(value: 0)
-        var recognizedText: String = ""
-        var requestError: Error?
-
-        let request = VNRecognizeTextRequest { req, err in
-          defer { semaphore.signal() }
-          if let err = err {
-            requestError = err
-            return
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+          let didAccess = url.startAccessingSecurityScopedResource()
+          defer {
+            if didAccess { url.stopAccessingSecurityScopedResource() }
           }
-          let observations = req.results as? [VNRecognizedTextObservation] ?? []
-          let lines = observations.compactMap { obs in
-            obs.topCandidates(1).first?.string
+          
+          let request = VNRecognizeTextRequest { req, err in
+            if let err = err {
+              DispatchQueue.main.async {
+                result(FlutterError(code: "vision_error", message: err.localizedDescription, details: nil))
+              }
+              return
+            }
+            let observations = req.results as? [VNRecognizedTextObservation] ?? []
+            let lines = observations.compactMap { obs in
+              obs.topCandidates(1).first?.string
+            }
+            DispatchQueue.main.async {
+              result(lines.joined(separator: "\n"))
+            }
           }
-          recognizedText = lines.joined(separator: "\n")
-        }
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = true
+          request.recognitionLevel = .accurate
+          request.usesLanguageCorrection = true
 
-        do {
-          let handler = VNImageRequestHandler(url: url, options: [:])
-          try handler.perform([request])
-          _ = semaphore.wait(timeout: .now() + 10)
-          if let err = requestError {
-            result(FlutterError(code: "vision_error", message: err.localizedDescription, details: nil))
-            return
+          do {
+            let handler = VNImageRequestHandler(url: url, options: [:])
+            try handler.perform([request])
+          } catch {
+            DispatchQueue.main.async {
+              result(FlutterError(code: "vision_error", message: error.localizedDescription, details: nil))
+            }
           }
-          result(recognizedText)
-        } catch {
-          result(FlutterError(code: "vision_error", message: error.localizedDescription, details: nil))
         }
       default:
         result(FlutterMethodNotImplemented)

@@ -99,7 +99,7 @@ class OCRService {
     final pdfBytes = Uint8List.fromList(bytes);
     int pageIndex = 0;
 
-    await for (final page in Printing.raster(pdfBytes, dpi: 160)) {
+    await for (final page in Printing.raster(pdfBytes, dpi: 300)) {
       final pngBytes = await page.toPng();
       final text = await extractTextFromImageBytes(pngBytes);
       if (text.trim().isNotEmpty) {
@@ -114,6 +114,33 @@ class OCRService {
   }
 
   static Future<String> extractTextFromImageBytes(Uint8List bytes) async {
+    // On iOS/macOS, we trust Apple Vision to handle the image processing.
+    // We skip the heavy downscaling/grayscaling that Tesseract needs.
+    if (Platform.isIOS || Platform.isMacOS) {
+      final directory = await getTemporaryDirectory();
+      final tempPath = p.join(
+        directory.path,
+        'ocr_pdf_prep_${DateTime.now().microsecondsSinceEpoch}.jpg',
+      );
+      final preprocessedFile = File(tempPath);
+
+      // Just write the bytes directly if they are already an image (PNG from PDF raster)
+      // Note: Printing.raster returns PNG bytes.
+      await preprocessedFile.writeAsBytes(bytes, flush: true);
+
+      try {
+        return await _runTesseract(preprocessedFile.path);
+      } catch (e) {
+        throw Exception("OCR Extraction failed: $e");
+      } finally {
+        try {
+          if (await preprocessedFile.exists()) {
+            await preprocessedFile.delete();
+          }
+        } catch (_) {}
+      }
+    }
+
     img.Image? image = img.decodeImage(bytes);
     if (image == null) {
       throw Exception('Unsupported image data');
@@ -162,33 +189,57 @@ class OCRService {
   }
 
   static Future<String> _runTesseract(String imagePath) async {
+    final override = tesseractExtractTextOverride;
+    if (override != null) {
+      final text = await override(
+        imagePath,
+        language: 'eng',
+        args: {
+          "psm": "3",
+          "preserve_interword_spaces": "1",
+        },
+      );
+      return _cleanText(text);
+    }
+
     if (Platform.isIOS || Platform.isMacOS) {
       try {
+        print("OCR: Attempting Apple Vision on $imagePath");
         final text = await _runAppleVision(imagePath);
+        print("OCR: Apple Vision result length: ${text.length}");
         if (text.trim().isNotEmpty) return text;
-        if (Platform.isMacOS) return text;
+        print("OCR: Apple Vision returned empty...");
       } catch (e) {
-        if (Platform.isMacOS) {
-          throw Exception("Apple Vision OCR failed on Desktop: $e");
-        }
+        print("OCR: Apple Vision error: $e");
       }
-    }
 
-    if (!Platform.isAndroid && !Platform.isIOS) {
+      // On macOS, we cannot fallback to Tesseract (not supported)
+      if (Platform.isMacOS) {
+        print(
+            "OCR: No fallback available on macOS (Tesseract not supported). Returning empty.");
+        return "";
+      }
+
+      // On iOS, we can try Tesseract as a fallback
+      print("OCR: Falling back to Tesseract on iOS...");
+      // Continue to Tesseract fallback below
+    } else if (Platform.isAndroid) {
+      // Android uses Tesseract directly
+      print("OCR: Using Tesseract on Android...");
+    } else {
+      // Windows/Linux - not supported
       throw Exception(
-          "OCR on Windows is not currently supported due to lack of native package compatibility. Please use the mobile app for OCR.");
+          "OCR on ${Platform.operatingSystem} is not currently supported due to lack of native package compatibility. Please use the mobile app for OCR.");
     }
 
-    final runner =
-        tesseractExtractTextOverride ?? FlutterTesseractOcr.extractText;
+    // Tesseract fallback (only reached on iOS/Android)
+    final runner = FlutterTesseractOcr.extractText;
     final text = await runner(
       imagePath,
       language: 'eng',
       args: {
         "psm": "3",
         "preserve_interword_spaces": "1",
-        "tessedit_char_whitelist":
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,:;()[]{}!@#\$%^&*-+=<>?/|_ '\"\n",
       },
     );
     return _cleanText(text);
@@ -204,6 +255,12 @@ class OCRService {
 
   /// Internal preprocessing: handles rotation, low-light enhancement, and grayscale.
   static Future<File> _preprocessImage(File imageFile) async {
+    // Skip preprocessing for Apple Vision (iOS/macOS) as it handles
+    // high-res color images better than Tesseract's preprocessed inputs.
+    if (Platform.isIOS || Platform.isMacOS) {
+      return imageFile;
+    }
+
     try {
       final bytes = await imageFile.readAsBytes();
       img.Image? image = img.decodeImage(bytes);
@@ -254,20 +311,17 @@ class OCRService {
 
   /// Cleans the raw OCR text by removing noise and normalizing whitespace.
   static String _cleanText(String text) {
-    if (text.isEmpty) return "";
+    if (text.trim().isEmpty) return "";
 
-    // 1. Initial split and trim
-    List<String> lines = text.split('\n').map((l) => l.trim()).toList();
+    final lines = text.split('\n').map((l) => l.trimRight()).toList();
+    final letterOrNumber = RegExp(r'[\p{L}\p{N}]', unicode: true);
 
-    // 2. Filter out noisy lines (mostly non-alphanumeric single chars)
-    List<String> cleanedLines = lines.where((line) {
-      if (line.isEmpty) return false;
-      // Keep lines that have at least one alphanumeric character
-      // and aren't just a string of symbols
-      return RegExp(r'[a-zA-Z0-9]').hasMatch(line) && line.length > 1;
+    final cleanedLines = lines.where((line) {
+      final t = line.trim();
+      if (t.isEmpty) return false;
+      return letterOrNumber.hasMatch(t);
     }).toList();
 
-    // 3. Rejoin and apply global regex cleaning
     return cleanedLines
         .join('\n')
         .replaceAll(RegExp(r'\n{3,}'), '\n\n') // Max two consecutive newlines

@@ -32,6 +32,25 @@ void main() {
     expect(text, contains('Hemoglobin'));
   });
 
+  test('extractTextFromFile preserves non-Latin scripts', () async {
+    final dir = await Directory.systemTemp.createTemp('ocr_txt_ar_test_');
+    final file = File('${dir.path}/report_ar.txt');
+    await file.writeAsString('تحاليل الدم\n', flush: true);
+
+    final text = await OCRService.extractTextFromFile(file);
+    expect(text, contains('تحاليل'));
+  });
+
+  test('extractTextFromFile preserves single-character numeric lines',
+      () async {
+    final dir = await Directory.systemTemp.createTemp('ocr_txt_digit_test_');
+    final file = File('${dir.path}/report_digit.txt');
+    await file.writeAsString('5\n', flush: true);
+
+    final text = await OCRService.extractTextFromFile(file);
+    expect(text, equals('5'));
+  });
+
   test('extractTextFromImageBytes writes a readable temp file', () async {
     const pathProviderChannel =
         MethodChannel('plugins.flutter.io/path_provider');
